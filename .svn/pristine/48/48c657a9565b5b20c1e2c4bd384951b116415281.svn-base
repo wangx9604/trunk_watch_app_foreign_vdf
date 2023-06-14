@@ -1,0 +1,223 @@
+apply plugin: 'com.android.application'
+apply plugin: 'org.jetbrains.kotlin.android'
+apply plugin: 'kotlin-android'
+apply plugin: 'com.jakewharton.butterknife'
+apply plugin: 'org.greenrobot.greendao'
+apply plugin: 'kotlin-kapt' // 使用 kapt 注解处理工具
+apply plugin: 'kotlin-parcelize'
+
+def buildTime() {
+    def date = new Date()
+    def formattedDate = date.format('YYYY-MM-dd HH:mm')
+    return formattedDate
+}
+
+android {
+    compileSdkVersion 30
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 30
+        multiDexEnabled = true
+        flavorDimensions "versionCode"  //AS 3.0 需要填此项
+    }
+    android.dexOptions {
+        jumboMode = true
+        javaMaxHeapSize "2g"
+    }
+
+    packagingOptions {
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/proguard/androidx-annotations.pro'
+        exclude 'META-INF/androidx.localbroadcastmanager_localbroadcastmanager.version'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['libs']
+        }
+    }
+
+    useLibrary 'org.apache.http.legacy'
+
+    signingConfigs {
+        debug {
+            storeFile file("./af_keys")
+            storePassword "longcheer"
+            keyAlias "publish_keys"
+            keyPassword "longcheer"
+        }
+
+        release {
+            storeFile file("./af_keys")
+            storePassword "longcheer"
+            keyAlias "publish_keys"
+            keyPassword "longcheer"
+        }
+
+    }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+            buildConfigField "boolean", "ISDEBUG", "true"
+            buildConfigField "boolean", "IS_PRINT_LOG", "true"
+            buildConfigField "String", "BUILD_TIME", "\"${buildTime()}\""
+
+            //SDK 版本号 每更新一次SDK，需要在这里备注新的版本号。
+            buildConfigField "String", "SDK_MiPush", "\"3.6.9\""
+            buildConfigField "String", "SDK_MiStats", "\"1.9.4\""
+            buildConfigField "String", "SDK_TingPhoneOpen", "\"5.6.4\""
+            buildConfigField "String", "VERSION_TYPE", "\"Normal\""   //1.Normal 2.Monkey
+        }
+        release {
+            buildConfigField "boolean", "ISDEBUG", "false"
+            buildConfigField "boolean", "IS_PRINT_LOG", "false"
+            buildConfigField "String", "BUILD_TIME", "\"${buildTime()}\""
+            signingConfig signingConfigs.release
+            zipAlignEnabled true
+            shrinkResources true
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard.cfg'
+
+            buildConfigField "String", "SDK_MiPush", "\"3.6.9\""
+            buildConfigField "String", "SDK_MiStats", "\"1.9.4\""
+            buildConfigField "String", "SDK_TingPhoneOpen", "\"5.6.4\""
+            buildConfigField "String", "VERSION_TYPE", "\"Official\""   //1.Official 2.DVT 3.Beta
+        }
+    }
+
+    productFlavors {
+        xunoversea {
+            applicationId "com.xiaoxun.xunoversea"
+            versionCode 39
+            versionName '1.0.41.16266'
+            buildConfigField "String", "project", "\"SW706_A02\""
+        }
+    }
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            if (variant.buildType.name == 'release') {
+                def apkName = "Mibro_${variant.versionName}.apk"
+                outputFileName = apkName
+            } else {
+                def apkName = "Mibro_${variant.versionName}_debug.apk"
+                outputFileName = apkName
+            }
+        }
+    }
+
+    lintOptions {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+
+}
+
+greendao {
+    schemaVersion 2
+}
+
+repositories {
+    flatDir {
+        dirs 'libs'
+    }
+}
+
+dependencies {
+    configurations.all {
+        resolutionStrategy.eachDependency {
+            DependencyResolveDetails details ->
+                def requested = details.requested
+                if (requested.group == "androidx.appcompat") {
+                    if (requested.name == "appcompat") {
+                        details.useVersion "1.3.1"
+                    }
+                }
+        }
+    }
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.1'
+    implementation fileTree(include: '*.jar', dir: 'libs')
+    implementation 'androidx.appcompat:appcompat:1.4.1'
+    implementation 'androidx.recyclerview:recyclerview:1.2.1'
+    implementation 'androidx.media:media:1.5.0'
+    implementation 'androidx.multidex:multidex:2.0.1'
+    implementation 'androidx.multidex:multidex-instrumentation:2.0.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.7.2'
+    implementation 'com.squareup.okio:okio:3.2.0'
+    implementation 'com.nineoldandroids:library:2.4.0'
+//    implementation 'com.github.bumptech.glide:glide:3.7.0'
+    implementation 'com.squareup.picasso:picasso:2.5.1'
+    implementation 'com.xiaomi.account:oauth-android:2.0.10'
+    implementation 'com.github.yalantis:ucrop:2.2.3'
+    //implementation 'com.google.android.gms:play-services:12.0.1'
+    implementation 'com.google.android.gms:play-services-maps:16.0.0'
+    implementation 'com.google.android.gms:play-services-auth:16.0.0'
+    implementation files('libs/photoJar.jar')
+//    implementation files('libs/MiPush_SDK_Client_3_6_12.jar')
+    implementation files('libs/zxing.jar')
+
+    //implementation 'com.facebook.android:facebook-android-sdk:[5,6)'
+    implementation(name: 'facebook-android-sdk-5.2.0', ext: 'aar')
+    implementation(name: 'facebook-applinks-5.2.0', ext: 'aar')
+    implementation(name: 'facebook-common-5.2.0', ext: 'aar')
+    implementation(name: 'facebook-core-5.2.0', ext: 'aar')
+    implementation(name: 'facebook-login-5.2.0', ext: 'aar')
+    implementation(name: 'facebook-share-5.2.0', ext: 'aar')
+    implementation(name: 'MiPush_SDK_Client_5_1_1-G_3rd', ext: 'aar')
+//    implementation(name: 'HERE-sdk', ext: 'aar')
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    api project(':mapadapter')
+    api project(':libsvideocall')
+    api project(':camera')
+    implementation files('libs/mistat-sdk-3.0.12.jar')
+    api "com.google.android.play:core-ktx:1.8.1"
+
+    implementation 'com.blankj:utilcode:1.30.7'
+    implementation 'com.google.android.material:material:1.2.1'
+    implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.30'
+    implementation 'com.huawei.hms:push:6.5.0.300'
+    implementation 'com.alibaba:fastjson:1.2.38'
+
+    implementation "androidx.exifinterface:exifinterface:1.3.2"
+    implementation "androidx.camera:camera-core:1.1.0-alpha06"
+    implementation "androidx.camera:camera-camera2:1.1.0-alpha06"
+    implementation "androidx.camera:camera-lifecycle:1.1.0-alpha06"
+    implementation "androidx.camera:camera-view:1.0.0-alpha26"
+    implementation "androidx.camera:camera-extensions:1.0.0-alpha26"
+    implementation "com.github.bumptech.glide:glide:4.13.2"
+    // 增加RxJava 2X 的依赖库
+    implementation 'io.reactivex.rxjava2:rxandroid:2.0.1'
+    implementation 'io.reactivex.rxjava2:rxjava:2.0.7'
+
+    implementation project(':flutter')                  //flutter 引用
+    implementation "com.jakewharton:butterknife:10.2.3"
+    implementation "com.jakewharton:butterknife-compiler:10.2.3"
+    implementation files('libs/qq_v3.3.9.jar')
+    implementation 'com.tencent.mm.opensdk:wechat-sdk-android-without-mta:6.8.0'
+    //butterknife kapt注解
+    kapt "com.jakewharton:butterknife-compiler:10.2.3"
+    //WebViewJsBridge
+    implementation 'com.github.lzyzsd:jsbridge:1.0.4'
+    implementation 'org.greenrobot:eventbus:3.1.1'
+
+    implementation "io.reactivex.rxjava3:rxjava:3.1.3"
+    implementation "io.reactivex.rxjava3:rxandroid:3.0.0"
+    api "com.squareup.okhttp3:logging-interceptor:4.7.2"
+    api "com.squareup.retrofit2:retrofit:2.9.0"
+    api "com.squareup.retrofit2:converter-gson:2.9.0"
+    api "com.squareup.retrofit2:adapter-rxjava3:2.9.0"
+
+    implementation 'com.github.zyyoona7:EasyPopup:1.1.2'
+
+    api 'com.github.yuweiguocn:GreenDaoUpgradeHelper:v2.0.0'
+    api 'org.greenrobot:greendao:3.3.0'
+
+    api(name: 'MPChartLib-release', ext: 'aar')
+
+}

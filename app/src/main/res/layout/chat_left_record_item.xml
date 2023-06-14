@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:id="@+id/send_time"
+        android:layout_width="311.33dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="18.66dp"
+        android:layout_marginBottom="10.33dp">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:layout_centerVertical="true"
+            android:layout_toLeftOf="@+id/chat_send_time"
+            android:background="@color/chat_item_text" />
+
+        <TextView
+            android:id="@+id/chat_send_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_marginLeft="11dp"
+            android:layout_marginRight="11dp"
+            android:text="nihao"
+            android:textColor="@color/m_a_spliter_line"
+            android:textSize="@dimen/xiaomiMyTextSize7" />
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:layout_centerVertical="true"
+            android:layout_toRightOf="@+id/chat_send_time"
+            android:background="@color/chat_item_text" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="9.33dp"
+        android:layout_marginRight="70dp">
+
+        <ImageView
+            android:id="@+id/left_head"
+            android:layout_width="38.66dp"
+            android:layout_height="38.66dp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginTop="6.66dp"
+            android:src="@drawable/head_1" />
+
+        <TextView
+            android:id="@+id/chat_nickname"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="13.66dp"
+            android:layout_toRightOf="@+id/left_head"
+            android:text=""
+            android:textColor="@color/color_5"
+            android:textSize="@dimen/xiaomiMyTextSize8" />
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/chat_nickname"
+            android:layout_marginTop="6.66dp"
+
+            android:layout_toRightOf="@+id/left_head">
+
+            <ImageButton
+                android:id="@+id/left_chat_content"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8.66dp"
+                android:background="@drawable/dialog_box_0" />
+
+            <TextView
+                android:id="@+id/left_duration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="23dp"
+                android:layout_marginRight="23.3dp"
+                android:text="14"
+                android:textColor="@color/color_1"
+                android:textSize="@dimen/xiaomiMyTextSize4" />
+
+
+            <ImageView
+                android:id="@+id/left_anim"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignRight="@+id/left_chat_content"
+                android:layout_centerVertical="true"
+                android:layout_marginRight="11.66dp"
+                android:background="@drawable/animation_chat_left" />
+
+
+            <ImageView
+                android:id="@+id/left_retry"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="8dp"
+                android:layout_toRightOf="@+id/left_chat_content"
+                android:background="@drawable/no_language_0" />
+
+        </RelativeLayout>
+    </RelativeLayout>
+
+    <ImageView
+        android:id="@+id/interval_view"
+        android:layout_width="match_parent"
+        android:layout_height="10dp" />
+</LinearLayout>

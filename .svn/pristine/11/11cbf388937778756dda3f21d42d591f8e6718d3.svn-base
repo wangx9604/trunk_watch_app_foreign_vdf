@@ -1,0 +1,527 @@
+package com.xiaoxun.xun.activitys;
+
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.graphics.Bitmap;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Environment;
+import android.text.TextUtils;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.webkit.DownloadListener;
+import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient;
+import android.webkit.WebView;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+
+import com.tencent.tauth.Tencent;
+import com.xiaoxun.xun.Constants;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.fragment.NewSettingFragment;
+import com.xiaoxun.xun.utils.AESUtil;
+import com.xiaoxun.xun.utils.BASE64Encoder;
+import com.xiaoxun.xun.utils.CloudBridgeUtil;
+import com.xiaoxun.xun.utils.CommonUtil;
+import com.xiaoxun.xun.utils.DialogUtil;
+import com.xiaoxun.xun.utils.ImageUtil;
+import com.xiaoxun.xun.utils.LogUtil;
+import com.xiaoxun.xun.utils.PermissionUtils;
+import com.xiaoxun.xun.utils.SystemUtils;
+import com.xiaoxun.xun.utils.ToastUtil;
+import com.xiaoxun.xun.utils.UriUtil;
+import com.xiaoxun.xun.utils.WebViewUtil;
+import com.xiaoxun.xun.webview.JavaScriptSubObject;
+import com.xiaoxun.xun.webview.MultFunWebViewClient;
+
+import net.minidev.json.JSONObject;
+
+import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+
+public class MultFunWebViewActivity extends NormalActivity {
+
+    @BindView(R.id.webcontent)
+    public WebView webcontent;
+    @BindView(R.id.pg_progres_store)
+    public ProgressBar pg_progress;
+    @BindView(R.id.tv_title)
+    public TextView tv_title;
+    @BindView(R.id.iv_title_menu)
+    public ImageView iv_title_menu;
+
+    private String mFunWebUrl_0;
+    private String mMultiFunType;
+    private JavaScriptSubObject mJsObject;
+
+    /** 视频全屏参数 */
+    protected static final FrameLayout.LayoutParams COVER_SCREEN_PARAMS = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+    private View customView;
+    private FrameLayout fullscreenContainer;
+    private WebChromeClient.CustomViewCallback customViewCallback;
+    private String videoOrientation = "transverse";
+    /* 文件上传功能 */
+    private File cameraTemp = null;
+    private File cropTemp = null;
+    private final int IMAGE_CODE = 0; // 这里的IMAGE_CODE是自己任意定义的
+    private final int IMAGE_CODE_1 = 1;
+    private final int GET_IMAGE_FROM_CAMERA = 2;
+    private ValueCallback<Uri[]> mUploadCallbackAboveL;
+
+    private boolean isShowTitleMenu = true;
+    private int channerShop = 0;
+
+    /*通用页面承载功能
+    1：视屏全屏播放
+    2：文件上传
+    3：文件下载
+
+    不同点：
+    1：标题文字
+    2：发现和商城登录后返回的页面刷新方式不同
+    */
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        // wherego 从登录来的就加载带参数的url
+        if(intent!=null && !TextUtils.isEmpty(intent.getStringExtra("wherego"))){
+            String sourceWhere = intent.getStringExtra("wherego");
+            mFunWebUrl_0 = intent.getStringExtra("targetUrl");
+            if(Constants.FINAL_CHANNEL_SUB_FIND.equals(sourceWhere)) {
+                webcontent.loadUrl(mFunWebUrl_0);
+            }else{
+                loadPostUrl();
+            }
+
+            LogUtil.e("MultWebView onNewIntent:"+mFunWebUrl_0);
+        }else{
+            mFunWebUrl_0 = intent.getStringExtra("targetUrl");
+            webcontent.loadUrl(mFunWebUrl_0);
+        }
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_c_a_web_view);
+        ButterKnife.bind(this);
+
+        initActManage();
+        initView();
+        initBaseInfo();
+        initWebViewLoadUrl();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        webcontent.loadUrl("about:blank");
+        webcontent = null;
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if(keyCode == KeyEvent.KEYCODE_BACK){
+            if (customView != null) {
+                hideCustomView();
+            }else if(webcontent.canGoBack()){
+                webcontent.goBack();
+            }else{
+                if(!getMyApp().getIsMainActivityOpen()) {
+                    onBackClick();
+                }else{
+                    finishActivity();
+                }
+            }
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, final Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        LogUtil.e("requestcode:"+requestCode+":"+resultCode);
+        if (requestCode == com.tencent.connect.common.Constants.REQUEST_QZONE_SHARE) {
+            Tencent.onActivityResultData(requestCode,resultCode,data,null);
+        }
+        if (requestCode == IMAGE_CODE && resultCode == RESULT_OK){
+            try {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        File file = new File(UriUtil.getPath(MultFunWebViewActivity.this,data.getData()));
+                        try {
+                            File destFile = ImageUtil.compressImage(file, 480, 480, Bitmap.CompressFormat.JPEG, 75,
+                                    getMyApp().getIconCacheDir().getAbsolutePath() + "/" + file.getName() + "_compress.jpg");
+
+                            CommonUtil.setPicToView(MultFunWebViewActivity.this,
+                                    destFile,
+                                    mUploadCallbackAboveL);
+                        }catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+                CommonUtil.cancleUploadCallBack(mUploadCallbackAboveL);
+            }
+        } else if (requestCode == GET_IMAGE_FROM_CAMERA) {
+            try {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        CommonUtil.setPicToView(MultFunWebViewActivity.this,
+                                cameraTemp,
+                                mUploadCallbackAboveL);
+                    }
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+                CommonUtil.cancleUploadCallBack(mUploadCallbackAboveL);
+            }
+        } else if (requestCode == IMAGE_CODE_1 && resultCode == RESULT_OK) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    CommonUtil.setPicToView(MultFunWebViewActivity.this,
+                            cropTemp,
+                            mUploadCallbackAboveL);
+                }
+            });
+        } else if (resultCode == RESULT_CANCELED) {
+            try {
+                CommonUtil.cancleUploadCallBack(mUploadCallbackAboveL);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }else if(requestCode == 1024){
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                if (Environment.isExternalStorageManager()) {
+                    // 授权成功
+                    if (PermissionUtils.hasPermissions(this, PermissionUtils.storagePermissions)) {
+                        getMyApp().initFileDirs();
+                    } else {
+                        if (PermissionUtils.hasRefusedPermissions(this, PermissionUtils.storagePermissions)) {
+                            PermissionUtils.showPermissionPromptDialog(getMyApp(), getString(R.string.need_storage_new), new DialogUtil.OnCustomDialogListener() {
+                                @Override
+                                public void onClick(View v) {
+                                }
+                            }, true);
+                        } else {
+                            ActivityCompat.requestPermissions(this,
+                                    PermissionUtils.getNoGrantedPermissions(this, PermissionUtils.storagePermissions), Constants.PERMISSION_RESULT_INIT);
+                        }
+                    }
+                } else {
+                    // 授权失败
+                    ToastUtil.show(this, "未授权成功");
+                }
+            }
+        }
+    }
+
+    private void initWebViewLoadUrl() {
+        webcontent.setWebChromeClient(new WebChromeClient() {
+
+            public void onReceivedTitle(WebView view, String title) {
+                super.onReceivedTitle(view, title);
+                tv_title.setText(title);
+            }
+
+            @Override
+            @TargetApi(21)
+            public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
+                LogUtil.e("onShowFileChooser upload");
+                try {
+                    //1:隐私权限申请
+                    PermissionUtils.checkPermissionForBack(getMyApp(),
+                            MultFunWebViewActivity.this,
+                            new PermissionUtils.OnPermissionAuthSuccess() {
+                                @Override
+                                public void onAuthSuccess() {
+                                    boolean isCapture = fileChooserParams.isCaptureEnabled();
+                                    mUploadCallbackAboveL = filePathCallback;
+                                    if (!isCapture) {
+                                        CommonUtil.startPickPhoto(MultFunWebViewActivity.this, IMAGE_CODE);
+                                    } else {
+                                        if(ActivityCompat.checkSelfPermission(MultFunWebViewActivity.this, Manifest.permission.CAMERA) == PERMISSION_GRANTED){
+                                            cameraTemp = CommonUtil.startCameraCapture(MultFunWebViewActivity.this, GET_IMAGE_FROM_CAMERA);
+                                        }else {
+                                            ActivityCompat.requestPermissions(MultFunWebViewActivity.this, new String[]{Manifest.permission.CAMERA}, 1);
+                                        }
+                                    }
+                                }
+                            });
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+                return true;
+            }
+
+            @Override
+            public View getVideoLoadingProgressView() {
+                FrameLayout frameLayout = new FrameLayout(MultFunWebViewActivity.this);
+                frameLayout.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+                return frameLayout;
+            }
+
+            @Override
+            public void onProgressChanged(WebView view, int newProgress) {
+                super.onProgressChanged(view, newProgress);
+                if(newProgress==100){
+                    pg_progress.setVisibility(View.GONE);//加载完网页进度条消失
+                }
+                else{
+                    pg_progress.setVisibility(View.VISIBLE);//开始加载网页时显示进度条
+                    pg_progress.setProgress(newProgress);//设置进度值
+                }
+            }
+
+            // 全屏
+            @Override
+            public void onShowCustomView(View view, CustomViewCallback callback) {
+                showCustomView(view, callback);
+            }
+
+            // 退出全屏
+            @Override
+            public void onHideCustomView() {
+                hideCustomView();
+            }
+
+        });
+        if(mMultiFunType.equals(Constants.FINAL_CHANNEL_SUB_FIND)) {
+            webcontent.setWebViewClient(new MultFunWebViewClient(this, getMyApp(), Constants.FINAL_CHANNEL_SUB_FIND));
+        }else{
+            webcontent.setWebViewClient(new MultFunWebViewClient(this, getMyApp(), Constants.FINAL_CHANNEL_SUB_STORE));
+        }
+        webcontent.loadUrl(mFunWebUrl_0);
+        //支持下载功能
+        webcontent.setDownloadListener(new MyWebViewDownLoadListener());
+    }
+
+    private void initBaseInfo() {
+        webcontent.getSettings().setMediaPlaybackRequiresUserGesture(false);
+        WebViewUtil.getInstance().initWebSettings(webcontent,this, getMyApp().miit_oaid);
+        WebViewUtil.getInstance().dealJavascriptLeak(webcontent);
+        //android提供给js调用android本地方法
+        mJsObject = new JavaScriptSubObject(this, getMyApp());
+        webcontent.addJavascriptInterface(mJsObject, "OCJSBridge");
+    }
+
+    private void initView() {
+        isShowTitleMenu = getIntent().getBooleanExtra("show_title_menu",true);
+        if(!isShowTitleMenu){
+            iv_title_menu.setVisibility(View.GONE);
+        }
+        if(Constants.FINAL_CHANNEL_SUB_STORE.equals(mMultiFunType)) {
+            tv_title.setText(getString(R.string.xun_store));
+        }else{
+//            tv_title.setText(getString(R.string.ad_title));
+        }
+    }
+
+    private void initActManage() {
+        mFunWebUrl_0 = getIntent().getStringExtra("targetUrl");
+        channerShop = getIntent().getIntExtra("channerShop",0);
+        mMultiFunType = getIntent().getStringExtra(Constants.TYPE_FUN);
+        if(!TextUtils.isEmpty(getIntent().getStringExtra("wherego"))) {
+            mMultiFunType = getIntent().getStringExtra("wherego");
+            try {
+                mFunWebUrl_0 = new URI(mFunWebUrl_0).getPath();
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            }
+            if(Constants.FINAL_CHANNEL_SUB_FIND.equals(mMultiFunType)) {
+                webcontent.loadUrl(mFunWebUrl_0);
+            }
+            LogUtil.e("MultWebView initActManage:"+mFunWebUrl_0+":"+ mMultiFunType);
+        }
+
+    }
+
+
+    @OnClick(R.id.iv_title_back)
+    public void onClickTitleBack(){
+        if (webcontent.canGoBack()) {
+            webcontent.goBack();
+        }else{
+            if(!getMyApp().getIsMainActivityOpen()) {
+                onBackClick();
+            }else{
+                finishActivity();
+            }
+        }
+    }
+    @OnClick(R.id.iv_title_menu)
+    public void onClickTitleMenu(){
+        onBackClick();
+    }
+
+    private void onBackClick(){
+        if (getMyApp().isAutoLogin() && CommonUtil.isHaveWatchList(getMyApp())) {
+            Intent intent = new Intent(this, NewMainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        }
+        finishActivity();
+    }
+
+    private void finishActivity(){
+        webcontent.loadUrl("javascript:yuer.mediapause()");//育儿平台关闭音频需要调用
+        if (channerShop == 1) {
+            NewSettingFragment.onRefresh();
+        }
+        finish();
+    }
+
+    private void loadPostUrl(){
+        if(getMyApp().isAutoLogin() && !TextUtils.isEmpty(getMyApp().getNetService().getAESKEY())){
+            JSONObject postData = new JSONObject();
+            postData.put(CloudBridgeUtil.KEY_NAME_EID, getMyApp().getCurUser().getEid());
+            postData.put("openId", getMyApp().getLoginId());
+            postData.put("uuid", getMyApp().getLastUnionId());
+            postData.put("nickName", getMyApp().getCurUser().getNickname());
+            postData.put("cellPhone", getMyApp().getCurUser().getCellNum());
+            postData.put("headImg", getMyApp().getCurUser().getHeadPath());
+            String encryptData = BASE64Encoder.encode(AESUtil.encryptAESCBC(postData.toString(),
+                    getMyApp().getNetService().getAESKEY(),
+                    getMyApp().getNetService().getAESKEY())) + getMyApp().getToken();
+            try {
+                webcontent.postUrl(mFunWebUrl_0, URLEncoder.encode(encryptData, "utf-8").getBytes());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }else{
+            webcontent.loadUrl(mFunWebUrl_0);
+        }
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if(1 == requestCode && grantResults.length == 1){
+            if(grantResults[0] == PERMISSION_GRANTED){
+                cameraTemp = CommonUtil.startCameraCapture(MultFunWebViewActivity.this, GET_IMAGE_FROM_CAMERA);
+            } else {
+                CommonUtil.cancleUploadCallBack(mUploadCallbackAboveL);
+                Toast.makeText(MultFunWebViewActivity.this, getString(R.string.camera_premission_tips),Toast.LENGTH_SHORT).show();
+            }
+        } else if(Constants.PERMISSION_RESULT_INIT == requestCode){
+            if (PermissionUtils.hasPermissions(this, PermissionUtils.storagePermissions)) {
+                getMyApp().initFileDirs();
+            } else {
+                PermissionUtils.showPermissionPromptDialog(getMyApp(), getString(R.string.need_storage_new), new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                    }
+                },true);
+            }
+        }
+    }
+
+
+    /** 视频播放全屏 **/
+    @SuppressLint("SourceLockedOrientationActivity")
+    private void showCustomView(View view, WebChromeClient.CustomViewCallback callback) {
+        // if a view already exists then immediately terminate the new one
+        if (customView != null) {
+            callback.onCustomViewHidden();
+            return;
+        }
+
+        FrameLayout decor = (FrameLayout) MultFunWebViewActivity.this.getWindow().getDecorView();
+        fullscreenContainer = new FullscreenHolder(this);
+        fullscreenContainer.addView(view, COVER_SCREEN_PARAMS);
+        decor.addView(fullscreenContainer, COVER_SCREEN_PARAMS);
+        customView = view;
+        setStatusBarVisibility(false);
+        customViewCallback = callback;
+        videoOrientation = mJsObject.getOrientation();
+        if(videoOrientation != null && videoOrientation.equals("transverse")) {
+            //屏蔽虚拟按键操作
+            int size = SystemUtils.getNavigationBarHeight(this);
+            fullscreenContainer.setPadding(0,0,size,0);
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);//播放时横屏幕，如果需要改变横竖屏，只需该参数就行了
+        }else{
+            //屏蔽虚拟按键操作
+            int size = SystemUtils.getNavigationBarHeight(this);
+            fullscreenContainer.setPadding(0,0,0,size);
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        }
+    }
+
+    /** 隐藏视频全屏 */
+    @SuppressLint("SourceLockedOrientationActivity")
+    private void hideCustomView() {
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);//不播放时竖屏
+        if (customView == null) {
+            return;
+        }
+
+        setStatusBarVisibility(true);
+        FrameLayout decor = (FrameLayout) getWindow().getDecorView();
+        decor.removeView(fullscreenContainer);
+        fullscreenContainer = null;
+        customView = null;
+        customViewCallback.onCustomViewHidden();
+        webcontent.setVisibility(View.VISIBLE);
+    }
+
+    /** 全屏容器界面 */
+    static class FullscreenHolder extends FrameLayout {
+
+        public FullscreenHolder(Context ctx) {
+            super(ctx);
+            setBackgroundColor(ctx.getResources().getColor(android.R.color.black));
+        }
+
+        @Override
+        public boolean onTouchEvent(MotionEvent evt) {
+            return true;
+        }
+    }
+
+    private void setStatusBarVisibility(boolean visible) {
+        int flag = visible ? 0 : WindowManager.LayoutParams.FLAG_FULLSCREEN;
+        getWindow().setFlags(flag, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+    }
+    //下载功能模块
+    private class MyWebViewDownLoadListener implements DownloadListener {
+
+        @Override
+        public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype,
+                                    long contentLength) {
+            Uri uri = Uri.parse(url);
+            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+            startActivity(intent);
+        }
+    }
+}

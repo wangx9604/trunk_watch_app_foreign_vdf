@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom_setting="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:orientation="vertical">
+
+    <include
+        android:id="@+id/powersave_setting_title"
+        layout="@layout/activity_title" />
+
+    <View
+        android:id="@+id/layout_desc_divider"
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:layout_below="@+id/powersave_setting_title"
+        android:layout_marginLeft="23.33dp"
+        android:layout_marginRight="23.33dp"
+        android:background="@color/divider_color" />
+
+    <com.xiaoxun.xun.views.CustomSettingView
+        android:id="@+id/layout_device_operationmode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        custom_setting:tv_title="@string/operation_mode_setting"
+        />
+
+    <com.xiaoxun.xun.views.CustomSettingView
+        android:id="@+id/layout_app_useInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        custom_setting:tv_title="@string/app_uses_info" />
+
+    <com.xiaoxun.xun.views.CustomSettingView
+        android:id="@+id/layout_devices_sleepmode"
+        android:layout_width="match_parent"
+        android:visibility="gone"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/layout_desc_divider"
+        custom_setting:tv_title="@string/setting_watch_sleep" />
+
+    <com.xiaoxun.xun.views.CustomSettingView
+        android:id="@+id/layout_device_offline"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/layout_devices_sleepmode"
+        android:visibility="visible"
+        custom_setting:tv_title="@string/offline_mode_setting" />
+
+    <RelativeLayout
+        android:id="@+id/setting_watch_intelligent_powersaving"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/layout_device_offline"
+        android:layout_marginBottom="11.33dp"
+        android:layout_marginTop="11.33dp"
+        android:background="@drawable/setting_item_selector"
+        android:gravity="center_vertical"
+        android:orientation="vertical"
+        android:paddingLeft="@dimen/divideleftandright">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/intelligent_power_saving"
+            android:textColor="@color/black"
+            android:textSize="@dimen/xiaomiMyTextSize1" />
+
+        <ImageButton
+            android:id="@+id/btn_watch_intelligent_powersaving"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="@color/white"
+            android:paddingEnd="@dimen/divideleftandright"
+            android:paddingStart="10dp"
+            android:src="@drawable/switch_on" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_below="@+id/btn_watch_intelligent_powersaving"
+            android:layout_marginEnd="12dp"
+            android:layout_toStartOf="@+id/btn_watch_intelligent_powersaving"
+            android:text="@string/intelligent_powersaving_describe"
+            android:textColor="@color/txt_grey"
+            android:textSize="@dimen/xiaomiMyTextSize13" />
+
+    </RelativeLayout>
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:layout_below="@+id/setting_watch_intelligent_powersaving"
+        android:paddingLeft="@dimen/divideleftandright"
+        android:paddingRight="@dimen/divideleftandright"
+        android:src="@color/line_grey" />
+
+</LinearLayout>

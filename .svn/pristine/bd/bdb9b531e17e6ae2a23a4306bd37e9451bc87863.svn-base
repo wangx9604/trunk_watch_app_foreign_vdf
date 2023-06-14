@@ -1,0 +1,219 @@
+package com.xiaoxun.xun.activitys;
+
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+
+import com.bumptech.glide.Glide;
+import com.xiaoxun.xun.Constants;
+import com.xiaoxun.xun.FunctionUrl;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.interfaces.InterfacesUtil;
+import com.xiaoxun.xun.utils.LogUtil;
+import com.xiaoxun.xun.utils.MyHandler;
+import com.xiaoxun.xun.utils.Sport2Utils;
+import com.xiaoxun.xun.utils.TimeUtil;
+import com.xiaoxun.xun.utils.alipayLoginUtil.NetworkRequestUtils;
+
+import net.minidev.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+public class SportChallActivity extends NormalActivity {
+    private RecyclerView recyclerView;
+    private ChallAdapter mChallAdapter;
+    private List<Map<String, String>> challData;
+
+    private WatchData mCurWatch;
+    private MyHandler myHandler;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_sport_chall);
+
+        initAppManage();
+        initData();
+        initView();
+        initListener();
+        getSportRankData();
+    }
+
+    private void initAppManage() {
+        String mWatchData = getIntent().getStringExtra(Constants.WATCH_EID_DATA);
+        mCurWatch = myApp.getCurUser().queryWatchDataByEid(mWatchData);
+        myHandler = new MyHandler(this, new InterfacesUtil.UpdateView() {
+            @Override
+            public void UpdateView(int position) {
+                updateViewByResult();
+            }
+        });
+    }
+
+    private void getSportRankData() {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("eid", mCurWatch.getEid());
+        jsonObject.put("type",1);
+        String data = jsonObject.toJSONString();
+        NetworkRequestUtils.getInstance(this).getNetWorkRequest(data,
+                myApp.getNetService().getAESKEY(), myApp.getToken(),
+                FunctionUrl.SPORT_MEDAL_LIST, new NetworkRequestUtils.OperationCallback() {
+                    @Override
+                    public void onSuccess(String result) {
+                        LogUtil.e("result:"+result);
+                        //1:数据解析
+                        parseDataByResult(result);
+
+                        //2:数据绑定视图
+                        myHandler.sendEmptyMessage(MyHandler.CHANGE_VIEW_FLAG);
+                    }
+
+                    @Override
+                    public void onFail(String error) {
+                        LogUtil.e("result:"+error);
+                    }
+                });
+    }
+
+    private void updateViewByResult() {
+        mChallAdapter.notifyDataSetChanged();
+    }
+
+    private void parseDataByResult(String result) {
+        if(Sport2Utils.getIntFromResult(result,"code") == 0){
+            challData.clear();
+            challData.addAll(Sport2Utils.parseChallListByResult(result));
+        }else{
+//            Toast.makeText(this,R.string.ximalaya_story_data_delay,Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void initData() {
+        challData = new ArrayList<>();
+    }
+
+    private void initListener() {
+        ((TextView)findViewById(R.id.tv_title)).setText(R.string.sport_chall_title);
+        findViewById(R.id.iv_title_back).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                finish();
+            }
+        });
+
+        mChallAdapter.setItemClickListener(new InterfacesUtil.OnRecyclerViewItemClickListener() {
+            @Override
+            public void onItemClick(View view, int position) {
+                Map<String,String> map = challData.get(position);
+                Intent _intent = new Intent(SportChallActivity.this, SportChallDetailActivity.class);
+                _intent.putExtra(Constants.SPORT_CHALL_NAME, map.get(Constants.SPORT_CHALL_NAME));
+                _intent.putExtra(Constants.SPORT_CHALL_BRIGHTICON, map.get(Constants.SPORT_CHALL_BRIGHTICON));
+                _intent.putExtra(Constants.SPORT_CHALL_GLOOMYICON, map.get(Constants.SPORT_CHALL_GLOOMYICON));
+                _intent.putExtra(Constants.SPORT_CHALL_COPYTEXT, map.get(Constants.SPORT_CHALL_COPYTEXT));
+                _intent.putExtra(Constants.SPORT_CHALL_ISACTIVED, map.get(Constants.SPORT_CHALL_ISACTIVED));
+                _intent.putExtra(Constants.SPORT_CHALL_ACTIVERATIO, map.get(Constants.SPORT_CHALL_ACTIVERATIO));
+                _intent.putExtra(Constants.SPORT_CHALL_BIGDETAILSICON, map.get(Constants.SPORT_CHALL_BIGDETAILSICON));
+                _intent.putExtra(Constants.WATCH_EID_DATA, mCurWatch.getEid());
+                startActivity(_intent);
+            }
+        });
+    }
+
+    private void initView() {
+        recyclerView = findViewById(R.id.layout_recycler);
+
+        //设置LayoutManager为LinearLayoutManager
+        GridLayoutManager layoutManager1 = new GridLayoutManager(this,3);
+        recyclerView.setLayoutManager(layoutManager1);
+        //设置Adapter
+        mChallAdapter = new ChallAdapter(this,challData);
+        recyclerView.setAdapter(mChallAdapter);
+    }
+
+    class ChallAdapter extends RecyclerView.Adapter<MyViewHolder> {
+
+        Context ctxt;
+        List<Map<String,String>> listData;
+        InterfacesUtil.OnRecyclerViewItemClickListener listener;
+
+        public  ChallAdapter(Context context, List<Map<String,String>> datas){
+                ctxt = context;
+                listData = datas;
+        }
+
+        public void setItemClickListener(InterfacesUtil.OnRecyclerViewItemClickListener itemClick){
+            listener = itemClick;
+        }
+
+        @NonNull
+        @Override
+        public MyViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+            //实例化得到Item布局文件的View对象
+            View v = View.inflate(ctxt, R.layout.item_challs_recycler,null);
+            //返回MyViewHolder的对象
+            return new MyViewHolder(v);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull MyViewHolder myViewHolder, final int i) {
+            Map<String, String> itemChall = listData.get(i);
+            String mChallName = itemChall.get(Constants.SPORT_CHALL_NAME);
+            String mChallDetail = itemChall.get(Constants.SPORT_CHALL_COPYTEXT);
+            String mChallIcon ;
+            myViewHolder.tv_chall_detail.setText(mChallDetail);
+            if(itemChall.get(Constants.SPORT_CHALL_ISACTIVED).equals("1")){
+                mChallIcon = itemChall.get(Constants.SPORT_CHALL_BRIGHTICON);
+                String detailHint = getString(R.string.sport_chall_detail_hint,
+                        TimeUtil.formatTimeYYYYMMDD(itemChall.get(Constants.SPORT_CHALL_ACTIVETIME)));
+                myViewHolder.tv_chall_detail.setText(detailHint);
+            }else{
+                mChallIcon = itemChall.get(Constants.SPORT_CHALL_GLOOMYICON);
+            }
+
+            Glide.with(ctxt)
+                    .load(mChallIcon)
+                    .into(myViewHolder.iv_chall_icon);
+            myViewHolder.tv_chall_name.setText(mChallName);
+            myViewHolder.layout_chall.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if(listener != null){
+                        listener.onItemClick(view, i);
+                    }
+                }
+            });
+        }
+
+        @Override
+        public int getItemCount() {
+            return listData.size();
+        }
+    }
+
+    class MyViewHolder extends RecyclerView.ViewHolder{
+        ImageView iv_chall_icon;
+        TextView tv_chall_name;
+        TextView tv_chall_detail;
+        RelativeLayout layout_chall;
+
+        public MyViewHolder(@NonNull View itemView) {
+            super(itemView);
+            iv_chall_icon = itemView.findViewById(R.id.iv_chall_icon);
+            tv_chall_name = itemView.findViewById(R.id.tv_chall_name);
+            tv_chall_detail = itemView.findViewById(R.id.tv_chall_detail);
+            layout_chall = itemView.findViewById(R.id.layout_chall_rl);
+        }
+    }
+
+}

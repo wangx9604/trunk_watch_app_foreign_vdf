@@ -1,0 +1,41 @@
+package com.xiaoxun.xun;
+
+public class OVERSEAURL {
+    public static String OVERSEA_DOMAIN_SG_RELEASE = "cmibro.xunkids.com:8555";
+
+    public static String URL_APP_XUNKIDS_BASE_FILES = "nfdsfile.xunkids.com";
+    public static String URL_APP_XUNKIDS_BASE_STEPS = "steps.xunkids.com";
+    public static String URL_APP_XUNKIDS_BASE_SHOP = "dial-shop.xunkids.com";
+    public static String URL_APP_XUNKIDS_BASE_UPGRADE = "nupgrade.xunkids.com";
+    public static String URL_APP_XUNKIDS_BASE_DCENTER = "dcenter.xunkids.com";
+    public static String URL_APP_XUNKIDS_BASE_COU = "couserver.xunkids.com";
+
+    //files
+    public static final String FDSFILE_FILE_LIST_URL =  "/filelist";
+    public static final String FDSFILE_DOWNLOAD_URL =  "/download";
+    public static final String FDSFILE_DELETE_URL =  "/delsfile";
+    public static final String FDSFILE_SHARE_URL =  "/share";
+    public static final String FDSFILE_UPLOAD_PUB_URL =  "/uploadpub";
+    public static final String FDSFILE_DOWNLOAD_PUB_URL =  "/downloadpub";
+    public static final String FDSFILE_UPLOAD_URL =  "/upload";
+    //计步2.0请求链接
+    public static final String STEPS_RANK_URL =  "/steps";
+    public static final String STEPS_RANK_AREA_URL =  "/dash";
+    public static final String SPORT_SNAP_SHOT = "/v2/getSnapshotData";
+    public static final String SPORT_STEPS_RUNNING =  "/v2/getSportSteps";
+    public static final String SPORT_RANKS_2 =  "/v2/getSportRank";
+    public static final String SPORT_MEDAL_LIST =  "/v2/getMedalList";
+    public static final String SPORT_DAY_STEPS =  "/v2/getDaySteps";
+    //shop
+    public static final String KEY_STORE_MAIN_URL =  "/mobile/main.html";
+    public static final String KEY_STORE_URL = "/mobile/xunlogin.htm?vs=1";
+    public static final String KEY_STORE_URL_TEST = "/mobile/xunlogin.htm?vs=1";
+    public static final String KEY_STORE_MAIN_URL_TEST =  "/mobile/main.html";
+    //upgrade
+    public static final String APP_UPGRADE_URL = "/upgradeApp";
+    public static final String WATCH_UPGRADE_URL = "/upgradeWatch";
+    public static final String WATCH_VERSION_INFO_URL = "/getDeviceDescription";
+
+    public static String APP_PRIVACY_POLICY_URL = Url.URL_APP_XUNKIDS + "/uagreement";
+
+}

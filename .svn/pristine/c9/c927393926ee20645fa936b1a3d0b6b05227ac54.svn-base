@@ -1,0 +1,371 @@
+package com.xiaoxun.xun.utils;
+
+import android.Manifest;
+import android.app.Activity;
+import android.app.Dialog;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Environment;
+import android.provider.Settings;
+
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
+import android.text.TextUtils;
+import android.view.View;
+
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.Constants;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Created by huangyouyang on 2018/11/12.
+ */
+
+public abstract class PermissionUtils {
+    public static void checkInitPermission(ImibabyApp myApp, Context ctxt) {
+        if (Build.VERSION.SDK_INT < 23) {
+            if (PermissionUtils.hasPermissions(ctxt, PermissionUtils.storagePermissions)) {
+                myApp.initFileDirs();
+            } else {
+                if (PermissionUtils.hasRefusedPermissions((Activity) ctxt, PermissionUtils.storagePermissions)) {
+                    PermissionUtils.showPermissionPromptDialog(myApp, ctxt.getString(R.string.need_storage_new), new DialogUtil.OnCustomDialogListener() {
+                        @Override
+                        public void onClick(View v) {
+                        }
+                    }, true);
+                } else {
+                    ActivityCompat.requestPermissions((Activity) ctxt,
+                            PermissionUtils.getNoGrantedPermissions(ctxt, PermissionUtils.storagePermissions), Constants.PERMISSION_RESULT_INIT);
+                }
+            }
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (!Environment.isExternalStorageManager()) {
+                Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                intent.setData(Uri.parse("package:" + ctxt.getPackageName()));
+                ((Activity) ctxt).startActivityForResult(intent, 1024);
+            } else {
+                if (PermissionUtils.hasPermissions(ctxt, PermissionUtils.storagePermissions)) {
+                    myApp.initFileDirs();
+                } else {
+                    if (PermissionUtils.hasRefusedPermissions((Activity) ctxt, PermissionUtils.storagePermissions)) {
+                        PermissionUtils.showPermissionPromptDialog(myApp, ctxt.getString(R.string.need_storage_new), new DialogUtil.OnCustomDialogListener() {
+                            @Override
+                            public void onClick(View v) {
+
+                            }
+                        }, true);
+                    } else {
+                        ActivityCompat.requestPermissions((Activity) ctxt,
+                                PermissionUtils.getNoGrantedPermissions(ctxt, PermissionUtils.storagePermissions), Constants.PERMISSION_RESULT_INIT);
+                    }
+                }
+            }
+        } else {
+            if (PermissionUtils.hasPermissions(ctxt, PermissionUtils.storagePermissions)) {
+                myApp.initFileDirs();
+            } else {
+                if (PermissionUtils.hasRefusedPermissions((Activity) ctxt, PermissionUtils.storagePermissions)) {
+                    PermissionUtils.showPermissionPromptDialog(myApp, ctxt.getString(R.string.need_storage_new), new DialogUtil.OnCustomDialogListener() {
+                        @Override
+                        public void onClick(View v) {
+                        }
+                    }, true);
+                } else {
+                    ActivityCompat.requestPermissions((Activity) ctxt,
+                            PermissionUtils.getNoGrantedPermissions(ctxt, PermissionUtils.storagePermissions), Constants.PERMISSION_RESULT_INIT);
+                }
+            }
+        }
+    }
+
+    public static void checkPermissionForBack(ImibabyApp myApp, Context ctxt, OnPermissionAuthSuccess mListener) {
+        if (Build.VERSION.SDK_INT < 23) {
+            if (PermissionUtils.hasPermissions(ctxt, PermissionUtils.storagePermissions)) {
+                myApp.initFileDirs();
+                mListener.onAuthSuccess();
+            } else {
+                if (PermissionUtils.hasRefusedPermissions((Activity) ctxt, PermissionUtils.storagePermissions)) {
+                    PermissionUtils.showPermissionPromptDialog(myApp, ctxt.getString(R.string.need_storage_new), new DialogUtil.OnCustomDialogListener() {
+                        @Override
+                        public void onClick(View v) {
+                        }
+                    }, true);
+                } else {
+                    ActivityCompat.requestPermissions((Activity) ctxt,
+                            PermissionUtils.getNoGrantedPermissions(ctxt, PermissionUtils.storagePermissions), Constants.PERMISSION_RESULT_INIT);
+                }
+            }
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (!Environment.isExternalStorageManager()) {
+                Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                intent.setData(Uri.parse("package:" + ctxt.getPackageName()));
+                ((Activity) ctxt).startActivityForResult(intent, 1024);
+            } else {
+                if (PermissionUtils.hasPermissions(ctxt, PermissionUtils.storagePermissions)) {
+                    myApp.initFileDirs();
+                    mListener.onAuthSuccess();
+                } else {
+                    if (PermissionUtils.hasRefusedPermissions((Activity) ctxt, PermissionUtils.storagePermissions)) {
+                        PermissionUtils.showPermissionPromptDialog(myApp, ctxt.getString(R.string.need_storage_new), new DialogUtil.OnCustomDialogListener() {
+                            @Override
+                            public void onClick(View v) {
+
+                            }
+                        }, true);
+                    } else {
+                        ActivityCompat.requestPermissions((Activity) ctxt,
+                                PermissionUtils.getNoGrantedPermissions(ctxt, PermissionUtils.storagePermissions), Constants.PERMISSION_RESULT_INIT);
+                    }
+                }
+            }
+        } else {
+            if (PermissionUtils.hasPermissions(ctxt, PermissionUtils.storagePermissions)) {
+                myApp.initFileDirs();
+                mListener.onAuthSuccess();
+            } else {
+                if (PermissionUtils.hasRefusedPermissions((Activity) ctxt, PermissionUtils.storagePermissions)) {
+                    PermissionUtils.showPermissionPromptDialog(myApp, ctxt.getString(R.string.need_storage_new), new DialogUtil.OnCustomDialogListener() {
+                        @Override
+                        public void onClick(View v) {
+                        }
+                    }, true);
+                } else {
+                    ActivityCompat.requestPermissions((Activity) ctxt,
+                            PermissionUtils.getNoGrantedPermissions(ctxt, PermissionUtils.storagePermissions), Constants.PERMISSION_RESULT_INIT);
+                }
+            }
+        }
+    }
+
+    public interface OnPermissionAuthSuccess {
+        void onAuthSuccess();
+    }
+
+    public static final String[] storagePermissions = new String[]{
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_EXTERNAL_STORAGE
+    };
+
+    public static final String[] locationPermissions = new String[]{
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.ACCESS_FINE_LOCATION
+    };
+
+    public static boolean hasRefusedPermissions(Activity context, String... permissions) {
+        for (String permission : permissions) {
+            boolean hasRefused = ActivityCompat.shouldShowRequestPermissionRationale(context, permission);
+            LogUtil.i(" hasRefusedPermissions :" + permission + "  " + hasRefused);
+            if (hasRefused)
+                return true;
+        }
+        return false;
+    }
+
+    public static boolean hasPermissions(Context context, String... permissions) {
+        for (String permission : permissions) {
+            LogUtil.i(" checkSelfPermission :" + permission + "  " + ContextCompat.checkSelfPermission(context, permission));
+            if (ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED)
+                return false;
+        }
+        return true;
+    }
+
+    public static String[] getNoGrantedPermissions(Context context, String... permissions) {
+        List<String> grantedPermission = new ArrayList<>();
+        for (String permission : permissions) {
+            if (ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED)
+                grantedPermission.add(permission);
+        }
+        return grantedPermission.toArray(new String[grantedPermission.size()]);
+    }
+
+    public static void showPermissionPromptDialog(final ImibabyApp mApp, String content) {
+
+        DialogUtil.ShowCustomSystemDialog(mApp,
+                mApp.getString(R.string.prompt), content,
+                new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        mApp.quitApp();
+                    }
+                }, mApp.getString(R.string.quit),
+                new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        jumpToPermissionsEditorActivity(mApp);
+                        mApp.quitApp();
+                    }
+                }, mApp.getString(R.string.goto_permission_set));
+    }
+
+    public static void showPermissionPromptDialog(final ImibabyApp mApp, String content,
+                                                  DialogUtil.OnCustomDialogListener left, boolean isQuit) {
+
+        DialogUtil.ShowCustomSystemDialog(mApp,
+                mApp.getString(R.string.friendly_prompt), content,
+                left, mApp.getString(R.string.goto_permission_later),
+                new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        jumpToPermissionsEditorActivity(mApp);
+                        if (isQuit) mApp.quitApp();
+                    }
+                }, mApp.getString(R.string.goto_permission_set));
+    }
+
+    public static boolean needGotoAlertWindowActivity(Activity context, ImibabyApp mApp, boolean needInterval) {
+//        LogUtil.e("RomUtils = " + RomUtils.instance.isBackgroundStartAllowed(context));
+        if (PermissionUtils.canAlertWindow(context))
+            return false;
+        if (needInterval && !PermissionUtils.checkShowAlertWindowDialog(mApp))
+            return false;
+        PermissionUtils.reqAlertWindowPermission(context);
+//        reqAlertWindowAndBackgroundPermission(context);
+        return true;
+    }
+
+    // 对于Android M及以上版本，检测悬浮窗权限。Android M以下版本，直接返回true。
+    private static boolean canAlertWindow(Context context) {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            return Settings.canDrawOverlays(context);
+        } else {
+            return true;
+        }
+    }
+
+    private static boolean checkShowAlertWindowDialog(ImibabyApp mApp) {
+
+        String lastStamp = mApp.getStringValue(Const.SHARE_PREF_FIELD_SHOW_ALERTWINDOW_SET_DIALOG, "");
+        if (TextUtils.isEmpty(lastStamp) || TimeUtil.getChatTime(lastStamp) >= 24 * 60 * 60 * 1000) {
+            mApp.setValue(Const.SHARE_PREF_FIELD_SHOW_ALERTWINDOW_SET_DIALOG, TimeUtil.getTimeStampLocal());
+            return true;
+        }
+        return false;
+    }
+
+    public static final int REQUEST_VODE_ALERT_WINDOW = 1;
+
+    private static void reqAlertWindowPermission(final Activity context) {
+
+        Dialog dlg = DialogUtil.CustomNormalDialog(context,
+                context.getString(R.string.able_alert_window),
+                context.getString(R.string.able_alert_window_desc),
+                new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        context.sendBroadcast(new Intent(Const.ACTION_REQUEST_ALERT_WINDOW_CANCEL));
+                    }
+                },
+                context.getText(R.string.cancel).toString(),
+                new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + AndroidUtil.getPackageName(context)));
+                        context.startActivityForResult(intent, REQUEST_VODE_ALERT_WINDOW);
+                    }
+                },
+                context.getText(R.string.open_state).toString());
+        dlg.setCanceledOnTouchOutside(false);
+        dlg.show();
+    }
+
+    private static void reqAlertWindowAndBackgroundPermission(final Activity context) {
+
+        Dialog dlg = DialogUtil.CustomNormalDialog(context,
+                context.getString(R.string.able_alert_window),
+                context.getString(R.string.able_alert_window_and_background_desc),
+                new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        context.sendBroadcast(new Intent(Const.ACTION_REQUEST_ALERT_WINDOW_CANCEL));
+                    }
+                },
+                context.getText(R.string.cancel).toString(),
+                new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + AndroidUtil.getPackageName(context)));
+                        context.startActivityForResult(intent, REQUEST_VODE_ALERT_WINDOW);
+                    }
+                },
+                context.getText(R.string.open_state).toString());
+        dlg.setCanceledOnTouchOutside(false);
+        dlg.show();
+    }
+
+
+    private static void jumpToPermissionsEditorActivity(Context context) {
+
+        try {
+            if (SystemUtils.getMIUI() != null) {
+                try {
+                    // MIUI 8及以后
+                    Intent localIntent = new Intent("miui.intent.action.APP_PERM_EDITOR");
+                    localIntent.setClassName("com.miui.securitycenter", "com.miui.permcenter.permissions.PermissionsEditorActivity");
+                    localIntent.putExtra("extra_pkgname", context.getPackageName());
+                    context.startActivity(localIntent);
+                } catch (Exception e) {
+                    // MIUI 5/6/7
+                    Intent localIntent = new Intent("miui.intent.action.APP_PERM_EDITOR");
+                    localIntent.setClassName("com.miui.securitycenter", "com.miui.permcenter.permissions.AppPermissionsEditorActivity");
+                    localIntent.putExtra("extra_pkgname", context.getPackageName());
+                    context.startActivity(localIntent);
+                }
+            } else if (SystemUtils.getFlyme() != null) {
+                Intent intent = new Intent("com.meizu.safe.security.SHOW_APPSEC");
+                intent.addCategory(Intent.CATEGORY_DEFAULT);
+                intent.putExtra("packageName", context.getPackageName());
+                context.startActivity(intent);
+            } else if (SystemUtils.getEMUI() != null) {
+                Intent intent = new Intent();
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                ComponentName comp = new ComponentName("com.huawei.systemmanager", "com.huawei.permissionmanager.ui.MainActivity");//华为权限管理
+                intent.setComponent(comp);
+                context.startActivity(intent);
+            } else {
+                Intent intent = new Intent();
+//                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                intent.setAction("android.settings.APPLICATION_DETAILS_SETTINGS");
+                intent.setData(Uri.fromParts("package", context.getPackageName(), null));
+                context.startActivity(intent);
+            }
+        } catch (Exception e) {
+            ToastUtil.show(context, context.getString(R.string.goto_storage_permission_activity));
+        }
+    }
+
+    public static void reqExternStoragePermission(final Activity context, final int reqestCode) {
+
+        Dialog dlg = DialogUtil.CustomNormalDialog(context,
+                context.getString(R.string.friendly_prompt),
+                context.getString(R.string.able_extern_storage_desc),
+                new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                    }
+                },
+                context.getText(R.string.goto_permission_later).toString(),
+                new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                        intent.setData(Uri.parse("package:" + context.getPackageName()));
+                        context.startActivityForResult(intent, reqestCode);
+                    }
+                },
+                context.getText(R.string.goto_permission_set).toString());
+        dlg.setCanceledOnTouchOutside(false);
+        dlg.show();
+    }
+}

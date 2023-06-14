@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
+
+    <TextView
+        android:id="@+id/item_txt"
+        android:layout_width="wrap_content"
+        android:layout_height="79dp"
+        android:layout_alignParentLeft="true"
+        android:layout_marginBottom="7.66dp"
+        android:layout_marginRight="15dp"
+        android:layout_marginTop="7.66dp"
+        android:layout_toLeftOf="@+id/item_time_ly"
+        android:gravity="center_vertical"
+        android:text="位置"
+        android:textColor="@color/color_7" />
+
+    <LinearLayout
+        android:id="@+id/item_time_ly"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:layout_marginBottom="7.66dp"
+        android:layout_marginTop="7.66dp">
+
+        <TextView
+            android:id="@+id/item_time_yr"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="8月2日"
+            android:textColor="@color/color_17"
+            android:layout_gravity="center"
+            />
+        <TextView
+            android:id="@+id/item_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="15:18"
+            android:textColor="@color/color_17"
+            android:layout_gravity="center"/>
+    </LinearLayout>
+</RelativeLayout>

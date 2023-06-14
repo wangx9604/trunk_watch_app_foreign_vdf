@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/color_6" >
+    
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent" 
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal">
+            <TextView 
+	            android:id="@+id/title"       
+	            android:layout_width="wrap_content"
+	            android:layout_height="wrap_content"
+                android:layout_marginTop="23.33dp"
+	            android:gravity="center" 
+	            android:text="title"
+	            android:textColor="@color/true_black"
+    	        android:textSize="@dimen/xiaomiMyTextSize1"/>
+			<TextView
+				android:id="@+id/func_desc"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_marginStart="25dp"
+				android:layout_marginEnd="25dp"
+				android:layout_marginTop="23.33dp"
+				android:gravity="start"
+				android:text="func_desc"
+				android:textColor="@color/color_5"
+				android:textSize="@dimen/xiaomiMyTextSize3" />
+            <View  
+   	            android:layout_height="1px" 
+                android:layout_width="match_parent"
+                android:layout_marginTop="23.33dp"
+                android:background="@color/line_grey"/>
+		    <ListView
+		        android:id="@+id/item_select_list"
+	    	    android:layout_width="match_parent"
+		        android:layout_height="0dip"
+		        android:layout_weight="1"
+		        android:cacheColorHint="@color/transparent"
+	    	    android:scrollbars="none"
+		        android:fadingEdge="none" 
+		        android:dividerHeight="1px"/>
+            <View  
+   	            android:layout_height="1px" 
+                android:layout_width="match_parent"
+                android:background="@color/line_grey"/>
+
+			<LinearLayout
+				android:id="@+id/layout_one_btn"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="23.33dp"
+				android:layout_marginBottom="23.33dp"
+				android:gravity="center_horizontal"
+				android:orientation="horizontal">
+				<Button
+					android:id="@+id/btn_cancel"
+					android:layout_width="wrap_content"
+					android:layout_height="40dp"
+					android:background="@drawable/btn_dialgo_one_button"
+					android:text="@string/cancel"
+					android:textColor="@color/dark_grey"
+					android:textSize="@dimen/xiaomiMyTextSize1" />
+			</LinearLayout>
+
+			<LinearLayout
+				android:id="@+id/layout_two_btns"
+				android:orientation="horizontal"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="23.33dp"
+				android:layout_marginBottom="23.33dp"
+				android:gravity="center_horizontal"
+				android:visibility="gone">
+				<Button
+					android:id="@+id/btn_left"
+					android:layout_width="match_parent"
+					android:layout_height="40dp"
+					android:text="@string/cancel"
+					android:textColor="@color/dark_grey"
+					android:textSize="@dimen/xiaomiMyTextSize1"
+					android:background="@drawable/btn_alarm_customer_week_cancel_select"/>
+				<Button
+					android:id="@+id/btn_right"
+					android:layout_width="wrap_content"
+					android:layout_height="40dp"
+					android:text="@string/confirm"
+					android:textColor="@color/dark_grey"
+					android:textSize="@dimen/xiaomiMyTextSize1"
+					android:background="@drawable/btn_alarm_customer_week_confirm_select"/>
+			</LinearLayout>
+
+		</LinearLayout>
+	</RelativeLayout>
+	
+</RelativeLayout>

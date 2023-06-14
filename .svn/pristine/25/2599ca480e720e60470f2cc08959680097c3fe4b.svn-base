@@ -1,0 +1,129 @@
+package com.xiaoxun.xun.adapter;
+
+import android.app.Activity;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.support.v7.widget.RecyclerView;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.beans.ChatMsgEntity;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.interfaces.ChatMsgViewHolder;
+import com.xiaoxun.xun.interfaces.OnItemClickListener;
+import com.xiaoxun.xun.utils.ImageDownloadHelper;
+import com.xiaoxun.xun.utils.ImageUtil;
+import com.xiaoxun.xun.utils.TimeUtil;
+
+public abstract class ChatRightHolder extends RecyclerView.ViewHolder implements ChatMsgViewHolder, View.OnClickListener, View.OnLongClickListener {
+    protected Activity activity;
+    protected ImibabyApp mApp;
+    protected int activityType;
+
+    protected ChatMsgEntity chat;
+    protected WatchData watch;
+
+    private RelativeLayout mSendTimeLayout;
+    private TextView mSendTime;
+    private ImageView mRightHead;
+    protected ImageView mRightRetry;
+    protected ProgressBar mRightWaiting;
+    private OnItemClickListener onItemClickListener;
+
+    public ChatRightHolder(View view, Activity activity, int activityType, WatchData watch, OnItemClickListener listener) {
+        super(view);
+        this.activity = activity;
+        mApp = (ImibabyApp) activity.getApplication();
+        this.activityType = activityType;
+        this.watch = watch;
+        this.onItemClickListener = listener;
+        initViewHolder(view);
+    }
+
+    @Override
+    public void bindTo(ChatMsgEntity chat, String lastTime) {
+        this.chat = chat;
+        setSendTime(lastTime);
+        showContentView();
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (onItemClickListener != null) {
+            onItemClickListener.onItemClick(v, getLayoutPosition());
+        }
+    }
+
+    @Override
+    public boolean onLongClick(View v) {
+        if (onItemClickListener != null) {
+            onItemClickListener.onItemLongClick(v, getLayoutPosition());
+        }
+        return false;
+    }
+
+    protected void initViewHolder(View view) {
+        mSendTimeLayout = view.findViewById(R.id.send_time);
+        mSendTime = view.findViewById(R.id.chat_send_time);
+
+        mRightHead = view.findViewById(R.id.right_head);
+        mRightRetry = view.findViewById(R.id.right_retry);
+        mRightWaiting = view.findViewById(R.id.right_waiting);
+
+    }
+
+    private void setSendTime(String lastTime) {
+        if (!lastTime.equals(Const.DEFAULT_NEXT_KEY)) {
+            long t1 = TimeUtil.getMillisByTime(chat.getmDate());
+            long t2 = TimeUtil.getMillisByTime(lastTime);
+            long interval = Math.abs(t1 - t2) / 1000;
+            if (interval > Const.CHAT_INTERVAL_TIME || (activityType == 2 && getLayoutPosition() == 1)) {
+                mSendTimeLayout.setVisibility(View.VISIBLE);
+                mSendTime.setVisibility(View.VISIBLE);
+                mSendTime.setText(TimeUtil.getTime(activity, TimeUtil.chnToLocalTimestamp(chat.getmDate())));
+            } else {
+                mSendTimeLayout.setVisibility(View.GONE);
+                mSendTime.setVisibility(View.GONE);
+            }
+        } else {
+            mSendTimeLayout.setVisibility(View.VISIBLE);
+            mSendTime.setVisibility(View.VISIBLE);
+            mSendTime.setText(TimeUtil.getTime(activity, TimeUtil.chnToLocalTimestamp(chat.getmDate())));
+        }
+    }
+
+    private void showContentView() {
+        showHeadImage();
+        showCustomView();
+    }
+
+    private void showHeadImage() {
+        int attri = mApp.getUserAttriByEid(watch.getEid(), chat.getmSrcId());
+        String avatatr = mApp.getUserAvatarByEid(watch.getEid(), chat.getmSrcId());
+        if (avatatr == null) {
+            ImageUtil.setMaskImage(mRightHead, R.drawable.head_1, mApp.getHeadDrawableByFile(activity.getResources(), Integer.toString(attri), chat.getmSrcId(), R.drawable.relation_custom));
+        } else {
+            Bitmap headBitmap = new ImageDownloadHelper(activity).downloadImage(avatatr, new ImageDownloadHelper.OnImageDownloadListener() {
+                @Override
+                public void onImageDownload(String url, Bitmap bitmap) {
+                    Drawable headDrawable = new BitmapDrawable(activity.getResources(), bitmap);
+                    ImageUtil.setMaskImage(mRightHead, R.drawable.head_2, headDrawable);
+                }
+            });
+            if (headBitmap != null) {
+                Drawable headDrawable = new BitmapDrawable(activity.getResources(), headBitmap);
+                ImageUtil.setMaskImage(mRightHead, R.drawable.head_2, headDrawable);
+            }
+        }
+        mRightHead.setTag(chat);
+    }
+
+    protected abstract void showCustomView();
+}

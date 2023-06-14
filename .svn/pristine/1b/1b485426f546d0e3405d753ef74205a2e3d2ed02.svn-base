@@ -1,0 +1,590 @@
+package com.xiaoxun.xun.adapter;
+
+import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
+import android.content.Intent;
+import android.media.MediaPlayer;
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Toast;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.activitys.ChatPopupWindow;
+import com.xiaoxun.xun.activitys.ImagesDisplayActivity;
+import com.xiaoxun.xun.activitys.VideoDisplayActivity;
+import com.xiaoxun.xun.beans.ChatImage;
+import com.xiaoxun.xun.beans.ChatMsgEntity;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.db.ChatHisDao;
+import com.xiaoxun.xun.interfaces.ChatMsgViewHolder;
+import com.xiaoxun.xun.interfaces.OnItemClickListener;
+import com.xiaoxun.xun.utils.AESUtil;
+import com.xiaoxun.xun.utils.DialogUtil;
+import com.xiaoxun.xun.utils.ImageUtil;
+import com.xiaoxun.xun.utils.LogUtil;
+import com.xiaoxun.xun.utils.MyMediaPlayerUtil;
+import com.xiaoxun.xun.utils.TimeUtil;
+import com.xiaoxun.xun.utils.ToastUtil;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ChatRecyclerViewAdaper extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+    private Activity activity;
+    private ArrayList<ChatMsgEntity> dataList;
+    private int activityType;
+    private WatchData watch;
+    private ImibabyApp mApp;
+    private ChatPopupWindow chatPopupWindow;
+    private OnItemClickListener onItemClickListener;
+    private boolean isNearEar = false;
+
+    public static final int VIEW_TYPE_INTERVAL = 100;
+    public static final String VIDEO_PREVIEW_SUFFIX = ".jpg";
+
+    public ChatRecyclerViewAdaper(Activity activity, ArrayList<ChatMsgEntity> dataList, int activityType, WatchData watch) {
+        this.activity = activity;
+        this.dataList = dataList;
+        this.activityType = activityType;
+        this.watch = watch;
+        mApp = (ImibabyApp) activity.getApplication();
+        initItemListener();
+    }
+
+    @NonNull
+    @Override
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view;
+        switch (viewType) {
+            case ChatMsgEntity.CHAT_MESSAGE_TYPE_VOICE:
+            case ChatMsgEntity.CHAT_MESSAGE_TYPE_SOS:
+            case ChatMsgEntity.CHAT_MESSAGE_TYPE_RECORD:
+                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_left_record_item, parent, false);
+                return new ChatLeftRecordHolder(view, activity, activityType, onItemClickListener);
+            case ChatMsgEntity.CHAT_MESSAGE_SOS_LOCATION:
+                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_left_sos_location_item, parent, false);
+                return new ChatLeftSosLocationHolder(view, activity, activityType);
+            case ChatMsgEntity.CHAT_MESSAGE_TYPE_TEXT:
+            case ChatMsgEntity.CHAT_MESSAGE_TYPE_EMOJI:
+                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_left_text_item, parent, false);
+                return new ChatLeftTextHolder(view, activity, activityType, onItemClickListener);
+            case ChatMsgEntity.CHAT_MESSAGE_TYPE_IMAGE:
+            case ChatMsgEntity.CHAT_MESSAGE_TYPE_PHOTO:
+                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_left_image_item, parent, false);
+                return new ChatLeftImageHolder(view, activity, activityType, onItemClickListener);
+            case ChatMsgEntity.CHAT_MESSAGE_TYPE_VIDEO:
+                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_left_video_item, parent, false);
+                return new ChatLeftVideoHolder(view, activity, activityType, onItemClickListener);
+
+
+            case ChatMsgEntity.CHAT_MESSAGE_TYPE_VOICE + VIEW_TYPE_INTERVAL:
+            case ChatMsgEntity.CHAT_MESSAGE_TYPE_SOS + VIEW_TYPE_INTERVAL:
+            case ChatMsgEntity.CHAT_MESSAGE_TYPE_RECORD + VIEW_TYPE_INTERVAL:
+                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_right_record_item, parent, false);
+                return new ChatRightRecordHolder(view, activity, activityType, watch, onItemClickListener);
+            case ChatMsgEntity.CHAT_MESSAGE_TYPE_TEXT + VIEW_TYPE_INTERVAL:
+            case ChatMsgEntity.CHAT_MESSAGE_TYPE_EMOJI + VIEW_TYPE_INTERVAL:
+                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_right_text_item, parent, false);
+                return new ChatRightTextHolder(view, activity, activityType, watch, onItemClickListener);
+            case ChatMsgEntity.CHAT_MESSAGE_TYPE_IMAGE + VIEW_TYPE_INTERVAL:
+            case ChatMsgEntity.CHAT_MESSAGE_TYPE_PHOTO + VIEW_TYPE_INTERVAL:
+                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_right_image_item, parent, false);
+                return new ChatRightImageHolder(view, activity, activityType, watch, onItemClickListener);
+            case ChatMsgEntity.CHAT_MESSAGE_TYPE_VIDEO + VIEW_TYPE_INTERVAL:
+                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_right_video_item, parent, false);
+                return new ChatRightVideoHolder(view, activity, activityType, watch, onItemClickListener);
+            case ChatMsgEntity.CHAT_MESSAGE_TYPE_VIDEOCALL + VIEW_TYPE_INTERVAL:
+                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_right_video_call_item, parent, false);
+                return new ChatRightVideoCallHolder(view, activity, activityType, watch, onItemClickListener);
+        }
+        return null;
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder viewHolder, int position) {
+        if (position == 0) {
+            ((ChatMsgViewHolder) viewHolder).bindTo(dataList.get(position), Const.DEFAULT_NEXT_KEY);
+        } else {
+            ((ChatMsgViewHolder) viewHolder).bindTo(dataList.get(position), dataList.get(position - 1).getmDate());
+        }
+    }
+
+    @Override
+    public int getItemCount() {
+        return dataList.size();
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        ChatMsgEntity chatMsgEntity = dataList.get(position);
+        if (chatMsgEntity.getmIsFrom()) {
+            return dataList.get(position).getmType();
+        } else {
+            return dataList.get(position).getmType() + VIEW_TYPE_INTERVAL;
+        }
+    }
+
+    public void stopPlayAnimation() {
+        for (ChatMsgEntity chat : dataList) {
+            stopChatAnimation(chat);
+        }
+    }
+
+    private void stopChatAnimation(ChatMsgEntity chat) {
+        if (chat.getmPlayAnimation() != null) {
+            chat.getmPlayAnimation().stop();
+            chat.getmPlayAnimation().selectDrawable(0);
+            chat.setmIsClick(false);
+        }
+    }
+
+    private void showRecordMenu(final ChatMsgEntity chat, final int position) {
+        chatPopupWindow = new ChatPopupWindow(activity, new View.OnClickListener() {
+
+            public void onClick(View v) {
+                chatPopupWindow.dismiss();
+                deleteChat(chat, position);
+            }
+        }, new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                chatPopupWindow.dismiss();
+                deleteAllChat(chat.getmFamilyId());
+            }
+        }, new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                chatPopupWindow.dismiss();
+                exportFile(chat);
+            }
+        });
+        chatPopupWindow.showAtLocation(activity.findViewById(R.id.chatlayout), Gravity.CENTER, 0, 0);
+    }
+
+    private void showTextMenu(final ChatMsgEntity chat, final int position) {
+        chatPopupWindow = new ChatPopupWindow(activity, new View.OnClickListener() {
+
+            public void onClick(View v) {
+                chatPopupWindow.dismiss();
+                deleteChat(chat, position);
+            }
+        }, new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                chatPopupWindow.dismiss();
+                deleteAllChat(chat.getmFamilyId());
+            }
+        }, null, new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                chatPopupWindow.dismiss();
+                copyTextToClipboard(chat.getmAudioPath());
+            }
+        });
+        chatPopupWindow.showAtLocation(activity.findViewById(R.id.chatlayout), Gravity.CENTER, 0, 0);
+    }
+
+    private void copyTextToClipboard(String text) {
+        ClipboardManager clip = (ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipData clipData = ClipData.newPlainText(activity.getPackageName(), text);
+        clip.setPrimaryClip(clipData);
+        ToastUtil.showMyToast(mApp, activity.getString(R.string.copy_success), Toast.LENGTH_SHORT);
+    }
+
+    private void showEmojiMenu(final ChatMsgEntity chat, final int position) {
+        chatPopupWindow = new ChatPopupWindow(activity, new View.OnClickListener() {
+
+            public void onClick(View v) {
+                chatPopupWindow.dismiss();
+                deleteChat(chat, position);
+            }
+        }, new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                chatPopupWindow.dismiss();
+                showDeleteAllChatDialog(chat.getmFamilyId());
+            }
+        }, null, null);
+        chatPopupWindow.showAtLocation(activity.findViewById(R.id.chatlayout), Gravity.CENTER, 0, 0);
+    }
+
+    private void showImageAndVideoMenu(final ChatMsgEntity chat, final int position) {
+        chatPopupWindow = new ChatPopupWindow(activity, new View.OnClickListener() {
+
+            public void onClick(View v) {
+                chatPopupWindow.dismiss();
+                deleteChat(chat, position);
+            }
+        }, new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                chatPopupWindow.dismiss();
+                deleteAllChat(chat.getmFamilyId());
+            }
+        });
+        chatPopupWindow.showAtLocation(activity.findViewById(R.id.chatlayout), Gravity.CENTER, 0, 0);
+    }
+
+    private void showDeleteAllChatDialog(final String familyId) {
+        DialogUtil.CustomALertDialog(activity, activity.getString(R.string.clear_messge_title),
+                activity.getString(R.string.clear_message_text), new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                    }
+                }, activity.getString(R.string.cancel),
+                new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        deleteAllChat(familyId);
+                    }
+                }, activity.getString(R.string.confirm)).show();
+
+    }
+
+    private void deleteChat(ChatMsgEntity chat, int position) {
+        if (isRecordChat(chat.getmType()) && chat.getmAudioPath() != null) {
+            File recordFile = new File(chat.getmAudioPath());
+            if (recordFile.exists()) {
+                recordFile.delete();
+            }
+        }
+        chat.setmSended(4);
+        dataList.remove(chat);
+        ChatHisDao.getInstance(activity.getApplicationContext()).updateChatMsg(chat.getmFamilyId(), chat, chat.getmDate());
+        notifyItemRemoved(position);
+        activity.sendBroadcast(new Intent(Const.ACTION_CLEAR_MESSAGE));
+    }
+
+    private void deleteAllChat(final String familyId) {
+        DialogUtil.CustomALertDialog(activity, activity.getString(R.string.clear_messge_title),
+                activity.getString(R.string.clear_message_text), new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                    }
+                }, activity.getString(R.string.cancel),
+                new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        File recordFile = null;
+                        ChatHisDao.getInstance(activity.getApplicationContext()).delAllMsg(familyId);
+                        for (ChatMsgEntity chatmsg : dataList) {
+                            try {
+                                recordFile = new File(chatmsg.getmAudioPath());
+                                if (recordFile.exists()) {
+                                    recordFile.delete();
+                                }
+                            } catch (Exception e) {
+
+                            }
+                        }
+                        dataList.clear();
+                        notifyDataSetChanged();
+                        activity.sendBroadcast(new Intent(Const.ACTION_CLEAR_MESSAGE));
+                    }
+                }, activity.getString(R.string.confirm)).show();
+    }
+
+    private void exportFile(ChatMsgEntity chat) {
+        try {
+            FileInputStream fileInputStream = new FileInputStream(chat.getmAudioPath());
+            int length = fileInputStream.available();
+            byte[] buffer = new byte[length];
+            fileInputStream.read(buffer);
+            fileInputStream.close();
+            byte[] tmp = AESUtil.getInstance().decrypt(buffer);
+            StringBuilder filename = new StringBuilder();
+            if (watch != null) {
+                filename.append(watch.getNickname());
+            } else {
+                String watchid = mApp.getWatchEid(chat);
+                filename.append(mApp.getCurUser().queryNicknameByEid(watchid));
+            }
+            filename.append("_").append(TimeUtil.getTimeStampFromUTC(TimeUtil.getMillisByTime(chat.getmDate()))).append(".amr");
+            File file = new File(ImibabyApp.getMyChat(), filename.toString());
+            FileOutputStream fos = new FileOutputStream(file);
+            fos.write(tmp);
+            fos.close();
+            ToastUtil.show(activity, file.getAbsolutePath());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void handleRecordClick(ChatMsgEntity chat) {
+        if (!chat.getmIsClick()) {
+            startPlayRecord(chat);
+        } else {
+            stopPlayRecord(chat);
+        }
+    }
+
+    private void startPlayRecord(ChatMsgEntity chat) {
+        stopPlayAnimation();
+        chat.setmIsClick(true);
+        if (chat.getmIsFrom()) {
+            chat.setmPlayed(true);
+            ChatHisDao.getInstance(activity.getApplicationContext()).updateChatMsg(chat.getmFamilyId(), chat, chat.getmDate());
+            if (chat.getmLeftRetry() != null) {
+                chat.getmLeftRetry().setVisibility(View.GONE);
+            }
+        }
+        if (chat.getmPlayAnimation() != null) {
+            chat.getmPlayAnimation().start();
+            playRecordInThread(chat);
+        }
+    }
+
+    private void stopPlayRecord(ChatMsgEntity chat) {
+        if (chat.getmPlayAnimation() != null) {
+            chat.setmIsClick(false);
+            chat.getmPlayAnimation().stop();
+            chat.getmPlayAnimation().selectDrawable(0);
+        }
+        MyMediaPlayerUtil.getInstance().stopMediaPlayer(mApp);
+        interruptThread();
+    }
+
+    private Thread recordPlayThread;
+
+    private void playRecordInThread(final ChatMsgEntity chat) {
+        recordPlayThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                playRecord(chat);
+            }
+        });
+        recordPlayThread.start();
+    }
+
+    private void interruptThread() {
+        if (recordPlayThread != null && recordPlayThread.getState() == Thread.State.RUNNABLE) {
+            recordPlayThread.interrupt();
+        }
+    }
+
+    private void playRecord(final ChatMsgEntity chat) {
+        if (chat != null) {
+            try {
+                boolean useCall = isNearEar ? true : mApp.getmUseCall();
+                MediaPlayer mMediaPlayer = MyMediaPlayerUtil.getInstance().StarMediaPlayer(chat.getmAudioPath(), mApp, useCall);
+                mApp.mAudioPath = chat.getmAudioPath();
+                mApp.sdcardLog("play record start");
+                mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                    public void onCompletion(MediaPlayer mp) {
+                        onRecordPlayCompletion(chat);
+                    }
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            LogUtil.e("chat path is null ! playRecord");
+        }
+    }
+
+    private void onRecordPlayCompletion(ChatMsgEntity chat) {
+        stopChatAnimation(chat);
+        MyMediaPlayerUtil.getInstance().abandonAudioFocus(mApp);
+        int position = -1;
+        if (-1 == dataList.indexOf(chat)) {
+            return;//播放中被删除，找不到这条语音
+        }
+        position = findNextNotPlayedRecord(dataList.indexOf(chat));
+        if (position != -1) {
+            Intent it = new Intent(Const.ACTION_PLAY_RECORD_COMPLETION);
+            it.putExtra("position", position);
+            activity.sendBroadcast(it);
+        }
+    }
+
+    private boolean isRecordChat(int type) {
+        return type == ChatMsgEntity.CHAT_MESSAGE_TYPE_VOICE || type == ChatMsgEntity.CHAT_MESSAGE_TYPE_SOS || type == ChatMsgEntity.CHAT_MESSAGE_TYPE_RECORD;
+    }
+
+    private int findNextNotPlayedRecord(int start) {
+        int position = -1;
+        for (int i = start; i < dataList.size(); i++) {
+            ChatMsgEntity chat = dataList.get(i);
+            if (isRecordChat(chat.getmType()) && chat.getmIsFrom() && !chat.getmPlayed()) {
+                position = i;
+                break;
+            }
+        }
+        return position;
+    }
+
+    private void showChatImage(ChatMsgEntity chat, int itemType) {
+//        File imageFile = null;
+//        if (itemType == ChatMsgEntity.CHAT_MESSAGE_TYPE_IMAGE) {
+//            imageFile = new File(chat.getmAudioPath());
+//        } else if (itemType == ChatMsgEntity.CHAT_MESSAGE_TYPE_PHOTO) {
+//            imageFile = new File(ImibabyApp.getChatCacheDir().getPath(), chat.getmAudioPath().substring(chat.getmAudioPath().lastIndexOf("/")));
+//        } else if (itemType == ChatMsgEntity.CHAT_MESSAGE_TYPE_PHOTO + VIEW_TYPE_INTERVAL) {
+//            imageFile = new File(chat.getmAudioPath());
+//        }
+//        if (imageFile != null && imageFile.exists()) {
+//            Intent intent = new Intent(activity, ImageDisplayActivity.class);
+//            intent.setData(ImageUtil.getUriFromFile(activity, imageFile));
+//            activity.startActivity(intent);
+//            activity.overridePendingTransition(R.anim.activity_zoom_enter, 0);
+//        } else {
+//            ToastUtil.showMyToast(mApp, activity.getString(R.string.image_delete), Toast.LENGTH_SHORT);
+//        }
+        ArrayList<ChatImage> filesPath = new ArrayList<>();
+        ArrayList<ChatMsgEntity> images = getImagesFromAllMessage(filesPath);
+        int index = images.indexOf(chat);
+        if (index >= 0) {
+            Intent it = new Intent(activity, ImagesDisplayActivity.class);
+            Gson gson = new Gson();
+            Type type = new TypeToken<List<ChatImage>>() {}.getType();
+
+            it.putExtra("index", index);
+            it.putExtra("file_list", gson.toJson(filesPath, type));
+            activity.startActivity(it);
+            activity.overridePendingTransition(R.anim.activity_zoom_enter, 0);
+        } else {
+            ToastUtil.showMyToast(mApp, activity.getString(R.string.image_delete), Toast.LENGTH_SHORT);
+        }
+    }
+
+    private ArrayList<ChatMsgEntity> getImagesFromAllMessage(ArrayList<ChatImage> filesPath) {
+        ArrayList<ChatMsgEntity> images = new ArrayList<>();
+        for (ChatMsgEntity chat : dataList) {
+
+            if (chat.getmType() == ChatMsgEntity.CHAT_MESSAGE_TYPE_IMAGE || chat.getmType() == ChatMsgEntity.CHAT_MESSAGE_TYPE_PHOTO || chat.getmType() == ChatMsgEntity.CHAT_MESSAGE_TYPE_PHOTO + VIEW_TYPE_INTERVAL) {
+                images.add(chat);
+                filesPath.add(new ChatImage(chat.getmIsFrom() ? chat.getmType() : (chat.getmType() + VIEW_TYPE_INTERVAL), chat.getmAudioPath()));
+            }
+        }
+
+        return images;
+    }
+
+    private void showChatVideo(ChatMsgEntity chat, int itemType) {
+        if (itemType == ChatMsgEntity.CHAT_MESSAGE_TYPE_VIDEO) {
+            showLeftVideo(chat);
+        } else {
+            showRightVideo(chat);
+        }
+    }
+
+    private void showLeftVideo(ChatMsgEntity chat) {
+        String watchEid;
+        if (watch != null) {
+            watchEid = watch.getEid();
+        } else {
+            watchEid = mApp.getWatchEid(chat);
+        }
+        if (watchEid != null) {
+            Intent intent = new Intent(activity, VideoDisplayActivity.class);
+            intent.putExtra("key", chat.getmAudioPath());
+            intent.putExtra("type", chat.getmType());
+            intent.putExtra("eid", watchEid);
+            activity.startActivity(intent);
+        } else {
+            ToastUtil.showMyToast(mApp, activity.getString(R.string.cannot_find_watch), Toast.LENGTH_SHORT);
+        }
+    }
+
+    private void showRightVideo(ChatMsgEntity chat) {
+        File videoFile = new File(chat.getmAudioPath());
+        if (videoFile != null && videoFile.exists()) {
+            Intent intent = new Intent(activity, VideoDisplayActivity.class);
+            intent.putExtra("type", chat.getmType() + VIEW_TYPE_INTERVAL);
+            intent.putExtra("video_path", chat.getmAudioPath());
+            activity.startActivity(intent);
+        } else {
+            ToastUtil.showMyToast(mApp, activity.getString(R.string.video_delete), Toast.LENGTH_SHORT);
+        }
+    }
+
+    private void initItemListener() {
+        onItemClickListener = new OnItemClickListener() {
+            @Override
+            public void onItemClick(View view, int position) {
+                ChatMsgEntity chat = dataList.get(position);
+                switch (getItemViewType(position)) {
+                    case ChatMsgEntity.CHAT_MESSAGE_TYPE_VOICE:
+                    case ChatMsgEntity.CHAT_MESSAGE_TYPE_SOS:
+                    case ChatMsgEntity.CHAT_MESSAGE_TYPE_RECORD:
+                    case ChatMsgEntity.CHAT_MESSAGE_TYPE_VOICE + VIEW_TYPE_INTERVAL:
+                    case ChatMsgEntity.CHAT_MESSAGE_TYPE_SOS + VIEW_TYPE_INTERVAL:
+                    case ChatMsgEntity.CHAT_MESSAGE_TYPE_RECORD + VIEW_TYPE_INTERVAL:
+                        handleRecordClick(chat);
+                        break;
+                    case ChatMsgEntity.CHAT_MESSAGE_TYPE_IMAGE:
+                    case ChatMsgEntity.CHAT_MESSAGE_TYPE_PHOTO:
+                    case ChatMsgEntity.CHAT_MESSAGE_TYPE_PHOTO + VIEW_TYPE_INTERVAL:
+                        mApp.hideKeyboard(view);
+                        showChatImage(chat, getItemViewType(position));
+                        break;
+                    case ChatMsgEntity.CHAT_MESSAGE_TYPE_VIDEO:
+                    case ChatMsgEntity.CHAT_MESSAGE_TYPE_VIDEO + VIEW_TYPE_INTERVAL:
+                        mApp.hideKeyboard(view);
+                        showChatVideo(chat, getItemViewType(position));
+                        break;
+
+                }
+            }
+
+            @Override
+            public void onItemLongClick(View view, int position) {
+                mApp.hideKeyboard(view);
+                stopPlayAnimation();
+                MyMediaPlayerUtil.getInstance().stopMediaPlayer(mApp);
+                ChatMsgEntity chat = dataList.get(position);
+
+                switch (getItemViewType(position)) {
+                    case ChatMsgEntity.CHAT_MESSAGE_TYPE_VOICE:
+                    case ChatMsgEntity.CHAT_MESSAGE_TYPE_SOS:
+                    case ChatMsgEntity.CHAT_MESSAGE_TYPE_RECORD:
+                    case ChatMsgEntity.CHAT_MESSAGE_TYPE_VOICE + VIEW_TYPE_INTERVAL:
+                    case ChatMsgEntity.CHAT_MESSAGE_TYPE_SOS + VIEW_TYPE_INTERVAL:
+                    case ChatMsgEntity.CHAT_MESSAGE_TYPE_RECORD + VIEW_TYPE_INTERVAL:
+                        showRecordMenu(chat, position);
+                        break;
+                    case ChatMsgEntity.CHAT_MESSAGE_TYPE_TEXT:
+                    case ChatMsgEntity.CHAT_MESSAGE_TYPE_TEXT + VIEW_TYPE_INTERVAL:
+                        showTextMenu(chat, position);
+                        break;
+                    case ChatMsgEntity.CHAT_MESSAGE_TYPE_EMOJI:
+                    case ChatMsgEntity.CHAT_MESSAGE_TYPE_EMOJI + VIEW_TYPE_INTERVAL:
+                        showEmojiMenu(chat, position);
+                        break;
+                    case ChatMsgEntity.CHAT_MESSAGE_TYPE_IMAGE:
+                    case ChatMsgEntity.CHAT_MESSAGE_TYPE_PHOTO:
+                    case ChatMsgEntity.CHAT_MESSAGE_TYPE_PHOTO + VIEW_TYPE_INTERVAL:
+                    case ChatMsgEntity.CHAT_MESSAGE_TYPE_VIDEO:
+                    case ChatMsgEntity.CHAT_MESSAGE_TYPE_VIDEO + VIEW_TYPE_INTERVAL:
+                        showImageAndVideoMenu(chat, position);
+                        break;
+                }
+            }
+        };
+    }
+
+    public void stopPlayRecord() {
+        stopPlayAnimation();
+        MyMediaPlayerUtil.getInstance().stopMediaPlayer(mApp);
+        interruptThread();
+    }
+    public void setNearEar(boolean nearEar) {
+        isNearEar = nearEar;
+    }
+}

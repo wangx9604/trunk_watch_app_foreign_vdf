@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".motion.activity.MotionGuideActivity">
+    <include
+        android:id="@+id/layout_title"
+        layout="@layout/activity_title" />
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cv_guide_0"
+        android:layout_width="match_parent"
+        android:layout_height="253dp"
+        android:layout_margin="15dp"
+        android:background="@color/white"
+        android:focusable="false"
+        app:cardCornerRadius="5dp"
+        app:cardElevation="0dp"
+        app:layout_constraintTop_toBottomOf="@+id/layout_title"/>
+    <ImageView
+        android:id="@+id/iv_guide_bg"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/motion_guide_0"
+        app:layout_constraintStart_toStartOf="@+id/cv_guide_0"
+        app:layout_constraintEnd_toEndOf="@+id/cv_guide_0"
+        app:layout_constraintTop_toTopOf="@+id/cv_guide_0"/>
+
+    <TextView
+        android:id="@+id/tv_guide_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/motion_guide_title"
+        android:textColor="@color/black"
+        android:textSize="16.5sp"
+        android:textStyle="bold"
+        android:layout_marginStart="15dp"
+        android:layout_marginTop="12dp"
+        app:layout_constraintTop_toBottomOf="@id/iv_guide_bg"
+        app:layout_constraintStart_toStartOf="@id/iv_guide_bg"/>
+
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="@string/motion_guide_content"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        android:layout_marginStart="15dp"
+        android:layout_marginTop="6dp"
+        android:layout_marginEnd="10dp"
+        app:layout_constraintTop_toBottomOf="@id/tv_guide_title"
+        app:layout_constraintStart_toStartOf="@id/iv_guide_bg"
+        app:layout_constraintEnd_toEndOf="@+id/iv_guide_bg"/>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cv_guide_1"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_margin="15dp"
+        android:background="@color/white"
+        android:focusable="false"
+        app:cardCornerRadius="5dp"
+        app:cardElevation="0dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/cv_guide_0"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layout_next_step"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="@+id/cv_guide_1"
+        app:layout_constraintEnd_toEndOf="@+id/cv_guide_1"
+        app:layout_constraintTop_toTopOf="@+id/cv_guide_1"
+        app:layout_constraintBottom_toBottomOf="@+id/cv_guide_1">
+        <ImageView
+            android:id="@+id/iv_guide_1_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/motion_guide_1"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/motion_guide_0"
+            android:textSize="16sp"
+            android:textColor="@color/black"
+            android:layout_marginTop="10dp"
+            app:layout_constraintTop_toBottomOf="@+id/iv_guide_1_title"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

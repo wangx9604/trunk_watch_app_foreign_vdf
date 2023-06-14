@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:orientation="vertical">
+
+    <LinearLayout
+        android:id="@+id/time_ly"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal"
+        >
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2px"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="23.33dp"
+            android:layout_marginRight="13dp"
+            android:layout_weight="1"
+            android:background="@color/msg_line_color"
+            />
+
+        <TextView
+            android:id="@+id/time_txt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="2016.7.25"
+            android:textColor="@color/color_14"
+            android:textSize="@dimen/xiaomiMyTextSize7"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2px"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="13dp"
+            android:layout_marginRight="23.33dp"
+            android:layout_weight="1"
+            android:background="@color/msg_line_color"
+            />
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <View
+            android:id="@+id/view_t"
+            android:layout_width="1dp"
+            android:layout_height="10dp"
+            android:layout_marginLeft="35dp"
+            android:background="@color/msg_line_color"/>
+
+        <View
+            android:id="@+id/view_m"
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:layout_alignBottom="@+id/content"
+            android:layout_alignTop="@+id/content"
+            android:layout_marginLeft="35dp"
+            android:background="@color/msg_line_color"/>
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="27dp"
+            android:layout_below="@+id/view_m"
+            android:layout_marginLeft="35dp"
+            android:background="@color/msg_line_color"/>
+
+        <ImageView
+            android:id="@+id/icon_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/view_t"
+            android:layout_marginLeft="16.66dp"
+            android:background="@drawable/low_power_icon"/>
+
+        <RelativeLayout
+            android:id="@+id/content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="45dp"
+            android:layout_marginTop="10dp"
+            android:layout_toRightOf="@+id/icon_view"
+            android:background="@drawable/normal_msg_content"
+            android:paddingBottom="10dp"
+            android:paddingLeft="0dp"
+            android:paddingRight="0dp"
+            android:paddingTop="10dp"
+            >
+
+            <TextView
+                android:id="@+id/text_content"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_marginLeft="26dp"
+                android:autoLink="web"
+                android:textColor="@color/color_7"
+
+                android:textSize="@dimen/xiaomiMyTextSize3"
+                />
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/content"
+            android:layout_marginLeft="14dp"
+            android:layout_marginTop="6dp"
+            android:layout_toRightOf="@+id/icon_view"
+            android:text="15:18"
+            android:textColor="@color/color_14"
+            android:textSize="@dimen/xiaomiMyTextSize8"
+            />
+
+        <View
+            android:layout_width="1px"
+            android:layout_height="0dp"
+            />
+    </RelativeLayout>
+
+
+</LinearLayout>

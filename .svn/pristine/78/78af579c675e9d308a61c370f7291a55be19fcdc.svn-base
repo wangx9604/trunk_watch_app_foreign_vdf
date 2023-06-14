@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/color_6" >
+	
+	
+	<RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent" 
+            android:layout_height="wrap_content">
+            <TextView 
+	            android:id="@+id/title"       
+	            android:layout_width="match_parent"
+	            android:layout_height="60dp"
+	            android:gravity="center" 
+	            android:text="@string/device_alarm_reset"
+	            android:textColor="@color/dark_grey"
+    	        android:textSize="@dimen/xiaomiMyTextSize1"/>
+            <TextView
+                android:id="@+id/prompt_content"
+                android:visibility="gone"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="30dp"
+                android:layout_marginRight="30dp"
+                android:layout_marginBottom="11.33dp"
+                android:layout_gravity="center"
+                android:clickable="true"
+                android:text="@string/open_trace_description"
+                android:textColor="@color/color_5"
+                android:textSize="@dimen/xiaomiMyTextSize3" />
+            <TextView
+                android:id="@+id/warning_info"
+                android:visibility="gone"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="30dp"
+                android:layout_marginRight="30dp"
+                android:layout_marginBottom="17dp"
+                android:layout_gravity="center"
+                android:clickable="true"
+                android:text="@string/open_trace_description"
+                android:textColor="@color/warining_red"
+                android:textSize="@dimen/xiaomiMyTextSize3" />
+            <View  
+   	            android:layout_height="1px" 
+                android:layout_width="match_parent"
+                android:background="@color/txt_grey"/>
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent" 
+            android:layout_height="wrap_content"
+            android:clickable="true">
+	        <ListView
+	        android:id="@+id/item_select_list"
+    	    android:layout_width="fill_parent"
+	        android:layout_height="fill_parent"
+	        android:cacheColorHint="@color/transparent"
+    	    android:scrollbars="none"
+	        android:fadingEdge="none" 
+	        android:dividerHeight="1px"/>
+        </LinearLayout>
+            
+            <View  
+   	            android:layout_height="1px" 
+                android:layout_width="match_parent"
+                android:background="@color/txt_grey"/>
+            
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginTop="23.33dp"
+                android:layout_marginBottom="23.33dp"
+                android:layout_marginLeft="23.33dp"
+                android:layout_marginRight="23.33dp"
+                android:layout_gravity="center_horizontal"
+                android:gravity="center_horizontal">
+    	        <Button 
+	            android:id="@+id/cancel_btn"       
+	            android:layout_width="wrap_content"
+	            android:layout_height="wrap_content" 
+	            android:text="@string/cancel"
+	            android:textColor="@color/dark_grey"
+    	        android:textSize="@dimen/xiaomiMyTextSize1"
+    	        android:background="@drawable/btn_alarm_customer_week_cancel_select"/>
+    	        <Button
+                android:id="@+id/confirm_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/confirm"
+	            android:textColor="@color/dark_grey"
+    	        android:textSize="@dimen/xiaomiMyTextSize1"
+                android:background="@drawable/btn_alarm_customer_week_confirm_select"/>
+            </LinearLayout>
+        </LinearLayout>
+	</RelativeLayout>
+</RelativeLayout>

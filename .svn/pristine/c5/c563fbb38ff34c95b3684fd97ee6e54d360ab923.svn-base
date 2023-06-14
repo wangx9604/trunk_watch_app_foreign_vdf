@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white">
+
+    <include
+        android:id="@+id/title"
+        layout="@layout/activity_title" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/title"
+        android:layout_marginLeft="@dimen/divideleftandright"
+        android:layout_marginRight="@dimen/divideleftandright"
+        android:layout_marginTop="20dp">
+
+        <TextView
+            android:id="@+id/tv_error_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/device_bind_fail_method"
+            android:textColor="@color/color_7"
+            android:textSize="@dimen/xiaomiMyTextNickname"
+            android:visibility="visible" />
+
+        <TextView
+            android:id="@+id/tv_error_desc"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_error_title"
+            android:layout_marginTop="10dp"
+            android:text="@string/device_bind_fail_method_desc_105"
+            android:textColor="@color/txt_grey"
+            android:textSize="@dimen/xiaomiMyTextNickname"
+            android:visibility="visible" />
+
+    </RelativeLayout>
+
+
+</RelativeLayout>

@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white">
+
+
+    <TextView
+        android:id="@+id/title_nick_name"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/fragment_title_height"
+        android:background="@color/bg_color_orange"
+        android:gravity="center"
+        android:text="@string/chat_string"
+        android:textColor="@color/white"
+        android:textSize="@dimen/xiaomiMyTextSize1"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+    <View
+        android:id="@+id/layout_network_error"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:background="@drawable/bg_network_error"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/title_nick_name" />
+
+
+    <ImageView
+        android:id="@+id/iv_network_warnning"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="@dimen/dimen23"
+        android:background="@drawable/bg_network_error_prompt"
+        app:layout_constraintBottom_toBottomOf="@+id/layout_network_error"
+        app:layout_constraintStart_toStartOf="@+id/layout_network_error"
+        app:layout_constraintTop_toTopOf="@+id/layout_network_error" />
+
+    <TextView
+        android:id="@+id/tv_network_error"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="@dimen/dimen51"
+        android:layout_marginEnd="13.3dp"
+        android:text="@string/network_error_prompt"
+        android:textColor="@color/black"
+        android:textSize="@dimen/xiaomiMyTextSize9"
+        app:layout_constraintBottom_toBottomOf="@+id/layout_network_error"
+        app:layout_constraintStart_toStartOf="@+id/layout_network_error"
+        app:layout_constraintTop_toTopOf="@+id/layout_network_error" />
+
+    <ImageView
+        android:id="@+id/iv_error_prompt_cancel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginEnd="13.3dp"
+        android:background="@drawable/icon_prompt_cancel"
+        app:layout_constraintBottom_toBottomOf="@+id/layout_network_error"
+        app:layout_constraintEnd_toEndOf="@+id/layout_network_error"
+        app:layout_constraintTop_toTopOf="@+id/layout_network_error" />
+
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/group_network_error"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:constraint_referenced_ids="layout_network_error,iv_network_warnning,tv_network_error" />
+
+    <View
+        android:id="@+id/view"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:background="@color/bg_color_orange"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/layout_network_error" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/all_watch_recyclerview"
+        android:layout_width="wrap_content"
+        android:layout_height="105dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/layout_network_error"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/all_message_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/bottom_line"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/all_watch_recyclerview"/>
+
+    <View
+        android:id="@+id/bottom_line"
+        android:layout_width="match_parent"
+        android:layout_height="0.3dp"
+        android:background="@color/bg_grey"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>

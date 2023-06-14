@@ -1,0 +1,772 @@
+package com.xiaoxun.xun.activitys;
+
+import android.app.Dialog;
+import android.app.NotificationManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.AnimationDrawable;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.Environment;
+import android.os.SystemClock;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.Constants;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.adapter.ChatListAdapter;
+import com.xiaoxun.xun.beans.ChatMsgEntity;
+import com.xiaoxun.xun.beans.FamilyData;
+import com.xiaoxun.xun.beans.MyMsgData;
+import com.xiaoxun.xun.beans.SosWarning;
+import com.xiaoxun.xun.beans.WarningInfo;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.db.ChatHisDao;
+import com.xiaoxun.xun.interfaces.MsgCallback;
+import com.xiaoxun.xun.utils.AESUtil;
+import com.xiaoxun.xun.utils.CloudBridgeUtil;
+import com.xiaoxun.xun.utils.DialogUtil;
+import com.xiaoxun.xun.utils.ImageUtil;
+import com.xiaoxun.xun.utils.LogUtil;
+import com.xiaoxun.xun.utils.MioAsyncTask;
+import com.xiaoxun.xun.utils.MyMediaPlayerUtil;
+import com.xiaoxun.xun.utils.MyRecorder;
+import com.xiaoxun.xun.utils.StrUtil;
+import com.xiaoxun.xun.utils.TimeUtil;
+import com.xiaoxun.xun.utils.ToastUtil;
+import com.xiaoxun.xun.utils.ToolUtils;
+import com.xiaoxun.xun.views.TimeoutButton;
+
+import net.minidev.json.JSONObject;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+
+public class SosGoogleActivity extends BaseAppCompatActivity implements OnMapReadyCallback, View.OnClickListener, MsgCallback {
+
+    public String LogTag = "SosActivity";
+    private final static int RECORD_INTERVAL_TIME = 500; //MS
+    private ImibabyApp mApp = null;                                //主Application对象
+    private WatchData mCurrentWatch;
+
+    private GoogleMap mGoogleMap = null;
+    private MarkerOptions mMarker = null;                        //临时位置marker变量
+
+    private LatLng mWatchLatLng;
+
+    private TextView nice_name;
+
+    private ImageView mHead;
+    private ImageButton zoomout;
+    private ImageButton zoomin;
+    private ImageButton location;
+    private ImageButton close;
+    private TimeoutButton mRecord;
+    private ImageButton mForceRecord;
+
+    private ListView mChatList;
+    private RelativeLayout mChatSending;
+    private ImageView mSendAnim;
+    private ChatListAdapter mChatAdater;
+    private ProgressBar mProgressRecord;
+    private RelativeLayout mRecording_ly;
+    private long mStartRecordT;
+    private long mEndRecordT;
+    private int mRecordT;
+    private long mRecordInterval = 0;
+    private boolean mFailToastShow = false;
+    private File mRecordFile;
+    private String mCurFamilyid;
+    private String mSosTime;
+    private SosWarning sosWarning;
+    private ChatMsgEntity mChat;
+    private HashMap<Integer, ChatMsgEntity> mSending = new HashMap<>();
+    private BroadcastReceiver mMsgReceiver;
+    private FamilyData mCurFamily;
+    private MioAsyncTask<String, Integer, String> mRecordTask = null;
+
+    private ArrayList<ChatMsgEntity> mCurSosChatList; //本地sos聊天数据
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_sos_google_warning);
+        mApp = (ImibabyApp) getApplication();
+        ToolUtils.setWindowStatusColor(this);
+        initDatas();
+        setUpMap();
+        initViews();
+        initBroadcastReceiver();
+        mApp.sdcardLog("sos SosActivity Oncreate time=" + TimeUtil.getTimeStampLocal() + "line=" + LogUtil.getLineNumber());
+    }
+
+    private void setUpMap() {
+        ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.googlemap)).getMapAsync(this);
+    }
+
+    protected GoogleMap getMap() {
+        return mGoogleMap;
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        if (mGoogleMap != null) {
+            return;
+        }
+        mGoogleMap = googleMap;
+        addWatchMaker();
+    }
+
+    private void initBroadcastReceiver() {
+        mMsgReceiver = new BroadcastReceiver() {
+
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (intent.getAction().equals(Const.ACTION_PROCESSED_NOTIFY_OK)) {
+                    mChatAdater.notifyDataSetChanged();
+                    mChatList.setSelection(mChatList.getCount() - 1);
+                    if (!mApp.getForceRecordState(mCurrentWatch.getEid())) {
+                        mForceRecord.setBackgroundResource(R.drawable.btn_tingting_selector);
+                        mProgressRecord.setVisibility(View.INVISIBLE);
+                    }
+                } else if (intent.getAction().equals(Const.ACTION_RESEND_CHAT)) {
+                    int position = intent.getIntExtra("position", -1);
+                    if (position != -1) {
+                        ChatMsgEntity entity = mCurSosChatList.get(position);
+                        entity.setmSended(3);
+                        mChatAdater.notifyDataSetChanged();
+                        mChatList.setSelection(mChatList.getCount() - 1);
+                        ChatHisDao.getInstance(getApplicationContext()).updateChatMsg(mCurFamilyid, entity, entity.getmDate());
+                        e2c4Chat(entity);
+                    }
+                }
+
+            }
+        };
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Const.ACTION_PROCESSED_NOTIFY_OK);
+        filter.addAction(Const.ACTION_RESEND_CHAT);
+        registerReceiver(mMsgReceiver, filter);
+    }
+
+    private void initDatas() {
+
+        Intent it = getIntent();
+        mCurFamilyid = it.getStringExtra("familyid");
+        mCurFamily = mApp.getCurUser().queryFamilyByGid(mCurFamilyid);
+        mCurrentWatch = mCurFamily.getWatchlist().get(0);
+        if (mCurFamily == null || mCurrentWatch == null) {
+            ToastUtil.show(mApp, getString(R.string.watch_is_null));
+            finish();
+        }
+
+        mSosTime = it.getStringExtra("sos");
+
+        if (mApp.getmSosCollectList().get(mSosTime) != null) {
+            mCurSosChatList = mApp.getmSosCollectList().get(mSosTime).get(mCurFamilyid);  //初始化聊天数据列表
+        } else {
+            mCurSosChatList = new ArrayList<>();
+        }
+
+        for (WarningInfo warn : mApp.getmWarningMsg().get(mCurFamilyid)) {
+            if (warn.getmTimestamp().equals(mSosTime)) {
+                mWatchLatLng = warn.getmSos().getmLocation().getWgs84Latlng();
+                sosWarning = warn.getmSos();
+            }
+        }
+
+        if (sosWarning == null) {
+            finish();
+            return;
+        }
+
+        mChat = new ChatMsgEntity();
+        StringBuilder des = new StringBuilder();
+        des.append(sosWarning.getmLocation().getDescription());
+        des.append(getString(R.string.send_help_req));
+        des.append(TimeUtil.getSosTime(mSosTime));
+        mChat.setmUserName(des.toString());
+        mChat.setmDate(sosWarning.getmTimestamp());
+        mChat.setmAudioPath(TimeUtil.getSosTime(mSosTime));
+        mChat.setmType(5);
+        mChat.setmFamilyId(mCurFamilyid);
+        mApp.getmSosChatList().add(mChat);
+        mCurSosChatList.add(0, mChat);
+
+        Intent intt = new Intent();
+        intt.setAction(Const.ACTION_PROCESSED_NOTIFY_OK);
+        sendBroadcast(intt);
+    }
+
+    private void initViews() {
+
+        nice_name = findViewById(R.id.title_nice_name);
+        nice_name.setText(getString(R.string.ask_for_help, mCurrentWatch.getNickname() + "," + TimeUtil.getSosTime(mSosTime)));
+        mHead = findViewById(R.id.title_head_mask);
+        ImageUtil.setMaskImage(mHead, R.drawable.mask, mApp.getHeadDrawableByFile(getResources(),
+                mApp.getCurUser().getHeadPathByEid(mCurrentWatch.getEid()), mCurrentWatch.getEid(), R.drawable.small_default_head));
+        zoomout = findViewById(R.id.zoomout);    //放大地图按钮
+        zoomout.setOnClickListener(this);
+        zoomin = findViewById(R.id.zoomin);        //缩小地图按钮
+        zoomin.setOnClickListener(this);
+        location = findViewById(R.id.location);    //规划路劲按钮
+        location.setOnClickListener(this);
+        close = findViewById(R.id.close_sos);
+        close.setOnClickListener(this);
+        mProgressRecord = findViewById(R.id.round_progressbar_1);
+        mRecording_ly = findViewById(R.id.recording_ly);
+        mForceRecord = findViewById(R.id.tingting);
+        if (mApp.getForceRecordState(mCurFamily.getWatchlist().get(0).getEid())) {
+            mForceRecord.setBackgroundResource(R.drawable.listen_for_1);
+            mProgressRecord.setVisibility(View.VISIBLE);
+        }
+        mForceRecord.setOnClickListener(this);
+
+        mChatSending = findViewById(R.id.luying);
+        mSendAnim = findViewById(R.id.view2);
+
+        mRecord = findViewById(R.id.record_button);
+        mRecord.setOnTouchListener(new View.OnTouchListener() {
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                    if (event.getAction() == MotionEvent.ACTION_DOWN) {
+
+                        if (mRecordInterval != 0 && (SystemClock.uptimeMillis() - mRecordInterval < RECORD_INTERVAL_TIME)) {
+                            mRecordInterval = SystemClock.uptimeMillis();
+                            return false;
+                        }
+                        close.setClickable(false);
+                        mForceRecord.setClickable(false);
+                        mRecordInterval = SystemClock.uptimeMillis();
+                        MyMediaPlayerUtil.getInstance().stopMediaPlayer(mApp);
+                        mChatAdater.stopVoicePlayAnimation();
+                        MyMediaPlayerUtil.getInstance().requestAudioFocus(mApp);
+                        mStartRecordT = SystemClock.uptimeMillis();
+                        if (mRecordTask != null) {
+                            mRecordTask.cancel(true);
+                        }
+                        mRecordTask = new MioAsyncTask<String, Integer, String>() {
+                            protected String doInBackground(String... params) {
+                                try {
+                                    MyRecorder.getInstance().startRecorder();
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                                return null;
+                            }
+
+                            protected void onCancelled() {
+
+                            }
+
+                            protected void onPostExecute(String message) {
+                                super.onPostExecute(message);
+                            }
+                        };
+                        mRecordTask.execute();
+                        mChatSending.setVisibility(View.VISIBLE);
+                        AnimationDrawable animDra = (AnimationDrawable) mSendAnim.getBackground();
+                        animDra.start();
+                    } else if (event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL) {//松开手势时执行录制完成
+                        close.setClickable(true);
+                        mForceRecord.setClickable(true);
+                        mChatSending.setVisibility(View.GONE);
+                        MyMediaPlayerUtil.getInstance().abandonAudioFocus(mApp);
+
+                        if (SystemClock.uptimeMillis() - mRecordInterval < RECORD_INTERVAL_TIME) {
+                            MyRecorder.getInstance().cancelRecorder();
+                            if (!mFailToastShow) {
+                                mFailToastShow = true;
+                            }
+                            return false;
+                        }
+                        if (mRecord.getmCancelFlag() == 2) {
+                            mRecord.setmCancelFlag(3);
+                            MyRecorder.getInstance().cancelRecorder();
+                            ToastUtil.showMyToast(mApp, getString(R.string.send_cancel), Toast.LENGTH_LONG);
+                        } else if (mRecord.getmCancelFlag() == 1 || mRecord.getmCancelFlag() == -1) {
+                            if (mRecord.getmTimeFlag() == true) {
+                                mRecord.setmTimeFlag(false);
+                                mRecord.setmRepeatAction(true);
+                                mRecordT = 15;
+                                mRecordFile = MyRecorder.getInstance().endRecorder();
+                                if (mRecordFile != null) {
+                                    ChatMsgEntity entity = new ChatMsgEntity();
+                                    entity.setmWatchId(mCurFamily.getWatchlist().get(0).getWatchId());
+                                    entity.setmAudioPath(mRecordFile.getPath());
+                                    entity.setmDuration(mRecordT);
+                                    entity.setmSrcId(mApp.getCurUser().getEid());
+                                    entity.setmDate(TimeUtil.getTimeStampLocal());
+                                    entity.setmIsFrom(false);
+                                    entity.setmFamilyId(mCurFamilyid);
+                                    entity.setmSended(0);
+                                    entity.setmTryTime(1);
+                                    entity.setmType(1);
+
+                                    mApp.getmSosChatList().add(entity);
+                                    //当多个相同家庭的sos界面出现时，用于同步发送出去的语音信息。
+                                    for (String time : mApp.getmSosCollectList().keySet()) {
+                                        HashMap<String, ArrayList<ChatMsgEntity>> curchatlist = mApp.getmSosCollectList()
+                                                .get(time);
+                                        if (curchatlist.get(mCurFamilyid) != null && !time.equals(mSosTime)) {
+                                            curchatlist.get(mCurFamilyid).add(entity);
+                                        }
+                                    }
+                                    mCurSosChatList.add(entity);
+                                    //通知相同sos页面数据更改
+                                    Intent intt = new Intent();
+                                    intt.setAction(Const.ACTION_PROCESSED_NOTIFY_OK);
+                                    sendBroadcast(intt);
+                                    mChatAdater.notifyDataSetChanged();
+                                    mChatList.setSelection(mChatList.getCount() - 1);
+                                    ChatHisDao.getInstance(getApplicationContext()).addChatMsg(mCurFamilyid, entity);
+                                    //E2C发送数据
+                                    AESUtil.encryptFile(mRecordFile);
+                                    e2c4Chat(entity);
+                                    sendBroadcast(new Intent(Constants.ACTION_GROUP_SEND_MESSAGE_NOTIFY));
+                                } else if (mFailToastShow) {
+                                    ToastUtil.showMyToast(mApp, getString(R.string.record_permission_tips), Toast.LENGTH_LONG);
+                                }
+                            } else if (mRecord.getmRepeatAction() == false) {
+                                mEndRecordT = SystemClock.uptimeMillis();
+                                mRecordT = (int) (mEndRecordT - mStartRecordT) / 1000;
+                                if (mRecordT < 1) {
+                                    MyRecorder.getInstance().cancelRecorder();
+                                    ToastUtil.showMyToast(mApp, getString(R.string.record_too_short), Toast.LENGTH_LONG);
+                                } else {
+                                    mRecordFile = MyRecorder.getInstance().endRecorder();
+                                    if (mRecordFile != null) {
+                                        ChatMsgEntity entity = new ChatMsgEntity();
+                                        entity.setmWatchId(mCurFamily.getWatchlist().get(0).getWatchId());
+                                        entity.setmAudioPath(mRecordFile.getPath());
+                                        entity.setmDuration(mRecordT);
+                                        entity.setmSrcId(mApp.getCurUser().getEid());
+                                        entity.setmDate(TimeUtil.getTimeStampLocal());
+                                        entity.setmIsFrom(false);
+                                        entity.setmFamilyId(mCurFamilyid);
+                                        entity.setmSended(0);
+                                        entity.setmTryTime(1);
+                                        entity.setmType(1);
+                                        mApp.getmSosChatList().add(entity);
+                                        mCurSosChatList.add(entity);
+                                        //当多个相同家庭的sos界面出现时，用于同步发送出去的语音信息。
+                                        for (String time : mApp.getmSosCollectList().keySet()) {
+                                            HashMap<String, ArrayList<ChatMsgEntity>> curchatlist = mApp.getmSosCollectList()
+                                                    .get(time);
+                                            if (curchatlist.get(mCurFamilyid) != null && !time.equals(mSosTime)) {
+                                                curchatlist.get(mCurFamilyid).add(entity);
+                                            }
+                                        }
+                                        //通知相同sos页面数据更改
+                                        Intent intt = new Intent();
+                                        intt.setAction(Const.ACTION_PROCESSED_NOTIFY_OK);
+                                        sendBroadcast(intt);
+
+                                        mChatAdater.notifyDataSetChanged();
+                                        mChatList.setSelection(mChatList.getCount() - 1);
+                                        ChatHisDao.getInstance(getApplicationContext()).addChatMsg(mCurFamilyid, entity);
+                                        //E2C发送数据
+                                        AESUtil.encryptFile(mRecordFile);
+                                        e2c4Chat(entity);
+                                        sendBroadcast(new Intent(Constants.ACTION_GROUP_SEND_MESSAGE_NOTIFY));
+                                    } else if (mFailToastShow) {
+                                        ToastUtil.showMyToast(mApp, getString(R.string.record_permission_tips), Toast.LENGTH_LONG);
+                                    }
+                                }
+                            }
+                        }
+                        if (!mFailToastShow) {
+                            mFailToastShow = true;
+                        }
+                    }
+                return false;
+            }
+        });
+
+        mChatList = findViewById(R.id.chat_list);
+
+    }
+
+    private void addWatchMaker() {
+        mMarker = new MarkerOptions().position(mWatchLatLng).anchor(0.5f, 0.95f).flat(true);
+        mMarker.icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.tumi_cry)));
+        mGoogleMap.addMarker(mMarker);
+        mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mWatchLatLng, 16.0f));
+    }
+
+    /**
+     * 类名称：SosActivity
+     * 创建人：zhangjun5
+     * 创建时间：2015/11/10 10:58
+     * 方法描述：发送录音请求信息。
+     */
+    private void e2eForceRecord(String eid) {
+        MyMsgData e2e = new MyMsgData();
+        e2e.setTimeout(100000);
+        e2e.setCallback(this);
+        String[] teid = new String[1];
+        teid[0] = eid;
+        JSONObject pl = new JSONObject();
+        pl.put(CloudBridgeUtil.KEY_NAME_SUB_ACTION, CloudBridgeUtil.SUB_ACTION_VALUE_NAME_FORCE_RECORD);
+        StringBuffer sms = new StringBuffer();
+        int sn = Long.valueOf(TimeUtil.getTimeStampGMT()).intValue();
+        e2e.setReqMsg(CloudBridgeUtil.CloudE2eMsgContent(CloudBridgeUtil.CID_E2E_UP, sn, mApp.getToken(), null, teid, pl));
+        mApp.getNetService().sendNetMsg(e2e);
+        mApp.setForceRecordState(eid, true);
+        mForceRecord.setBackgroundResource(R.drawable.listen_for_1);
+        mProgressRecord.setVisibility(View.VISIBLE);
+    }
+
+    private MioAsyncTask<String, Long, String> task;
+
+    /**
+     * 类名称：SosActivity
+     * 创建人：zhangjun5
+     * 创建时间：2015/11/10 11:01
+     * 方法描述：手表正在录音的提示信息
+     */
+    private void startTask() {
+        if (task != null) {
+            task.cancel(true);
+        }
+        task = new MioAsyncTask<String, Long, String>() {
+            protected String doInBackground(String... params) {
+                String eid = params[0];
+                publishProgress((long) 2000);
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+                return eid;
+            }
+
+            protected void onCancelled() {
+                super.onCancelled();
+            }
+
+            protected void onProgressUpdate(Long... values) {
+                mRecording_ly.setVisibility(View.VISIBLE);
+            }
+
+            protected void onPostExecute(String message) {
+                super.onPostExecute(message);
+                mRecording_ly.setVisibility(View.INVISIBLE);
+            }
+        };
+        task.execute("eewewerewr234");
+    }
+
+    @Override
+    public void onClick(View v) {
+
+        switch (v.getId()) {
+            case R.id.zoomout:
+                mGoogleMap.animateCamera(com.google.android.gms.maps.CameraUpdateFactory.zoomIn(), 250, null);
+                break;
+            case R.id.zoomin:
+                mGoogleMap.animateCamera(com.google.android.gms.maps.CameraUpdateFactory.zoomOut(), 250, null);
+                break;
+            case R.id.location:
+                navigateByGoogleMap(SosGoogleActivity.this, mWatchLatLng);
+                break;
+            case R.id.close_sos:
+                finish();
+                break;
+            case R.id.tingting:
+                if (!mApp.getForceRecordState(sosWarning.getmEid())) {
+                    Dialog dlg = DialogUtil.CustomNormalDialog(SosGoogleActivity.this,
+                            getText(R.string.tingting_confirm_title).toString(),
+                            getText(R.string.tingting_confirm_msg).toString(),
+                            new DialogUtil.OnCustomDialogListener() {
+
+                                @Override
+                                public void onClick(View v) {
+
+                                }
+                            },
+                            getText(R.string.cancel).toString(),
+                            new DialogUtil.OnCustomDialogListener() {
+
+                                @Override
+                                public void onClick(View v) {
+                                    e2eForceRecord(mCurFamily.getWatchlist().get(0).getEid());
+                                }
+                            },
+                            getText(R.string.confirm).toString());
+                    dlg.show();
+                } else {
+                    startTask();
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        mApp.setmSosStartFlag(true);
+        mApp.setmSosFamily(mCurFamilyid);
+
+        LayoutInflater mInflater = getLayoutInflater();
+        mChatAdater = new ChatListAdapter(this, mInflater, mCurSosChatList, 2, mCurrentWatch);
+        mChatList.setAdapter(mChatAdater);
+        mChatList.setSelection(mChatList.getCount() - 1);
+
+        NotificationManager notifyMng = (NotificationManager) getApplicationContext().getSystemService(NOTIFICATION_SERVICE);
+        notifyMng.cancel(mCurFamilyid, Const.TITLE_BAR_NEW_GROUP_MESSAGE);
+        mApp.setGroupMsgOpenGid(mCurFamilyid);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        mApp.setGroupMsgOpenGid(null);
+        MyMediaPlayerUtil.getInstance().stopMediaPlayer(mApp);
+        mApp.sdcardLog("sos SosActivity onPause time=" + TimeUtil.getTimeStampLocal() + "line=" + LogUtil.getLineNumber());
+        mApp.setmSosStartFlag(false);
+        mApp.setHasNewGroupMsg(mCurFamilyid, false);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        //当关闭该sos页面时，清除该SOS界面的聊天信息。
+        if (mApp.getmSosCollectList().get(mSosTime) != null)
+            mApp.getmSosCollectList().remove(mSosTime);
+        try {
+            unregisterReceiver(mMsgReceiver);
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
+    }
+
+    /**
+     * 类名称：SosActivity
+     * 修改人：zhangjun5
+     * 修改时间：2015/11/10 11:47
+     * 方法描述：负责处理语音信息的发送和重发。
+     * 并设置回调函数入口。
+     * 修改描述：未修改。
+     */
+    private void e2c4Chat(ChatMsgEntity entity) {
+        MyMsgData e2c = new MyMsgData();
+        e2c.setTimeout(60 * 1000);
+        e2c.setCallback(this);
+        JSONObject pl = new JSONObject();
+        pl.put(CloudBridgeUtil.KEY_NAME_TGID, entity.getmFamilyId());
+        StringBuilder key = new StringBuilder(CloudBridgeUtil.PREFIX_GP_E2C_MESSAGE);
+        key.append(entity.getmFamilyId());
+        key.append(CloudBridgeUtil.E2C_SPLIT_MEG);
+        key.append(CloudBridgeUtil.E2C_SERVER_SET_TIME);
+        pl.put(CloudBridgeUtil.KEY_NAME_KEY, key.toString());
+        JSONObject chat = new JSONObject();
+        chat.put(CloudBridgeUtil.E2C_PL_KEY_TYPE, CloudBridgeUtil.E2C_PL_KEY_TYPE_VOICE);
+        chat.put(CloudBridgeUtil.E2C_PL_KEY_EID, entity.getmSrcId());
+        chat.put(CloudBridgeUtil.E2C_PL_KEY_DURATION, entity.getmDuration());
+        try {
+            chat.put(CloudBridgeUtil.E2C_PL_KEY_CONTENT, StrUtil.encodeBase64File(entity.getmAudioPath()));
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        pl.put(CloudBridgeUtil.KEY_NAME_MAP_GET_KEY, chat);
+        int sn = Long.valueOf(TimeUtil.getTimeStampGMT()).intValue();
+
+        entity.setmSendStartTime(System.currentTimeMillis());
+        mSending.put(sn, entity);
+        e2c.setReqMsg(CloudBridgeUtil.obtainCloudMsgContent(CloudBridgeUtil.CID_E2C4_DEVICE_LONGTIME_MSG_REQ, sn, mApp.getToken(), pl));
+        e2c.getReqMsg().put(CloudBridgeUtil.KEY_NAME_VERSION, mCurFamily.getWatchlist().get(0).getDeviceProtocolVersion());
+        mApp.getNetService().sendNetMsg(e2c);
+    }
+
+    @Override
+    public void doCallBack(JSONObject reqMsg, JSONObject respMsg) {
+        // TODO Auto-generated method stub
+        int rc = CloudBridgeUtil.getCloudMsgRC(respMsg);
+        JSONObject pl;
+        int cid = (Integer) respMsg.get(CloudBridgeUtil.KEY_NAME_CID);
+        ChatMsgEntity chat;
+        int sn = (Integer) reqMsg.get(CloudBridgeUtil.KEY_NAME_SN);
+        switch (cid) {
+            case CloudBridgeUtil.CID_E2C4_DEVICE_LONGTIME_MSG_RESP:
+                if (CloudBridgeUtil.RC_SUCCESS == rc) {
+                    if (mApp.getNetService() != null) {
+                        mApp.getNetService().timeoutZero();
+                    }
+                    JSONObject key1 = (JSONObject) respMsg.get(CloudBridgeUtil.KEY_NAME_PL);
+                    String temp = (String) key1.get(CloudBridgeUtil.KEY_NAME_KEY);
+                    chat = mSending.get(sn);
+                    chat.setmSended(1);
+                    String findkey = chat.getmDate();
+                    chat.setmDate(TimeUtil.getOrderTime(temp.substring(temp.indexOf("/MSG/") + 5)));
+                    ChatHisDao.getInstance(getApplicationContext()).updateChatMsg(mCurFamilyid, chat, findkey);
+                    mSending.remove(sn);
+                    mChatAdater.notifyDataSetChanged();
+                    mChatList.setSelection(mChatList.getCount() - 1);
+                } else if (CloudBridgeUtil.RC_NETERROR == rc) {
+                    chat = mSending.get(sn);
+                    chat.setmTryTime(0);
+                    chat.setmSended(2);
+                    ChatHisDao.getInstance(getApplicationContext()).updateChatMsg(mCurFamilyid, chat, chat.getmDate());
+                    mSending.remove(sn);
+                    mChatAdater.notifyDataSetChanged();
+                    mChatList.setSelection(mChatList.getCount() - 1);
+                } else if (CloudBridgeUtil.RC_NOT_LOGIN == rc || CloudBridgeUtil.RC_SOCKET_NOTREADY == rc) {
+                    chat = mSending.get(sn);
+                    if (chat.getmTryTime() > ChatMsgEntity.MAX_TRY_SEND_TIME) {
+                        mApp.sdcardLog("huangqilin 333 send num:" + chat.getmTryTime());
+                        chat.setmSended(2);
+                        chat.setmTryTime(0);
+                        ChatHisDao.getInstance(getApplicationContext()).updateChatMsg(mCurFamilyid, chat, chat.getmDate());
+                        mSending.remove(sn);
+                        mChatAdater.notifyDataSetChanged();
+                        mChatList.setSelection(mChatList.getCount() - 1);
+                    } else {
+                        chat.setmTryTime(chat.getmTryTime() + 1);
+                        mApp.sdcardLog("huangqilin 444 send num:" + chat.getmTryTime());
+                        e2c4Chat(chat);
+                        mSending.remove(sn);
+                    }
+                } else if (CloudBridgeUtil.RC_TIMEOUT == rc) {
+                    chat = mSending.get(sn);
+                    if (mApp.getNetService() != null) {
+                        mApp.getNetService().timeoutInc();
+                    }
+                    if (chat.getmTryTime() > ChatMsgEntity.MAX_TRY_SEND_TIME) {
+                        mApp.sdcardLog("huangqilin 1111 send num:" + chat.getmTryTime());
+                        chat.setmSended(2);
+                        chat.setmTryTime(0);
+                        ChatHisDao.getInstance(getApplicationContext()).updateChatMsg(mCurFamilyid, chat, chat.getmDate());
+                        mSending.remove(sn);
+                        mChatAdater.notifyDataSetChanged();
+                        mChatList.setSelection(mChatList.getCount() - 1);
+                    } else {
+                        chat.setmTryTime(chat.getmTryTime() + 1);
+                        mApp.sdcardLog("huangqilin 2222 send num:" + chat.getmTryTime());
+                        e2c4Chat(chat);
+                        mSending.remove(sn);
+                    }
+                } else {
+                    chat = mSending.get(sn);
+                    if (chat.getmTryTime() > ChatMsgEntity.MAX_TRY_SEND_TIME) {
+                        mApp.sdcardLog("huangqilin 111 send num:" + chat.getmTryTime());
+                        chat.setmSended(2);
+                        chat.setmTryTime(0);
+                        ChatHisDao.getInstance(getApplicationContext()).updateChatMsg(mCurFamilyid, chat, chat.getmDate());
+                        mSending.remove(sn);
+                        mChatAdater.notifyDataSetChanged();
+                        mChatList.setSelection(mChatList.getCount() - 1);
+                    } else {
+                        chat.setmTryTime(chat.getmTryTime() + 1);
+                        mApp.sdcardLog("huangqilin 222 send num:" + chat.getmTryTime());
+                        e2c4Chat(chat);
+                        mSending.remove(sn);
+                    }
+
+                }
+                break;
+
+            case CloudBridgeUtil.CID_E2E_DOWN:
+                pl = (JSONObject) reqMsg.get(CloudBridgeUtil.KEY_NAME_PL);
+                int value = (Integer) pl.get(CloudBridgeUtil.KEY_NAME_SUB_ACTION);
+                if (CloudBridgeUtil.SUB_ACTION_VALUE_NAME_FORCE_RECORD == value) {
+                    String[] teid = (String[]) reqMsg.get(CloudBridgeUtil.KEY_NAME_TEID);
+                    String eid = teid[0];
+                    if (CloudBridgeUtil.RC_TIMEOUT == rc || CloudBridgeUtil.RC_SOCKET_NOTREADY == rc) {
+                        mForceRecord.setBackgroundResource(R.drawable.btn_tingting_selector);
+                        mProgressRecord.setVisibility(View.INVISIBLE);
+                        if (!mApp.getForceRecordState(eid)) {
+
+                        } else {
+                            ToastUtil.showMyToast(mApp, getString(R.string.record_network_error), Toast.LENGTH_LONG);
+                            mApp.setForceRecordState(eid, false);
+                            Intent intt = new Intent();
+                            intt.setAction(Const.ACTION_PROCESSED_NOTIFY_OK);
+                            sendBroadcast(intt);
+                        }
+                    } else if (CloudBridgeUtil.RC_NETERROR == rc) {
+                        mForceRecord.setBackgroundResource(R.drawable.btn_tingting_selector);
+                        mProgressRecord.setVisibility(View.INVISIBLE);
+                        ToastUtil.showMyToast(mApp, getString(R.string.network_error_prompt), Toast.LENGTH_LONG);
+                        mApp.setForceRecordState(eid, false);
+                        Intent intt = new Intent();
+                        intt.setAction(Const.ACTION_PROCESSED_NOTIFY_OK);
+                        sendBroadcast(intt);
+                    } else if (rc < 0) {
+                        mForceRecord.setBackgroundResource(R.drawable.btn_tingting_selector);
+                        mProgressRecord.setVisibility(View.INVISIBLE);
+                        ToastUtil.showMyToast(mApp, getString(R.string.record_network_error), Toast.LENGTH_LONG);
+                        mApp.setForceRecordState(eid, false);
+                        Intent intt = new Intent();
+                        intt.setAction(Const.ACTION_PROCESSED_NOTIFY_OK);
+                        sendBroadcast(intt);
+                    }
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+
+    public void navigateByGoogleMap(Context context, com.google.android.gms.maps.model.LatLng latLng) {
+        if (isAvilible(context, "com.google.android.apps.maps")) {
+            Uri gmmIntentUri = Uri.parse("google.navigation:q="
+                    + latLng.latitude + "," + latLng.longitude);
+            Intent mapIntent = new Intent(Intent.ACTION_VIEW,
+                    gmmIntentUri);
+            mapIntent.setPackage("com.google.android.apps.maps");
+            context.startActivity(mapIntent);
+        } else {
+            Uri uri = Uri.parse("market://details?id=com.google.android.apps.maps");
+            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+            context.startActivity(intent);
+        }
+    }
+
+    public static boolean isAvilible(Context context, String packageName) {
+        PackageInfo packageInfo = null;
+        try {
+            packageInfo = context.getPackageManager().getPackageInfo(packageName, 0);
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        return packageInfo != null;
+    }
+}

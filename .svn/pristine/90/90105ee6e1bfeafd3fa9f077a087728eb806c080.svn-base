@@ -1,0 +1,136 @@
+package com.xiaoxun.xun.ScheduleCard.activitys;
+
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import com.tencent.tauth.Tencent;
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.Constants;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.ScheduleCard.beans.ScheduleNoticeBean;
+import com.xiaoxun.xun.activitys.NormalActivity;
+import com.xiaoxun.xun.activitys.NormalActivity2;
+import com.xiaoxun.xun.utils.DialogUtil;
+import com.xiaoxun.xun.utils.ShareUtil;
+import com.xiaoxun.xun.utils.StatusBarUtil;
+
+public class ScheduleNoticeActivity extends NormalActivity implements View.OnClickListener {
+
+    private final static String TAG = ScheduleNoticeActivity.class.getSimpleName();
+
+    private ImageView iv_back;
+    private ImageView iv_menu;
+    private LinearLayout layout_show_class;
+    private ImageView iv_weather_icon;
+    private TextView tv_weather_temp;
+    private TextView tv_weather_city;
+    private TextView tv_weather_info;
+    private ConstraintLayout mLayoutAllView;
+    private TextView tv_week_num;
+    private TextView tv_date;
+    private ImageView mShareViewBg;
+
+    private ScheduleNoticeBean noticeBean;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        StatusBarUtil.changeStatusBarColor(this, getResources().getColor(R.color.schedule_notice_bg));
+        setContentView(R.layout.activity_schedule_notice);
+
+        initManager();
+        initView();
+        addClassView();
+    }
+
+    private void addClassView() {
+        for(int i = 0;i < noticeBean.getCourses().size(); i++){
+            try {
+                String Schedule_info = noticeBean.getCourses().get(i);
+                String[] array = Schedule_info.split(",");
+
+                View view = View.inflate(this, R.layout.view_schedule_notice, null);
+                TextView tv_num  = view.findViewById(R.id.tv_schedule_num);
+                TextView tv_start = view.findViewById(R.id.tv_time_start);
+                TextView tv_end = view.findViewById(R.id.tv_time_end);
+                TextView tv_class = view.findViewById(R.id.tv_schedule_class);
+
+                tv_num.setText(ScheduleCardUtils.ScheduleGetClassNum(this,i,false));
+                tv_start.setText(ScheduleCardUtils.ScheduleGetHourFormat(array[0]));
+                tv_end.setText(ScheduleCardUtils.ScheduleGetHourFormat(array[1]));
+                tv_class.setText(array[2]);
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                layout_show_class.addView(view,params);
+            }catch(Exception e){
+                e.printStackTrace();
+            }
+        }
+        layout_show_class.invalidate();
+    }
+
+    private void initManager() {
+        String mScheduleInfo = getIntent().getStringExtra(Constants.SCHEDULE_NOTICE_INFO);
+        noticeBean = ScheduleCardUtils.transNoticeBeanByScheInfo(mScheduleInfo);
+    }
+
+    private void initView() {
+        iv_back = findViewById(R.id.iv_back);
+        iv_menu = findViewById(R.id.iv_menu);
+        layout_show_class = findViewById(R.id.layout_schedule_show);
+        iv_weather_icon = findViewById(R.id.iv_weather_icon);
+        tv_weather_temp = findViewById(R.id.tv_weather_temp);
+        tv_weather_city = findViewById(R.id.tv_weather_city);
+        tv_weather_info = findViewById(R.id.tv_weather_info);
+        mLayoutAllView = findViewById(R.id.share_layout);
+        mShareViewBg = findViewById(R.id.iv_share_bg);
+        tv_week_num = findViewById(R.id.tv_week);
+        tv_date = findViewById(R.id.tv_date);
+
+        iv_back.setOnClickListener(this);
+        iv_menu.setOnClickListener(this);
+
+        tv_weather_city.setText(noticeBean.getWeather().getCity());
+        tv_weather_temp.setText(ScheduleCardUtils.FormatWeatherInfo(noticeBean.getWeather().getTemp()));
+        tv_weather_info.setText(noticeBean.getWeather().getWeather());
+        iv_weather_icon.setBackgroundResource(ScheduleCardUtils.ScheduleGetWeatherIconByName(
+                noticeBean.getWeather().getWeather()
+        ));
+
+        tv_week_num.setText(ScheduleCardUtils.getNoticeWeek(noticeBean.getWeather().getDate()));
+        tv_date.setText(ScheduleCardUtils.getNoticeDate(noticeBean.getWeather().getDate()));
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()){
+            case R.id.iv_back:
+                finish();
+                break;
+            case R.id.iv_menu:
+                mLayoutAllView.setBackgroundResource(R.color.schedule_notice_bg);
+                mShareViewBg.setVisibility(View.VISIBLE);
+                String fileName = ShareUtil.getLocalShareFile(mLayoutAllView);
+                mShareViewBg.setVisibility(View.GONE);
+                mLayoutAllView.setBackgroundResource(android.R.color.transparent);
+                DialogUtil.shareLocalFileToPlat(ScheduleNoticeActivity.this,getString(R.string.schedule_card_title),
+                        Const.SHARE_TO_QQ_URL, fileName);
+                break;
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == com.tencent.connect.common.Constants.REQUEST_QZONE_SHARE) {
+            Tencent.onActivityResultData(requestCode,resultCode,data,null);
+        }
+    }
+}

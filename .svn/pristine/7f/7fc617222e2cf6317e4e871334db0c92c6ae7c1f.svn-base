@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/xiaomi_bg_grey"
+        android:layout_above="@+id/buttom_add_view"
+        android:orientation="vertical">
+        
+        <include layout="@layout/activity_title"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12dp"
+            android:layout_marginLeft="13dp"
+            android:layout_marginTop="15.33dp"
+            android:layout_marginRight="23.33dp"
+            android:lineSpacingExtra="4.66dp"
+            android:textColor="@color/txt_grey"
+            android:text="@string/security_zone_title"/>
+
+        <ListView
+	    android:id="@+id/security_zone_list"
+	    android:layout_width="fill_parent"
+	    android:layout_height="fill_parent"
+	    android:cacheColorHint="@color/transparent"
+	    android:scrollbars="none"
+	    android:fadingEdge="none"
+        android:divider="@color/transparent"
+        android:dividerHeight="0dip" />
+
+    </LinearLayout>
+    
+    <RelativeLayout
+        android:id="@+id/buttom_add_view"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:layout_alignParentBottom="true">
+        <View
+            android:layout_height="1px"
+            android:layout_width="match_parent"
+            android:background="@color/color_9"/>
+        <Button
+            android:visibility="gone"
+            android:id="@+id/btn_next_step"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/btn_dialgo_one_button"
+            android:layout_centerInParent="true"
+            android:text="@string/security_finish_next"
+            android:textColor="@color/black"
+            android:textSize="@dimen/xiaomiMyTextSize1" />
+        <LinearLayout
+            android:visibility="visible"
+            android:id="@+id/security_add_btn"
+            android:orientation="vertical"
+            android:layout_width="wrap_content"  
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:clickable="true">
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/btn_alarm_add_selector" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                 android:layout_marginTop="3dp"
+                android:textSize="@dimen/xiaomiMyTextSize4"
+                android:text="@string/string_add"
+                android:textColor="@color/color_5" />
+        </LinearLayout>
+   </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/cover"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/alarmclock_title"
+        android:orientation="vertical"
+        android:clickable="false">
+    </RelativeLayout>
+</RelativeLayout>

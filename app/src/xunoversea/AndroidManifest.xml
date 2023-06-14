@@ -1,0 +1,55 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <permission
+        android:name="com.xiaoxun.xunoversea.permission.MIPUSH_RECEIVE"
+        android:protectionLevel="signature" />
+
+    <uses-permission android:name="com.xiaoxun.xunoversea.permission.MIPUSH_RECEIVE" />
+    <application>
+        <activity
+            android:name="com.xiaoxun.xun.activitys.NewWelcomeActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait"
+            android:theme="@style/WelcomeActivityTheme"
+            android:exported="true"
+            android:windowSoftInputMode="stateAlwaysHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDyQ30E5tq4TF3BkZ0otJXwp-fJAjMmBpY" />
+
+        <!--vivo推送配置项-->
+        <meta-data
+            android:name="com.vivo.push.api_key"
+            android:value="d2cccb66-d6da-435d-8637-bc54f4e657f4"/>
+        <meta-data
+            android:name="com.vivo.push.app_id"
+            android:value="10411"/>
+        <!-- HMS AppID -->
+        <meta-data
+            android:name="com.huawei.hms.client.appid"
+            android:value="10873853"/>
+        <!-- ximalaya data -->
+        <meta-data
+            android:name="app_key"
+            android:value="7373cd8d10ce6ca6de202f4e42fb2e34" />
+        <meta-data
+            android:name="pack_id"
+            android:value="com.xiaoxun.xun" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.xiaoxun.xunoversea.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"/>
+        </provider>
+    </application>
+</manifest>

@@ -1,0 +1,687 @@
+package com.xiaoxun.xun.activitys;
+
+import android.app.Dialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.os.Bundle;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.TextPaint;
+import android.text.style.ClickableSpan;
+import android.view.View;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+
+import com.xiaoxun.calendar.LoadingDialog;
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.beans.PhoneNumber;
+import com.xiaoxun.xun.beans.RanksStepsEntity;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.db.WatchDAO;
+import com.xiaoxun.xun.interfaces.MsgCallback;
+import com.xiaoxun.xun.utils.CloudBridgeUtil;
+import com.xiaoxun.xun.utils.DialogUtil;
+import com.xiaoxun.xun.utils.ImageDownloadHelper;
+import com.xiaoxun.xun.utils.ImageUtil;
+import com.xiaoxun.xun.utils.LogUtil;
+import com.xiaoxun.xun.utils.StepsUtil;
+import com.xiaoxun.xun.utils.TimeUtil;
+import com.xiaoxun.xun.utils.Timer;
+
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
+import net.minidev.json.JSONValue;
+
+import java.util.ArrayList;
+import java.util.Collections;
+
+public class stepsRankActivity extends NormalActivity implements  View.OnClickListener, MsgCallback, LoadingDialog.OnConfirmClickListener {
+    private TextView tv_baby_steps;
+    private TextView tv_baby_kilos;
+    private TextView tv_baby_calos;
+    private TextView tv_rank_country;
+    private TextView tv_rank_area;
+    private TextView tv_rank_nick_no1;
+    private TextView tv_rank_nick_no2;
+    private TextView tv_rank_nick_no3;
+    private TextView tv_rank_steps_no1;
+    private TextView tv_rank_steps_no2;
+    private TextView tv_rank_steps_no3;
+    private ImageView iv_rank_head1;
+    private ImageView iv_rank_head2;
+    private ImageView iv_rank_head3;
+    private ImageView iv_rank_num1;
+    private ImageView iv_rank_num2;
+    private ImageButton ib_rank_settings;
+    private View btnBack;
+    private RelativeLayout rl_family_ranks;
+    private RelativeLayout ll_cur_steps;
+    private RelativeLayout ll_his_steps;
+
+    private ImibabyApp myApp;
+    private String watchEid;
+    private String targetSteps;
+    private String curSteps = "0";
+    private BroadcastReceiver mMsgReceiver = null;
+    ArrayList<RanksStepsEntity> ranksList ;
+    private LoadingDialog loadingDialog;
+    private Timer reqTimer = null;
+    private int timeCount ;
+    private int noRepeat = 0;
+    private String phoneSteps = "0";
+
+    private boolean isGetWatchData = false;//判断是否收到了计步数据
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_steps_rank);
+        myApp = (ImibabyApp)getApplication();
+        ranksList = new ArrayList<>();
+        initView();
+        watchEid = myApp.getCurUser().getFocusWatch().getEid();
+//        loadLocalData();
+        getStepsFromLocal();
+        //没有计步器的提示信息
+        noRepeat = myApp.getIntValue(Const.SHARE_PREF_NO_SUPPORT_STEPS_FLAG, 0);
+        if(!StepsUtil.isHasStepSensor(this) && noRepeat == 0){
+            Dialog dlg = DialogUtil.CustomSupportTitleDialog(this, getText(R.string.steps_sensor_title).toString(),
+                    getString(R.string.steps_sensor_nosupport_title),
+                    new DialogUtil.OnCustomDialogListener() {
+
+                        @Override
+                        public void onClick(View v) {
+                            getStepsFromCloudBridge();
+                            StepsUtil.initSensor(stepsRankActivity.this,"1");
+                            if (loadingDialog != null && !loadingDialog.isShowing()) {
+                                loadingDialog.enableCancel(false);
+                                loadingDialog.changeStatus(1, getString(R.string.steps_get_ranks_data));
+                                loadingDialog.show();
+                            }
+                            startTimeOutForNoSteps();
+                        }
+                    },
+                    getText(R.string.donothing_text).toString(),
+                    new DialogUtil.OnSelectorDialogLister() {
+                        @Override
+                        public Boolean onClick(View v) {
+                            if(noRepeat == 1){
+                                noRepeat = 0;
+                                myApp.setValue(Const.SHARE_PREF_NO_SUPPORT_STEPS_FLAG, noRepeat);
+                                return false;
+                            }else{
+                                noRepeat = 1;
+                                myApp.setValue(Const.SHARE_PREF_NO_SUPPORT_STEPS_FLAG, noRepeat);
+                                return true;
+                            }
+                        }
+                    });
+            dlg.show();
+        }else{
+            getStepsFromCloudBridge();
+            StepsUtil.initSensor(this,"1");
+            if (loadingDialog != null && !loadingDialog.isShowing()) {
+                loadingDialog.enableCancel(false);
+                loadingDialog.changeStatus(1, getString(R.string.steps_get_ranks_data));
+                loadingDialog.show();
+            }
+            startTimeOutForNoSteps();
+        }
+
+        //添加数据统计
+        WatchData mCurWatch = myApp.getCurUser().getFocusWatch();
+        initBroadReceive();
+    }
+    /**
+    *user:zhangjun5 time:9:52 date:2017/4/19
+    *desc:未获取到排名信息前，显示手机的计步和当前手表保存在本地的计步数据
+    **/
+    private void showPhoneAndLocalWatchSteps(){
+        String eid = myApp.getCurUser().getFocusWatch().getEid();
+        RanksStepsEntity entity1 = StepsUtil.getEntityFormRanksListByEid(ranksList,eid);
+        if(entity1 == null){
+            entity1 = new RanksStepsEntity();
+            entity1.eid = eid;
+            entity1.name = "nickname";
+            entity1.steps = Integer.valueOf(curSteps);
+            entity1.num = 0;
+            ranksList.add(entity1);
+        }
+        eid = myApp.getCurUser().getEid();
+        entity1 = StepsUtil.getEntityFormRanksListByEid(ranksList,eid);
+        if(entity1 == null){
+            entity1 = new RanksStepsEntity();
+            entity1.eid = eid;
+            entity1.name = "nickname";
+            entity1.steps =  Integer.valueOf(phoneSteps);
+            entity1.num = 0;
+            ranksList.add(entity1);
+        }
+        reSortRanksList();
+        updateRanksView();
+    }
+
+    private void initBroadReceive(){
+        mMsgReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (intent.getAction().equals(Const.ACTION_CLOUD_BRIDGE_STEPS_CHANGE)) {
+                    isGetWatchData = true;
+                    String stepsSum = intent.getStringExtra(CloudBridgeUtil.STEPS_LEVEL);
+                    String eid = intent.getStringExtra(Const.KEY_WATCH_ID);
+                    if(!myApp.getCurUser().getFocusWatch().getEid().equals(eid)){
+                        LogUtil.i("eid is not same!");
+                        return ;
+                    }
+                    String[] array = stepsSum.split("_");
+                    String curSteps = array[1];
+                    if(TimeUtil.compareTodayToLastInfo(array[0])){
+                        tv_baby_steps.setText(getString(R.string.unit_steps_with_number,curSteps+"/"+targetSteps));
+                        tv_baby_calos.setText(getString(R.string.unit_kiloCard_with_num,Integer.toString(StepsUtil.calcCalBySteps(myApp,curSteps))));
+                        tv_baby_kilos.setText(StepsUtil.formatKiloByMeter(StepsUtil.calcMeterBySteps(myApp, curSteps)
+                        ,getString(R.string.unit_kilometer),getString(R.string.unit_meter)));
+                    }
+                    RanksStepsEntity entity1 = StepsUtil.getEntityFormRanksListByEid(ranksList,eid);
+                    if(entity1 == null){
+                        entity1 = new RanksStepsEntity();
+                        entity1.eid = eid;
+                        entity1.name = "nickname";
+                        entity1.steps = Integer.valueOf(curSteps);
+                        entity1.num = 0;
+                        ranksList.add(entity1);
+                    }else{
+                        if(entity1.steps < Integer.valueOf(curSteps)) {
+                            ranksList.remove(entity1);
+                            entity1.steps = Integer.valueOf(curSteps);
+                            ranksList.add(entity1);
+                        }
+                    }
+                    reSortRanksList();
+                    updateRanksView();
+                    if(reqTimer != null){
+                        LogUtil.i("time is stop!");
+                        reqTimer.stop();
+                        reqTimer = null;
+                        if (loadingDialog != null && loadingDialog.isShowing()) {
+                            loadingDialog.dismiss();
+                        }
+                    }
+                }else if(intent.getAction().equals(Const.ACTION_CLOUD_BRIDGE_RANKS_DATA)){
+                    String eid = intent.getStringExtra(Const.KEY_WATCH_ID);
+                    String result = intent.getStringExtra(Const.SHARE_PREF_RANKS_DATA_JSON);
+                    if(!myApp.getCurUser().getFocusWatch().getEid().equals(eid)){
+                        LogUtil.i("eid is not same!");
+                        return ;
+                    }
+                    JSONObject ranksJson = (JSONObject) JSONValue.parse(result);
+                    JSONObject pl = (JSONObject) ranksJson.get("PL");
+                    updateViewByJson(pl);
+                    if(isGetWatchData){
+                        updateRanksView();
+                    }
+                } else if(intent.getAction().equals(Const.ACTION_BROAST_SENSOR_STEPS)){
+                    String sensorSteps = intent.getStringExtra("sensor_steps");
+                    phoneSteps = StepsUtil.getPhoneStepsByFirstSteps(myApp, sensorSteps);
+                    LogUtil.e("phoneSteps1:"+phoneSteps+sensorSteps);
+                    StepsUtil.getRanksDataFromCloud(myApp,"1",
+                            myApp.getCurUser().getFocusWatch().getEid(), phoneSteps);
+                }
+            }
+        };
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Const.ACTION_CLOUD_BRIDGE_STEPS_CHANGE);
+        filter.addAction(Const.ACTION_CLOUD_BRIDGE_RANKS_DATA);
+        filter.addAction(Const.ACTION_BROAST_SENSOR_STEPS);
+
+        registerReceiver(mMsgReceiver, filter);
+    }
+
+    private void startTimeOutForNoSteps(){
+        timeCount = 5;
+        reqTimer = new Timer(1000, new Runnable() {
+            public void run() {
+                if (reqTimer != null) {
+                    timeCount -= 1;
+                    if (timeCount <= 0) {
+                        reqTimer.stop();
+                        reqTimer = null;
+                        if (loadingDialog != null && loadingDialog.isShowing()) {
+                            loadingDialog.dismiss();
+                        }
+                        showPhoneAndLocalWatchSteps();
+                    } else {
+                        LogUtil.i("time:"+timeCount);
+                        reqTimer.restart();
+                    }
+                }
+            }
+        });
+        reqTimer.start();
+    }
+    /**
+    *user:zhangjun5 time:15:58 date:2017/2/7
+    *desc:解析数据和更新控件显示
+    **/
+    private void updateViewByJson(JSONObject pl){
+        int countyTotal = (int)pl.get("CountyTotal");
+        int countyRank = (int)pl.get("CountryRank");
+        int cityRank = (int)pl.get("CityRank");
+        int cityTotal = (int)pl.get("CityTotal");
+        if(cityRank == 0) {
+            tv_rank_area.setText(getString(R.string.steps_get_no_ranks));
+        }else if(cityRank < 1000){
+            tv_rank_area.setText(getString(R.string.steps_get_ranks_name,cityRank+""));
+        }else{
+            int percent = (cityRank) * 100 / cityTotal;
+            tv_rank_area.setText(getString(R.string.steps_get_ranks_name_percent,percent+"%"));
+        }
+        if(countyRank == 0) {
+            tv_rank_country.setText(getString(R.string.steps_get_no_ranks));
+        }else if(countyRank < 1000){
+            tv_rank_country.setText(getString(R.string.steps_get_ranks_name,countyRank+""));
+        }else{
+            int percent = (countyRank) * 100 / countyTotal;
+            tv_rank_country.setText(getString(R.string.steps_get_ranks_name_percent,percent+"%"));
+        }
+        JSONArray rankJson = (JSONArray) pl.get("RankList");
+        if(rankJson == null){
+            return ;
+        }
+        for(int i = 0;i < rankJson.size();i++){
+            JSONObject object = (JSONObject) rankJson.get(i);
+            RanksStepsEntity entity1 = StepsUtil.getEntityFormRanksListByEid(ranksList,(String)object.get("EID"));
+            if(entity1 == null) {
+                RanksStepsEntity entity = new RanksStepsEntity();
+                entity.eid = (String) object.get("EID");
+                entity.name = (String) object.get("Name");
+                entity.steps = (int) object.get("Steps");
+                entity.num = (int) object.get("Num");
+                ranksList.add(entity);
+            }else{
+                if(entity1.steps < (int) object.get("Steps")) {
+                    ranksList.remove(entity1);
+                    entity1.steps = (int) object.get("Steps");
+                    ranksList.add(entity1);
+                }
+            }
+        }
+        RanksStepsEntity entity1 = StepsUtil.getEntityFormRanksListByEid(ranksList,
+                myApp.getCurUser().getFocusWatch().getEid());
+        if(entity1 == null){
+            entity1 = new RanksStepsEntity();
+            entity1.eid = myApp.getCurUser().getFocusWatch().getEid();
+            entity1.name = "nickname";
+            entity1.steps = Integer.valueOf(curSteps);
+            entity1.num = 0;
+            ranksList.add(entity1);
+        }
+        reSortRanksList();
+//        updateRanksView();
+    }
+    private void reSortRanksList(){
+        Collections.sort(ranksList);
+        for(int i = 0;i<ranksList.size();i++){
+            RanksStepsEntity entity = ranksList.get(0);
+            ranksList.remove(entity);
+            entity.num = i+1;
+            ranksList.add(entity);
+        }
+    }
+
+    private void updateRanksView(){
+        int default_head_Id = R.drawable.ranks_custom;
+        RanksStepsEntity entity1 = StepsUtil.getEntityFormRanksListByNum(ranksList,1);
+        if(entity1 != null){
+            tv_rank_nick_no1.setVisibility(View.VISIBLE);
+            tv_rank_steps_no1.setVisibility(View.VISIBLE);
+            tv_rank_steps_no1.setText(getString(R.string.unit_steps_with_number,String.valueOf(entity1.steps>0?entity1.steps:"-")));
+            //设置用户图像
+            String headpath  = myApp.getCurUser().getHeadPathByEid(entity1.eid);
+            if (myApp.getCurUser().getIsWatchByEid(entity1.eid)) {//如果是手表
+                default_head_Id = R.drawable.default_head;
+                tv_rank_nick_no1.setText(myApp.getCurUser().queryNicknameByEid(entity1.eid));
+                ImageUtil.setMaskImage(iv_rank_head1, R.drawable.rank_head_mask, myApp.getHeadDrawableByFile(getResources(), headpath, entity1.eid, default_head_Id));
+            } else {
+                default_head_Id = R.drawable.relation_custom;
+                PhoneNumber phoneNumber = myApp.getPhoneNumberByEid(entity1.eid, watchEid);
+                if (phoneNumber != null && phoneNumber.nickname != null && phoneNumber.nickname.length() > 0) {
+                    tv_rank_nick_no1.setText(phoneNumber.nickname);
+                } else {
+                    tv_rank_nick_no1.setText(R.string.default_relation_text);
+                }
+                if (myApp.getCurUser().getEid().equals(entity1.eid) && entity1.steps <= 0) {
+                    setViewTitleToHelpWeb(tv_rank_steps_no1);
+                } else {
+                    tv_rank_steps_no1.setOnClickListener(null);
+                }
+
+                final ImageView ivAvatar = iv_rank_head1;
+                if (phoneNumber != null && phoneNumber.avatar == null) {
+                    ImageUtil.setMaskImage(iv_rank_head1, R.drawable.rank_head_mask,
+                            myApp.getHeadDrawableByFile(getResources(), Integer.toString(phoneNumber.attri), entity1.eid, R.drawable.relation_custom));
+                } else if (phoneNumber != null) {
+                    Bitmap headBitmap = new ImageDownloadHelper(stepsRankActivity.this).downloadImage(phoneNumber.avatar, new ImageDownloadHelper.OnImageDownloadListener() {
+                        @Override
+                        public void onImageDownload(String url, Bitmap bitmap) {
+                            Drawable headDrawable = new BitmapDrawable(getResources(), bitmap);
+                            ImageUtil.setMaskImage(ivAvatar, R.drawable.rank_head_mask, headDrawable);
+                        }
+                    });
+                    if (headBitmap != null) {
+                        Drawable headDrawable = new BitmapDrawable(getResources(), headBitmap);
+                        ImageUtil.setMaskImage(iv_rank_head1, R.drawable.rank_head_mask, headDrawable);
+                    }
+                } else {
+                    iv_rank_head1.setImageResource(default_head_Id);
+                }
+            }
+        }else{
+            tv_rank_nick_no1.setVisibility(View.GONE);
+            tv_rank_steps_no1.setVisibility(View.GONE);
+            ImageUtil.setMaskImage(iv_rank_head1, R.drawable.rank_head_mask, myApp.getHeadDrawableByFile(getResources(), null, null, default_head_Id));
+        }
+        default_head_Id = R.drawable.ranks_custom;
+        RanksStepsEntity entity2 = StepsUtil.getEntityFormRanksListByNum(ranksList,2);
+        if(entity2 != null){
+            tv_rank_nick_no2.setVisibility(View.VISIBLE);
+            tv_rank_steps_no2.setVisibility(View.VISIBLE);
+            iv_rank_num1.setVisibility(View.VISIBLE);
+            tv_rank_steps_no2.setText(getString(R.string.unit_steps_with_number,String.valueOf(entity2.steps>0?entity2.steps:"-")));
+            //设置用户图像
+            String headpath  = myApp.getCurUser().getHeadPathByEid(entity2.eid);
+            if (myApp.getCurUser().getIsWatchByEid(entity2.eid)) {//如果是手表
+                default_head_Id = R.drawable.default_head;
+                tv_rank_nick_no2.setText(myApp.getCurUser().queryNicknameByEid(entity2.eid));
+                ImageUtil.setMaskImage(iv_rank_head2, R.drawable.rank_other_head, myApp.getHeadDrawableByFile(getResources(), headpath, entity2.eid, default_head_Id));
+            }else{
+                default_head_Id = R.drawable.relation_custom;
+                PhoneNumber phoneNumber = myApp.getPhoneNumberByEid(entity2.eid, watchEid);
+                if(phoneNumber != null && phoneNumber.nickname != null &&phoneNumber.nickname.length() > 0){
+                    tv_rank_nick_no2.setText(phoneNumber.nickname);
+                }else{
+                    tv_rank_nick_no2.setText(R.string.default_relation_text);
+                }
+                if(myApp.getCurUser().getEid().equals(entity2.eid) && entity2.steps <= 0){
+                    setViewTitleToHelpWeb(tv_rank_steps_no2);
+                }else{
+                    tv_rank_steps_no2.setOnClickListener(null);
+                }
+
+                final ImageView ivAvatar = iv_rank_head2;
+                if (phoneNumber != null && phoneNumber.avatar == null) {
+                    ImageUtil.setMaskImage(iv_rank_head2, R.drawable.rank_other_head,
+                            myApp.getHeadDrawableByFile(getResources(), Integer.toString(phoneNumber.attri), entity1.eid, R.drawable.relation_custom));
+                } else if (phoneNumber != null) {
+                    Bitmap headBitmap = new ImageDownloadHelper(stepsRankActivity.this).downloadImage(phoneNumber.avatar, new ImageDownloadHelper.OnImageDownloadListener() {
+                        @Override
+                        public void onImageDownload(String url, Bitmap bitmap) {
+                            Drawable headDrawable = new BitmapDrawable(getResources(), bitmap);
+                            ImageUtil.setMaskImage(ivAvatar, R.drawable.rank_other_head, headDrawable);
+                        }
+                    });
+                    if (headBitmap != null) {
+                        Drawable headDrawable = new BitmapDrawable(getResources(), headBitmap);
+                        ImageUtil.setMaskImage(iv_rank_head2, R.drawable.rank_other_head, headDrawable);
+                    }
+                } else {
+                    iv_rank_head2.setImageResource(default_head_Id);
+                }
+            }
+        }else{
+            tv_rank_nick_no2.setVisibility(View.GONE);
+            tv_rank_steps_no2.setVisibility(View.GONE);
+            iv_rank_num1.setVisibility(View.GONE);
+            ImageUtil.setMaskImage(iv_rank_head2, R.drawable.rank_other_head, myApp.getHeadDrawableByFile(getResources(), null, null, default_head_Id));
+        }
+        default_head_Id = R.drawable.ranks_custom;
+        RanksStepsEntity entity3 = StepsUtil.getEntityFormRanksListByNum(ranksList,3);
+        if(entity3 != null){
+            tv_rank_nick_no3.setVisibility(View.VISIBLE);
+            tv_rank_steps_no3.setVisibility(View.VISIBLE);
+            iv_rank_num2.setVisibility(View.VISIBLE);
+            tv_rank_steps_no3.setText(getString(R.string.unit_steps_with_number,String.valueOf(entity3.steps>0?entity3.steps:"-")));
+            //设置用户图像
+            String headpath  = myApp.getCurUser().getHeadPathByEid(entity3.eid);
+            if (myApp.getCurUser().getIsWatchByEid(entity3.eid)) {//如果是手表
+                default_head_Id = R.drawable.default_head;
+                tv_rank_nick_no3.setText(myApp.getCurUser().queryNicknameByEid(entity3.eid));
+                ImageUtil.setMaskImage(iv_rank_head3, R.drawable.rank_other_head, myApp.getHeadDrawableByFile(getResources(), headpath, entity3.eid, default_head_Id));
+            }else{
+                default_head_Id = R.drawable.relation_custom;
+                PhoneNumber phoneNumber = myApp.getPhoneNumberByEid(entity3.eid, watchEid);
+                if(phoneNumber != null && phoneNumber.nickname != null &&phoneNumber.nickname.length() > 0){
+                    tv_rank_nick_no3.setText(phoneNumber.nickname);
+                }else{
+                    tv_rank_nick_no3.setText(R.string.default_relation_text);
+                }
+                if(myApp.getCurUser().getEid().equals(entity3.eid) && entity3.steps <= 0){
+                    setViewTitleToHelpWeb(tv_rank_steps_no3);
+                }else{
+                    tv_rank_steps_no3.setOnClickListener(null);
+                }
+
+                final ImageView ivAvatar = iv_rank_head3;
+                if (phoneNumber != null && phoneNumber.avatar == null) {
+                    ImageUtil.setMaskImage(iv_rank_head3, R.drawable.rank_other_head,
+                            myApp.getHeadDrawableByFile(getResources(), Integer.toString(phoneNumber.attri), entity1.eid, R.drawable.relation_custom));
+                } else if (phoneNumber != null) {
+                    Bitmap headBitmap = new ImageDownloadHelper(stepsRankActivity.this).downloadImage(phoneNumber.avatar, new ImageDownloadHelper.OnImageDownloadListener() {
+                        @Override
+                        public void onImageDownload(String url, Bitmap bitmap) {
+                            Drawable headDrawable = new BitmapDrawable(getResources(), bitmap);
+                            ImageUtil.setMaskImage(ivAvatar, R.drawable.rank_other_head, headDrawable);
+                        }
+                    });
+                    if (headBitmap != null) {
+                        Drawable headDrawable = new BitmapDrawable(getResources(), headBitmap);
+                        ImageUtil.setMaskImage(iv_rank_head3, R.drawable.rank_other_head, headDrawable);
+                    }
+                } else {
+                    iv_rank_head3.setImageResource(default_head_Id);
+                }
+            }
+        }else{
+            tv_rank_nick_no3.setVisibility(View.GONE);
+            tv_rank_steps_no3.setVisibility(View.GONE);
+            iv_rank_num2.setVisibility(View.GONE);
+            ImageUtil.setMaskImage(iv_rank_head3, R.drawable.rank_other_head, myApp.getHeadDrawableByFile(getResources(), null, null, default_head_Id));
+        }
+    }
+
+    private void setViewTitleToHelpWeb(TextView viewTitle){
+        String titile = getString(R.string.steps_show_error);
+        SpannableStringBuilder builder = new SpannableStringBuilder(titile);
+        ClickableSpan clickableSpan = new ClickableSpan() {
+            @Override
+            public void onClick(View widget) {
+            }
+
+            @Override
+            public void updateDrawState(TextPaint ds) {
+                super.updateDrawState(ds);
+                ds.setColor(stepsRankActivity.this.getResources().getColor(R.color.title_white_color));
+            }
+        };
+        builder.setSpan(clickableSpan, 0, titile.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        viewTitle.setText(builder);
+        viewTitle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(myApp.getHelpCenterIntent(stepsRankActivity.this, "stepRanks"));
+            }
+        });
+    }
+
+    private void getStepsFromLocal(){
+        targetSteps = StepsUtil.getLocalDataToTargetLevel(myApp, watchEid);
+        curSteps = StepsUtil.getLocalDataToCurSteps(myApp, watchEid);
+        tv_baby_steps.setText(getString(R.string.unit_steps_with_number, curSteps + "/" + targetSteps));
+        tv_baby_calos.setText(getString(R.string.unit_kiloCard_with_num,String.valueOf(StepsUtil.calcCalBySteps(myApp,curSteps))));
+        tv_baby_kilos.setText(StepsUtil.formatKiloByMeter(StepsUtil.calcMeterBySteps(myApp, curSteps),getString(R.string.unit_kilometer),getString(R.string.unit_meter)));
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        getStepsFromLocal();
+    }
+
+    /**
+    *user:zhangjun5 time:14:16 date:2017/2/8
+    *desc:请求用户身高、体重信息和获取实时计步数据
+    **/
+    private void getStepsFromCloudBridge(){
+        if(myApp.getNetService() != null) {
+            myApp.getNetService().sendDeviceGet(myApp.getCurUser().getFocusWatch().getEid(), this);
+            //MapMget获取到目标步数,实时步数，计步开关
+            String[] keys = new String[4];
+            keys[0] = CloudBridgeUtil.STEPS_TARGET_LEVEL;
+            keys[1] = CloudBridgeUtil.STEPS_LEVEL;
+            keys[2] = CloudBridgeUtil.STEPS_ONOFF_SETTING;
+            keys[3] = CloudBridgeUtil.STEPS_NOTIFICATION_SETTING;
+            myApp.getNetService().sendMapMGetMsg(myApp.getCurUser().getFocusWatch().getEid(), keys, this);
+            myApp.getNetService().sendStepsReqE2eMsg();
+        }
+    }
+
+    private void initView(){
+        ((TextView) findViewById(R.id.tv_title)).setText(getString(R.string.health_steps));
+        btnBack = findViewById(R.id.iv_title_back);
+        tv_baby_calos = findViewById(R.id.baby_rank_calo);
+        tv_baby_kilos = findViewById(R.id.baby_rank_kilo);
+        tv_baby_steps = findViewById(R.id.baby_rank_step);
+        tv_rank_country = findViewById(R.id.rank_country);
+        tv_rank_area = findViewById(R.id.rank_area);
+        tv_rank_nick_no1 = findViewById(R.id.nickname_no1);
+        tv_rank_nick_no2 = findViewById(R.id.nickname_no2);
+        tv_rank_nick_no3 = findViewById(R.id.nickname_no3);
+        tv_rank_steps_no1 = findViewById(R.id.rank_steps_no1);
+        tv_rank_steps_no2 = findViewById(R.id.rank_steps_no2);
+        tv_rank_steps_no3 = findViewById(R.id.rank_steps_no3);
+        iv_rank_head1 = findViewById(R.id.head_imge_no1);
+        iv_rank_head2 = findViewById(R.id.head_imge_no2);
+        iv_rank_head3 = findViewById(R.id.head_imge_no3);
+        iv_rank_num1 = findViewById(R.id.rank_two_no);
+        iv_rank_num2 = findViewById(R.id.rank_three_no);
+        ll_cur_steps = findViewById(R.id.rank_cursteps_layer);
+        ll_his_steps = findViewById(R.id.rank_hissteps_layer);
+        rl_family_ranks = findViewById(R.id.rank_family_layer);
+        ib_rank_settings = findViewById(R.id.iv_title_menu);
+        ib_rank_settings.setBackgroundResource(R.drawable.btn_steps_setting_selector);
+
+        if(myApp.getCurUser().isMeAdminByWatch(myApp.getCurUser().getFocusWatch())){
+            ib_rank_settings.setVisibility(View.VISIBLE);
+        }else{
+            ib_rank_settings.setVisibility(View.GONE);
+        }
+
+        btnBack.setOnClickListener(this);
+        ll_cur_steps.setOnClickListener(this);
+        ll_his_steps.setOnClickListener(this);
+        rl_family_ranks.setOnClickListener(this);
+        ib_rank_settings.setOnClickListener(this);
+        //初始化默认头像
+        int default_head_Id = R.drawable.ranks_custom;
+        ImageUtil.setMaskImage(iv_rank_head1, R.drawable.rank_head_mask, myApp.getHeadDrawableByFile(getResources(), null, null, default_head_Id));
+        ImageUtil.setMaskImage(iv_rank_head2, R.drawable.rank_other_head, myApp.getHeadDrawableByFile(getResources(), null, null, default_head_Id));
+        ImageUtil.setMaskImage(iv_rank_head3, R.drawable.rank_other_head, myApp.getHeadDrawableByFile(getResources(), null, null, default_head_Id));
+
+        loadingDialog = new LoadingDialog(this, R.style.Theme_DataSheet, this);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        try {
+            unregisterReceiver(mMsgReceiver);
+        } catch (Exception e) {
+        }
+        if(reqTimer != null){
+            reqTimer.stop();
+            reqTimer = null;
+            if (loadingDialog != null && loadingDialog.isShowing()) {
+                loadingDialog.dismiss();
+            }
+        }
+    }
+
+    @Override
+    public void onClick(View v) {
+        WatchData focusWatch = myApp.getCurUser().getFocusWatch();
+        switch (v.getId()){
+            case R.id.iv_title_menu:
+                startActivity(new Intent(this, StepsSettingActivity.class));
+                break;
+            case R.id.iv_title_back:
+                finish();
+                break;
+            case R.id.rank_cursteps_layer:
+                startActivity(new Intent(this, StepsActivity.class));
+                break;
+            case R.id.rank_hissteps_layer:
+                startActivity(new Intent(this, RanksAreasActivity.class));
+                break;
+            case R.id.rank_family_layer:
+
+                break;
+        }
+    }
+
+    @Override
+    public void doCallBack(JSONObject reqMsg, JSONObject respMsg) {
+        int cid = (Integer)respMsg.get(CloudBridgeUtil.KEY_NAME_CID);
+        int mapRc = CloudBridgeUtil.getCloudMsgRC(respMsg);
+        switch (cid) {
+            case CloudBridgeUtil.CID_DEVICE_GET_RESP:
+                if (mapRc == CloudBridgeUtil.RC_SUCCESS) {
+                    JSONObject devicePl = CloudBridgeUtil.getCloudMsgPL(respMsg);
+                    myApp.parseDevicePl(myApp.getCurUser().getFocusWatch(), devicePl);
+                    LogUtil.i("devicepl"+devicePl.toJSONString());
+                    WatchDAO.getInstance(getApplicationContext()).addWatch(myApp.getCurUser().getFocusWatch());
+                }
+                break;
+            case CloudBridgeUtil.CID_MAPGET_MGET_RESP:
+                if (mapRc == CloudBridgeUtil.RC_SUCCESS) {
+                    JSONObject pl = (JSONObject) respMsg.get(CloudBridgeUtil.KEY_NAME_PL);
+                    String steps = (String) pl.get(CloudBridgeUtil.STEPS_LEVEL);
+                    String target = (String) pl.get(CloudBridgeUtil.STEPS_TARGET_LEVEL);
+                    if (target != null && !"".equals(target) && !target.equals("0")) {
+                        myApp.setValue(myApp.getCurUser().getFocusWatch().getEid() + CloudBridgeUtil.STEPS_TARGET_LEVEL,
+                                target);
+                    }
+                    if (steps != null && !"".equals(steps) && !steps.equals("0")) {
+                        myApp.setValue(myApp.getCurUser().getFocusWatch().getEid() +
+                                CloudBridgeUtil.STEPS_LEVEL, steps);
+                    }
+                    getStepsFromLocal();
+                    String offOnNotication = (String) pl.get(CloudBridgeUtil.STEPS_NOTIFICATION_SETTING);
+                    if(offOnNotication != null) {
+                        LogUtil.e("get step noti in stepsRankActivity:"+offOnNotication);
+                        if (offOnNotication.equals("0")) {
+                            myApp.setValue(myApp.getCurUser().getFocusWatch().getEid() +
+                                    CloudBridgeUtil.STEPS_NOTIFICATION_SETTING, "0");
+                        } else {
+                            myApp.setValue(myApp.getCurUser().getFocusWatch().getEid() +
+                                    CloudBridgeUtil.STEPS_NOTIFICATION_SETTING, "1");
+                        }
+                    }
+                }
+                break;
+        }
+    }
+
+    @Override
+    public void confirmClick() {
+
+    }
+}

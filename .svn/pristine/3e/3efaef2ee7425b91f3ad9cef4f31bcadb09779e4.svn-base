@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">CameraLibrary</string>
+    <string name="camera_prompt">Nhấn vào để chụp ảnh, kéo dài để chụp ảnh</string>
+</resources>

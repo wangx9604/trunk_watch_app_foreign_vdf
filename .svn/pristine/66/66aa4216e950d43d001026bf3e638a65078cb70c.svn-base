@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/welcome_bg_color">
+
+    <include
+        android:id="@+id/layout_title"
+        layout="@layout/activity_title" />
+
+    <TextView
+        android:id="@+id/tv_add_friend_num_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="10dp"
+        android:layout_marginTop="99.7dp"
+        android:text="@string/add_watch_friend_by_pnonenum"
+        android:textColor="@color/white"
+        android:textSize="@dimen/xiaomiMyTextNickname" />
+
+    <ImageView
+        android:id="@+id/iv_add_friend_num_img"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tv_add_friend_num_title"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="27.3dp"
+        android:src="@drawable/add_friend_phonenum" />
+
+    <RelativeLayout
+        android:id="@+id/layout_add_friend_num"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/iv_add_friend_num_img"
+        android:layout_marginTop="27.3dp">
+        <EditText
+            android:id="@+id/edit_number"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:hint="@string/add_watch_friend_by_pnonenum"
+            android:inputType="numberDecimal"
+            android:maxLength="18"
+            android:maxLines="1"
+            android:paddingStart="5dp"
+            android:textColor="@color/white"
+            android:textColorHint="@color/white"
+            android:textCursorDrawable="@null"
+            android:textSize="@dimen/xiaomiMyTextNickname"
+            android:background="@drawable/add_friend_text_selector"/>
+        <TextView
+            android:id="@+id/btn_add_friend"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:paddingEnd="11dp"
+            android:text="@string/search"
+            android:layout_alignEnd="@id/edit_number"
+            android:textColor="@color/color_3"
+            android:textSize="@dimen/xiaomiMyTextNickname" />
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/tv_add_friend_qr_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="59dp"
+        android:text="@string/add_watch_friend_by_qrStr"
+        android:layout_below="@id/layout_add_friend_num"
+        android:textColor="@color/white"
+        android:textSize="@dimen/xiaomiMyTextNickname" />
+
+    <ImageView
+        android:id="@+id/iv_add_friend_qr_img"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tv_add_friend_qr_title"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="27.3dp"
+        android:src="@drawable/add_friend_qrcode" />
+
+    <Button
+        android:id="@+id/btn_next_step"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/iv_add_friend_qr_img"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="27.3dp"
+        android:background="@drawable/btn_trans_selector"
+        android:text="@string/start_scan_guide"
+        android:textColor="@color/bg_color"
+        android:textSize="@dimen/MyTextSize2" />
+</RelativeLayout>

@@ -1,0 +1,225 @@
+package com.xiaoxun.xun.activitys;
+
+import android.os.Bundle;
+import androidx.collection.ArrayMap;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import android.view.View;
+import android.widget.ImageButton;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.adapter.DeviceModeAdapter;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.interfaces.MsgCallback;
+import com.xiaoxun.xun.utils.CloudBridgeUtil;
+import com.xiaoxun.xun.utils.ToastUtil;
+
+import net.minidev.json.JSONObject;
+
+/**
+ * Created by huangyouyang on 2016/10/11.
+ */
+public class DeviceAutoAnswerActivity extends NormalActivity implements MsgCallback {
+
+    private TextView tvTitle;
+    private ImageButton btnBack;
+    private RecyclerView mModeRecyclerView;
+    private DeviceModeAdapter mModeAdapter;
+    private LinearLayoutManager mLinearLayoutManager;
+    private ArrayMap<Integer, String[]> modeMap;
+
+    private WatchData curWatch;
+    private int formalAutoAnswer;
+    private int selectAutoAnswer=1 ;
+    private int iItemSelectPosition = 2;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.activity_auto_answer);
+        curWatch = ((ImibabyApp) getApplication()).getCurUser().getFocusWatch();
+
+        initViews();
+        initData();
+        initListener();
+
+        getAutoAnswerFromLocal();
+        mapgetAutoAnswer();
+    }
+
+    private void initViews() {
+
+        tvTitle= findViewById(R.id.tv_title);
+        tvTitle.setText(getText(R.string.setting_auto_answer));
+
+        btnBack = findViewById(R.id.iv_title_back);
+        mModeRecyclerView= findViewById(R.id.autoanswer_recyclerview);
+    }
+
+    private void initData() {
+
+        modeMap = new ArrayMap<>();
+        modeMap.put(0, new String[]{getString(R.string.no_auto_answer), getString(R.string.no_auto_answer_desc)});
+        modeMap.put(1, new String[]{getString(R.string.auto_answer_rightnow), getString(R.string.auto_answer_rightnow_desc)});
+        if(getMyApp().getCurUser().getFocusWatch().isDevice709_A03() || getMyApp().getCurUser().getFocusWatch().isDevice708_A06()
+                || getMyApp().getCurUser().getFocusWatch().isDevice709_A05() || getMyApp().getCurUser().getFocusWatch().isDevice708_A07()
+                || getMyApp().getCurUser().getFocusWatch().isDevice707_H01() || getMyApp().getCurUser().getFocusWatch().isDevice709_H01()){
+            modeMap.put(2, new String[]{getString(R.string.auto_answer_after_15s), getString(R.string.auto_answer_after_desc_15s)});
+        }else {
+            modeMap.put(2, new String[]{getString(R.string.auto_answer_after), getString(R.string.auto_answer_after_desc)});
+        }
+
+        mLinearLayoutManager = new LinearLayoutManager(this);
+        mModeRecyclerView.setLayoutManager(mLinearLayoutManager);
+        mModeAdapter = new DeviceModeAdapter(this, modeMap);
+        mModeRecyclerView.setAdapter(mModeAdapter);
+//        mModeRecyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL_LIST) {
+//        });
+    }
+
+    private void initListener() {
+
+        btnBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                DeviceAutoAnswerActivity.this.finish();
+            }
+        });
+
+        mModeAdapter.setOnItemClickLitener(new DeviceModeAdapter.OnRecyclerViewItemClickListener() {
+            @Override
+            public void onItemClick(View view, int position) {
+
+                if (position==2&&!isNewVersion()){
+                    ToastUtil.show(DeviceAutoAnswerActivity.this,getText(R.string.please_update_new_version).toString());
+                    return;
+                }
+                iItemSelectPosition = position;
+                selectAutoAnswer=getModeFromPosition(iItemSelectPosition);
+                if (formalAutoAnswer != selectAutoAnswer){
+                    mapsetAutoAnswer(Integer.toString(selectAutoAnswer));
+                }
+            }
+        });
+    }
+
+    private void getAutoAnswerFromLocal(){
+
+        String autoAnswer=myApp.getStringValue(myApp.getCurUser().getFocusWatch().getEid() + Const.SHARE_PREF_FIELD_AUTO_RECEIVE, "1");
+        selectAutoAnswer=Integer.parseInt(autoAnswer);
+        updateAutoAnswerState();
+    }
+
+    private void mapgetAutoAnswer() {
+
+        String[] keys = new String[1];
+        String eid = myApp.getCurUser().getFocusWatch().getEid();
+        keys[0] = CloudBridgeUtil.AUTO_ANSWER;
+        if (myApp.getNetService() != null) {
+            myApp.getNetService().sendMapGetMsg(eid, keys[0], DeviceAutoAnswerActivity.this);
+        }
+    }
+
+    private void mapsetAutoAnswer(String autoAnswer) {
+
+        if (myApp.getNetService() != null) {
+            myApp.getNetService().sendMapSetMsg(curWatch.getEid(), curWatch.getFamilyId(),
+                    CloudBridgeUtil.AUTO_ANSWER, autoAnswer, DeviceAutoAnswerActivity.this);
+        }
+    }
+
+    private void updateAutoAnswerState(){
+
+        formalAutoAnswer=selectAutoAnswer;
+        iItemSelectPosition=getPositionFromMode(selectAutoAnswer);
+        mModeAdapter.selectItem(iItemSelectPosition);
+        mModeAdapter.notifyDataSetChanged();
+        myApp.setValue(curWatch.getEid() + Const.SHARE_PREF_FIELD_AUTO_RECEIVE, Integer.toString(selectAutoAnswer));
+    }
+
+    @Override
+    public void doCallBack(JSONObject reqMsg, JSONObject respMsg) {
+
+        int cid = (Integer) respMsg.get(CloudBridgeUtil.KEY_NAME_CID);
+        switch (cid) {
+            case CloudBridgeUtil.CID_MAPSET_RESP:
+                int rc = CloudBridgeUtil.getCloudMsgRC(respMsg);
+                if (rc > 0) {
+                    updateAutoAnswerState();
+                } else if (rc == CloudBridgeUtil.RC_TIMEOUT) {
+                    ToastUtil.showMyToast(this, getString(R.string.phone_set_timeout), Toast.LENGTH_SHORT);
+                } else if (rc == CloudBridgeUtil.RC_NETERROR || rc == CloudBridgeUtil.RC_SOCKET_NOTREADY) {
+                    ToastUtil.showMyToast(this, getString(R.string.network_error_prompt), Toast.LENGTH_SHORT);
+                } else if (rc == CloudBridgeUtil.ERROR_CODE_COMMOM_GENERAL_EXCEPTION) {
+                    ToastUtil.showMyToast(this, getString(R.string.set_error), Toast.LENGTH_SHORT);
+                }
+                break;
+            case CloudBridgeUtil.CID_MAPGET_MGET_RESP:
+                int mapRc = CloudBridgeUtil.getCloudMsgRC(respMsg);
+                if (mapRc == CloudBridgeUtil.RC_SUCCESS) {
+                    JSONObject maggetPl = (JSONObject) respMsg.get(CloudBridgeUtil.KEY_NAME_PL);
+                    String value = (String) maggetPl.get(CloudBridgeUtil.AUTO_ANSWER);
+                    if (value != null && value.length() > 0) {
+                        selectAutoAnswer=Integer.parseInt(value);
+                        updateAutoAnswerState();
+                    }
+                } else {
+                    ToastUtil.showMyToast(this, getString(R.string.network_error_prompt), Toast.LENGTH_SHORT);
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    private boolean isNewVersion() {
+
+        boolean isNewVersion ;
+        if (curWatch.isDevice102())
+            isNewVersion=myApp.isControledByVersion(curWatch,true,"T29");
+        else if (curWatch.isDevice105()) {
+            if(curWatch.getDeviceType().equals("SW105")) {
+                isNewVersion = myApp.isControledByVersion(curWatch, true, "T10");
+            }else{
+                isNewVersion = true;
+            }
+        }
+        else
+            isNewVersion=true;
+
+        return isNewVersion;
+    }
+
+    private int getPositionFromMode(int iItemSelectMode) {
+
+        switch (iItemSelectMode) {
+            case 0:
+                return 0;
+            case 1:
+                return 2;
+            case 2:
+                return 1;
+            default:
+                return 2;
+        }
+    }
+
+    private int getModeFromPosition(int iItemSelectMode) {
+
+        switch (iItemSelectMode) {
+            case 0:
+                return 0;
+            case 1:
+                return 2;
+            case 2:
+                return 1;
+            default:
+                return 1;
+        }
+    }
+}

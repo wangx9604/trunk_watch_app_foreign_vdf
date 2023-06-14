@@ -1,0 +1,32 @@
+package com.xiaoxun.xun.networkv2.beans;
+
+import java.util.ArrayList;
+
+public class TaskListInfo extends BaseResponseInfo{
+    ArrayList<TaskDetailInfo> list;
+
+    public TaskListInfo(int code) {
+        super(code);
+    }
+
+    public TaskListInfo(int code, ArrayList<TaskDetailInfo> list) {
+        super(code);
+        this.list = list;
+    }
+
+    public ArrayList<TaskDetailInfo> getList() {
+        return list;
+    }
+
+    public void setList(ArrayList<TaskDetailInfo> list) {
+        this.list = list;
+    }
+
+    @Override
+    public String toString() {
+        return "TaskListInfo{" +
+                "list=" + list +
+                ", code=" + code +
+                '}';
+    }
+}

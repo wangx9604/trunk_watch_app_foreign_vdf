@@ -1,0 +1,54 @@
+package com.xiaoxun.xun.networkv2.beans;
+
+import java.util.ArrayList;
+
+public class XunScoreRollInfo {
+    int RC;
+    ArrayList<RollInfo> row;
+
+    public static class RollInfo {
+        String userName;
+        String avatar;
+        String goodsName;
+
+        public String getUserName() {
+            return userName;
+        }
+
+        public void setUserName(String userName) {
+            this.userName = userName;
+        }
+
+        public String getAvatar() {
+            return avatar;
+        }
+
+        public void setAvatar(String avatar) {
+            this.avatar = avatar;
+        }
+
+        public String getGoodsName() {
+            return goodsName;
+        }
+
+        public void setGoodsName(String goodsName) {
+            this.goodsName = goodsName;
+        }
+    }
+
+    public int getRC() {
+        return RC;
+    }
+
+    public void setRC(int RC) {
+        this.RC = RC;
+    }
+
+    public ArrayList<RollInfo> getRow() {
+        return row;
+    }
+
+    public void setRow(ArrayList<RollInfo> row) {
+        this.row = row;
+    }
+}

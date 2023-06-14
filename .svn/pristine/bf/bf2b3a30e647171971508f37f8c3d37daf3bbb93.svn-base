@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/xiaomi_bg_grey"
+    android:orientation="vertical">
+
+    <include layout="@layout/activity_title"
+        />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/autoanswer_recyclerview"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:layout_marginLeft="23.33dp"
+        android:layout_marginRight="23.33dp"
+        android:background="@color/divider_color" />
+</LinearLayout>

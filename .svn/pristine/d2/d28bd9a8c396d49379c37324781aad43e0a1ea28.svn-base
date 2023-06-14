@@ -1,0 +1,241 @@
+package com.xiaoxun.xun.utils;
+
+import android.app.Activity;
+import android.app.Dialog;
+import android.content.Context;
+import android.util.Base64;
+import android.view.View;
+
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.Constants;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.views.AuthAdminDialog;
+
+import net.minidev.json.JSONObject;
+import net.minidev.json.JSONValue;
+
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+
+public class PersonalAuth {
+    public interface DialogClickListener{
+        void onClick(int status);
+    }
+    public interface AuthResultListener{
+        void onResult(int code,String msg);
+    }
+
+    //wifi数据授权
+    public static boolean isWifiAuthorised(ImibabyApp mApp,String eid){
+        String pref = mApp.getStringValue(Constants.SHARE_PREF_AUTHORISE_WIFI + eid,"");
+        if(!pref.equals("")){
+            JSONObject pl = (JSONObject) JSONValue.parse(pref);
+            int isAuth = (int)pl.get(Constants.KEY_NAME_AUTHORISE);
+            return isAuth == 1;
+        }else{
+            return false;
+        }
+    }
+    public static void saveWifiAuthorise(ImibabyApp mApp,String eid,int status){
+        JSONObject pl = new JSONObject();
+        pl.put(Constants.KEY_NAME_AUTHORISE,status);
+        pl.put(Constants.APP_SCORE_TIMESTAMP,TimeUtil.getTimeStampLocal());
+        mApp.setValue(Constants.SHARE_PREF_AUTHORISE_WIFI + eid,pl.toJSONString());
+    }
+
+    public static void showWifiAuthorisedDialog(Context context,ImibabyApp mApp,String uid,String eid,final DialogClickListener listener){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        String pro = context.getString(R.string.app_name);
+        AuthAdminDialog dlg = new AuthAdminDialog(context, context.getString(R.string.personal_authorise_wifi_title)
+                , context.getString(R.string.personal_authorise_wifi_content,pro),
+                new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_WIFI, 0, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(0);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                },
+                new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_WIFI, 1, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(1);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                });
+        dlg.show();
+    }
+    public static void showWifiAuthorisedNotAdminDialog(Activity context, ImibabyApp mApp){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        String pro = context.getString(R.string.app_name);
+        Dialog dialog = DialogUtil.CustomNormalDialog(context, context.getString(R.string.personal_authorise_wifi_title),
+                context.getString(R.string.personal_authorise_wifi_content_not_admin,pro), new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        context.finish();
+                    }
+                },context.getString(R.string.donothing_text));
+        dialog.setCancelable(false);
+        dialog.show();
+    }
+
+    /**
+     * 获取授权状态
+     * @param eid 设备eid
+     * @param authType 授权类型
+     * @param mApp
+     * @param listener 获取结果回调
+     */
+    public static void getAuthResultFromCloud(String eid,String authType,ImibabyApp mApp,AuthResultListener listener){
+        Observable.create(new ObservableOnSubscribe<String>() {
+            @Override
+            public void subscribe(ObservableEmitter<String> e) throws Exception {
+                JSONObject pl = new JSONObject();
+                pl.put("eid",eid);
+                pl.put("type",authType);
+                LogUtil.e("getAuthResultFromCloud post : " + pl.toJSONString());
+                String body = Base64.encodeToString(AESUtil.encryptAESCBC(pl.toJSONString(),
+                        mApp.getNetService().AES_KEY, mApp.getNetService().AES_KEY),
+                        Base64.NO_WRAP) + mApp.getToken();
+                HttpWorks.HttpWorksResponse response = HttpWorks.httpPost(Const.AUTHORISE_GET_RESULT_URL,body);
+                if(response.isSuccess()){
+                    e.onNext(response.data);
+                }else{
+                    listener.onResult(-1,"network error");
+                }
+                e.onComplete();
+            }
+        }).subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<String>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+
+            }
+
+            @Override
+            public void onNext(String s) {
+                handleGetAuthSendResult(authType,mApp,eid,s);  //获取状态存储到本地
+                listener.onResult(0,"Success");
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                listener.onResult(-1,"Error");
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
+        });
+    }
+
+    /**
+     * 上传授权结果
+     * @param uid   用户id
+     * @param eid   设备id
+     * @param authType  授权类型
+     * @param result    授权结果
+     * @param mApp  Application
+     * @param listener  上传结果回调
+     */
+    public static void sendAuthResultToCloud(String uid,String eid,String authType,int result,ImibabyApp mApp,AuthResultListener listener){
+        Observable.create(new ObservableOnSubscribe<String>() {
+            @Override
+            public void subscribe(ObservableEmitter<String> e) throws Exception {
+                JSONObject pl = new JSONObject();
+                pl.put("uid",uid);
+                pl.put("eid",eid);
+                pl.put("type",authType);
+                pl.put("val",result);
+                LogUtil.e("sendAuthResultToCloud : " + pl.toJSONString());
+                String body = Base64.encodeToString(AESUtil.encryptAESCBC(pl.toJSONString(),
+                        mApp.getNetService().AES_KEY, mApp.getNetService().AES_KEY),
+                        Base64.NO_WRAP) + mApp.getToken();
+                HttpWorks.HttpWorksResponse response = HttpWorks.httpPost(Const.AUTHORISE_UPLOAD_RESULT_URL,body);
+                if(response.isSuccess()){
+                    e.onNext(response.data);
+                }else{
+                    listener.onResult(-1,"network error");
+                }
+                e.onComplete();
+            }
+        }).subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<String>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+
+            }
+
+            @Override
+            public void onNext(String s) {
+                handleAuthSendResult(authType,mApp,eid,result);
+                listener.onResult(0,"success");
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                listener.onResult(-1,"network error");
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
+        });
+    }
+
+    private static void handleAuthSendResult(String type,ImibabyApp mApp,String eid,int status){
+        switch (type){
+            case Constants.KEY_NAME_AUTHORISE_WIFI:
+                saveWifiAuthorise(mApp,eid,status);
+                break;
+        }
+    }
+
+    private static void handleGetAuthSendResult(String type,ImibabyApp mApp,String eid,String data){
+        LogUtil.e("handleGetAuthSendResult :" + data);
+        int status = 0;
+        JSONObject resp = (JSONObject) JSONValue.parse(data);
+        int rc = CloudBridgeUtil.getCloudMsgRC(resp);
+        if(rc == CloudBridgeUtil.RC_SUCCESS){
+            JSONObject pl = (JSONObject)resp.get(CloudBridgeUtil.KEY_NAME_PL);
+            if(pl != null){
+                status = (int)pl.get("val");
+            }
+        }
+        switch (type){
+            case Constants.KEY_NAME_AUTHORISE_WIFI:
+                saveWifiAuthorise(mApp,eid,status);
+                break;
+
+        }
+    }
+}

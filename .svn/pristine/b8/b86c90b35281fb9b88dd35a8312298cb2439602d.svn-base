@@ -1,0 +1,1358 @@
+package com.xiaoxun.xun.utils;
+
+import android.app.Activity;
+import android.app.Dialog;
+import android.content.Context;
+import android.util.Base64;
+import android.view.View;
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.Constants;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.pay.utils.HttpWorks;
+import com.xiaoxun.xun.views.AuthAdminDialog;
+
+import net.minidev.json.JSONObject;
+import net.minidev.json.JSONValue;
+
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+
+public class PersonalAuth {
+    public interface DialogClickListener{
+        void onClick(int status);
+    }
+    public interface AuthResultListener{
+        void onResult(int code,String msg);
+    }
+
+    //MapAuth
+    public static boolean isMapDataAuthorised(ImibabyApp mApp,String eid){
+        String pref = mApp.getStringValue(Constants.SHARE_PREF_AUTHORISE_PERSONAL_MAP_DATA + eid,"");
+        if(!pref.equals("")){
+            JSONObject pl = (JSONObject) JSONValue.parse(pref);
+            int isAuth = (int)pl.get(Constants.KEY_NAME_AUTHORISE);
+            return isAuth == 1;
+        }else{
+            return false;
+        }
+    }
+
+    public static boolean isFirstMapDataAuthorisedDialogShow(ImibabyApp mApp,String eid){
+        int pref = mApp.getIntValue(Constants.SHARE_PREF_AUTHORISE_PERSONAL_MAP_DATA_FIRST_SHOW + eid,0);
+        return pref == 0;
+    }
+
+    public static void saveMapDataAuthorise(ImibabyApp mApp,String eid,int status){
+        JSONObject pl = new JSONObject();
+        pl.put(Constants.KEY_NAME_AUTHORISE,status);
+        pl.put(Constants.APP_SCORE_TIMESTAMP,TimeUtil.getTimeStampLocal());
+        mApp.setValue(Constants.SHARE_PREF_AUTHORISE_PERSONAL_MAP_DATA + eid,pl.toJSONString());
+    }
+
+
+    public static void showReCallAuthoriseDialog(Context context, String title, String content, String mAuthType,
+                                                 ImibabyApp myApp, String uid, String eid, DialogClickListener dialogClickListener) {
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        Dialog dialog = DialogUtil.CustomALertDialog(context, title, content, new DialogUtil.OnCustomDialogListener() {
+            @Override
+            public void onClick(View v) {
+                dialogClickListener.onClick(-1);
+            }
+        }, context.getString(R.string.wechat_notice_bind_dialog_refuse),
+        new DialogUtil.OnCustomDialogListener() {
+            @Override
+            public void onClick(View v) {
+                sendAuthResultToCloud(uid, eid, mAuthType, 0, myApp, new AuthResultListener() {
+                    @Override
+                    public void onResult(int code, String msg) {
+                        if(code == 0){
+                            dialogClickListener.onClick(0);
+                        }else{
+                            ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                        }
+                    }
+                });
+            }
+        },context.getString(R.string.agree));
+        dialog.show();
+    }
+
+    public static void  showAuthorisedRequestDialog(Context context,ImibabyApp mApp,String uid,String eid,
+                                                   String mAuthType, String mTitle, String mContent,
+                                                   final DialogClickListener listener){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        AuthAdminDialog dlg = new AuthAdminDialog(context, mTitle,
+                mContent, new AuthAdminDialog.OnDialogListener() {
+            @Override
+            public void onClick(View v, AuthAdminDialog dialog) {
+                sendAuthResultToCloud(uid, eid, mAuthType, 0, mApp, new AuthResultListener() {
+                    @Override
+                    public void onResult(int code, String msg) {
+                        if(code == 0){
+                            listener.onClick(0);
+                        }else{
+                            ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                        }
+                        dialog.setProgressBarVisibility(View.GONE);
+                        dialog.dismiss();
+                    }
+                });
+            }
+        }, new AuthAdminDialog.OnDialogListener() {
+            @Override
+            public void onClick(View v,AuthAdminDialog dialog) {
+                sendAuthResultToCloud(uid, eid, mAuthType, 1, mApp, new AuthResultListener() {
+                    @Override
+                    public void onResult(int code, String msg) {
+                        if(code == 0){
+                            listener.onClick(1);
+                        }else{
+                            ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                        }
+                    }
+                });
+                dialog.setProgressBarVisibility(View.GONE);
+                dialog.dismiss();
+            }
+        });
+        dlg.show();
+    }
+
+    public static void showMapDataAuthorisedDialog(Context context,ImibabyApp mApp,String uid,String eid,final DialogClickListener listener){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        String pro = context.getString(R.string.app_name);
+        AuthAdminDialog dlg = new AuthAdminDialog(context, context.getString(R.string.personal_authorise_map_data_title), context.getString(R.string.personal_authorise_map_data_content,pro), new AuthAdminDialog.OnDialogListener() {
+            @Override
+            public void onClick(View v, AuthAdminDialog dialog) {
+                sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_MAP, 0, mApp, new AuthResultListener() {
+                    @Override
+                    public void onResult(int code, String msg) {
+                        if(code == 0){
+                            listener.onClick(0);
+                        }else{
+                            ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                        }
+                        dialog.setProgressBarVisibility(View.GONE);
+                        dialog.dismiss();
+                    }
+                });
+            }
+        }, new AuthAdminDialog.OnDialogListener() {
+            @Override
+            public void onClick(View v,AuthAdminDialog dialog) {
+                sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_MAP, 1, mApp, new AuthResultListener() {
+                    @Override
+                    public void onResult(int code, String msg) {
+                        if(code == 0){
+                            listener.onClick(1);
+                        }else{
+                            ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                        }
+                    }
+                });
+                dialog.setProgressBarVisibility(View.GONE);
+                dialog.dismiss();
+            }
+        });
+        dlg.show();
+    }
+    public static void showMapDataAuthorisedNotAdminDialog(Context context,ImibabyApp mApp){
+        Dialog dialog = DialogUtil.CustomNormalDialog(context, context.getString(R.string.personal_authorise_map_data_title),
+                context.getString(R.string.personal_authorise_map_data_content), new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                    }
+                },context.getString(R.string.donothing_text));
+        dialog.show();
+    }
+
+    //Personal Auth
+    public static boolean isPersonalInfoAuthorised(ImibabyApp mApp,String eid){
+        String pref = mApp.getStringValue(Constants.SHARE_PREF_AUTHORISE_PERSONAL_INFO + eid,"");
+        if(!pref.equals("")){
+            JSONObject pl = (JSONObject) JSONValue.parse(pref);
+            int isAuth = (int)pl.get(Constants.KEY_NAME_AUTHORISE);
+            return isAuth == 1;
+        }else{
+            return false;
+        }
+    }
+
+    public static boolean isFirstPersonalInfoAuthorisedDialogShow(ImibabyApp mApp,String eid){
+        int pref = mApp.getIntValue(Constants.SHARE_PREF_AUTHORISE_PERSONAL_INFO_FIRST_SHOW + eid,0);
+        return pref == 0;
+    }
+    public static void savePersonalInfoAuthorise(ImibabyApp mApp,String eid,int status){
+        JSONObject pl = new JSONObject();
+        pl.put(Constants.KEY_NAME_AUTHORISE,status);
+        pl.put(Constants.APP_SCORE_TIMESTAMP,TimeUtil.getTimeStampLocal());
+        mApp.setValue(Constants.SHARE_PREF_AUTHORISE_PERSONAL_INFO + eid,pl.toJSONString());
+    }
+    public static void showPersonalInfoAuthorisedDialog(Context context,ImibabyApp mApp,String uid,String eid,final DialogClickListener listener){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        String pro = context.getString(R.string.app_name);
+        AuthAdminDialog dlg = new AuthAdminDialog(context, context.getString(R.string.perspnal_authorise_info_title), context.getString(R.string.personal_authorise_info_content,pro),
+                new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_PRIVACY, 0, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(0);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                }, new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_PRIVACY, 1, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(1);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                });
+        dlg.show();
+    }
+    public static void showPersonalInfoAuthorisedNotAdminDialog(Context context,ImibabyApp mApp){
+        Dialog dialog = DialogUtil.CustomNormalDialog(context, context.getString(R.string.perspnal_authorise_info_title),
+                context.getString(R.string.personal_authorise_info_content), new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                    }
+                },context.getString(R.string.donothing_text));
+        dialog.show();
+    }
+
+    //Trace auth
+    public static boolean isTraceAuthorised(ImibabyApp mApp,String eid){
+        String pref = mApp.getStringValue(Constants.SHARE_PREF_AUTHORISE_TRACE + eid,"");
+        if(!pref.equals("")){
+            JSONObject pl = (JSONObject) JSONValue.parse(pref);
+            int isAuth = (int)pl.get(Constants.KEY_NAME_AUTHORISE);
+            return isAuth == 1;
+        }else{
+            return false;
+        }
+    }
+
+    public static boolean isFirstTraceAuthorisedDialogShow(ImibabyApp mApp,String eid){
+        int pref = mApp.getIntValue(Constants.SHARE_PREF_AUTHORISE_TRACE_FIRST_SHOW + eid,0);
+        return pref == 0;
+    }
+    public static void saveTraceAuthorise(ImibabyApp mApp,String eid,int status){
+        JSONObject pl = new JSONObject();
+        pl.put(Constants.KEY_NAME_AUTHORISE,status);
+        pl.put(Constants.APP_SCORE_TIMESTAMP,TimeUtil.getTimeStampLocal());
+        mApp.setValue(Constants.SHARE_PREF_AUTHORISE_TRACE + eid,pl.toJSONString());
+    }
+    public static void showTraceAuthorisedDialog(Context context,ImibabyApp mApp,String uid,String eid,final DialogClickListener listener){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        String pro = context.getString(R.string.app_name);
+        AuthAdminDialog dlg = new AuthAdminDialog(context, context.getString(R.string.personal_authorise_trace_title), context.getString(R.string.personal_authorise_trace_content,pro),
+                new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_TRACE, 0, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(0);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                },
+                new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_TRACE, 1, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(1);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                });
+        dlg.show();
+    }
+    public static void showTraceAuthorisedNotAdminDialog(Context context,ImibabyApp mApp){
+        String pro = context.getString(R.string.app_name);
+        Dialog dialog = DialogUtil.CustomNormalDialog(context, context.getString(R.string.personal_authorise_trace_title),
+                context.getString(R.string.personal_authorise_trace_content,pro), new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                    }
+                },context.getString(R.string.donothing_text));
+        dialog.show();
+    }
+
+    //流量统计
+    public static boolean isDataUsageAuthorised(ImibabyApp mApp,String eid){
+        String pref = mApp.getStringValue(Constants.SHARE_PREF_AUTHORISE_DATAUSAGE + eid,"");
+        if(!pref.equals("")){
+            JSONObject pl = (JSONObject) JSONValue.parse(pref);
+            int isAuth = (int)pl.get(Constants.KEY_NAME_AUTHORISE);
+            return isAuth == 1;
+        }else{
+            return false;
+        }
+    }
+    public static void saveDataUsageAuthorise(ImibabyApp mApp,String eid,int status){
+        JSONObject pl = new JSONObject();
+        pl.put(Constants.KEY_NAME_AUTHORISE,status);
+        pl.put(Constants.APP_SCORE_TIMESTAMP,TimeUtil.getTimeStampLocal());
+        mApp.setValue(Constants.SHARE_PREF_AUTHORISE_DATAUSAGE + eid,pl.toJSONString());
+    }
+    public static void showDataUsageAuthorisedDialog(Context context,ImibabyApp mApp,String uid,String eid,final DialogClickListener listener){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        String pro = context.getString(R.string.app_name);
+        AuthAdminDialog dlg = new AuthAdminDialog(context, context.getString(R.string.personal_authorise_datausage_title)
+                , context.getString(R.string.personal_authorise_datausage_content,pro),
+                new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_DATAUSAGE, 0, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(0);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                },
+                new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_DATAUSAGE, 1, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(1);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                });
+        dlg.show();
+    }
+    public static void showDataUsageAuthorisedNotAdminDialog(Activity context,ImibabyApp mApp){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        String pro = context.getString(R.string.app_name);
+        Dialog dialog = DialogUtil.CustomNormalDialog(context, context.getString(R.string.personal_authorise_datausage_title),
+                context.getString(R.string.personal_authorise_datausage_content_not_admin,pro), new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        context.finish();
+                    }
+                },context.getString(R.string.donothing_text));
+        dialog.setCancelable(false);
+        dialog.show();
+    }
+
+    //wifi数据授权
+    public static boolean isWifiAuthorised(ImibabyApp mApp,String eid){
+        String pref = mApp.getStringValue(Constants.SHARE_PREF_AUTHORISE_WIFI + eid,"");
+        if(!pref.equals("")){
+            JSONObject pl = (JSONObject) JSONValue.parse(pref);
+            int isAuth = (int)pl.get(Constants.KEY_NAME_AUTHORISE);
+            return isAuth == 1;
+        }else{
+            return false;
+        }
+    }
+    public static void saveWifiAuthorise(ImibabyApp mApp,String eid,int status){
+        JSONObject pl = new JSONObject();
+        pl.put(Constants.KEY_NAME_AUTHORISE,status);
+        pl.put(Constants.APP_SCORE_TIMESTAMP,TimeUtil.getTimeStampLocal());
+        mApp.setValue(Constants.SHARE_PREF_AUTHORISE_WIFI + eid,pl.toJSONString());
+    }
+
+    //通用数据授权
+    public static boolean isCommontAuthorised(ImibabyApp mApp,String mAuthType, String eid){
+        String pref = mApp.getStringValue(mAuthType + eid,"");
+        if(!pref.equals("")){
+            JSONObject pl = (JSONObject) JSONValue.parse(pref);
+            int isAuth = (int)pl.get(Constants.KEY_NAME_AUTHORISE);
+            return isAuth == 1;
+        }else{
+            return false;
+        }
+    }
+    public static void saveCommontAuthorise(ImibabyApp mApp,String mAuthType, String eid,int status){
+        JSONObject pl = new JSONObject();
+        pl.put(Constants.KEY_NAME_AUTHORISE,status);
+        pl.put(Constants.APP_SCORE_TIMESTAMP,TimeUtil.getTimeStampLocal());
+        mApp.setValue(mAuthType + eid,pl.toJSONString());
+    }
+
+    public static void showWifiAuthorisedDialog(Context context,ImibabyApp mApp,String uid,String eid,final DialogClickListener listener){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        String pro = context.getString(R.string.app_name);
+        AuthAdminDialog dlg = new AuthAdminDialog(context, context.getString(R.string.personal_authorise_wifi_title)
+                , context.getString(R.string.personal_authorise_wifi_content,pro),
+                new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_WIFI, 0, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(0);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                },
+                new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_WIFI, 1, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(1);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                });
+        dlg.show();
+    }
+    public static void showWifiAuthorisedNotAdminDialog(Activity context, ImibabyApp mApp){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        String pro = context.getString(R.string.app_name);
+        Dialog dialog = DialogUtil.CustomNormalDialog(context, context.getString(R.string.personal_authorise_wifi_title),
+                context.getString(R.string.personal_authorise_wifi_content_not_admin,pro), new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        context.finish();
+                    }
+                },context.getString(R.string.donothing_text));
+        dialog.setCancelable(false);
+        dialog.show();
+    }
+
+    //应用中心数据授权
+    public static boolean isAppStoreAuthorised(ImibabyApp mApp,String eid){
+        String pref = mApp.getStringValue(Constants.SHARE_PREF_AUTHORISE_APP_STORE + eid,"");
+        if(!pref.equals("")){
+            JSONObject pl = (JSONObject) JSONValue.parse(pref);
+            int isAuth = (int)pl.get(Constants.KEY_NAME_AUTHORISE);
+            return isAuth == 1;
+        }else{
+            return false;
+        }
+    }
+    public static void saveAppStoreAuthorise(ImibabyApp mApp,String eid,int status){
+        JSONObject pl = new JSONObject();
+        pl.put(Constants.KEY_NAME_AUTHORISE,status);
+        pl.put(Constants.APP_SCORE_TIMESTAMP,TimeUtil.getTimeStampLocal());
+        mApp.setValue(Constants.SHARE_PREF_AUTHORISE_APP_STORE + eid,pl.toJSONString());
+    }
+    public static void showAppStoreAuthorisedDialog(Context context,ImibabyApp mApp,String uid,String eid,final DialogClickListener listener){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        String pro = context.getString(R.string.app_name);
+        AuthAdminDialog dlg = new AuthAdminDialog(context, context.getString(R.string.personal_authorise_appstore_title)
+                , context.getString(R.string.personal_authorise_appstore_content,pro),
+                new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_APPSTORE, 0, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(0);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                },
+                new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_APPSTORE, 1, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(1);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                });
+        dlg.show();
+    }
+    public static void showAppStoreAuthorisedNotAdminDialog(Activity context,ImibabyApp mApp){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        String pro = context.getString(R.string.app_name);
+        Dialog dialog = DialogUtil.CustomNormalDialog(context, context.getString(R.string.personal_authorise_appstore_title),
+                context.getString(R.string.personal_authorise_appstore_content_not_admin,pro), new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        context.finish();
+                    }
+                },context.getString(R.string.donothing_text));
+        dialog.setCancelable(false);
+        dialog.show();
+    }
+
+    //运动数据授权
+    public static boolean isSportAuthorised(ImibabyApp mApp,String eid){
+        String pref = mApp.getStringValue(Constants.SHARE_PREF_AUTHORISE_SPORT + eid,"");
+        if(!pref.equals("")){
+            JSONObject pl = (JSONObject) JSONValue.parse(pref);
+            int isAuth = (int)pl.get(Constants.KEY_NAME_AUTHORISE);
+            return isAuth == 1;
+        }else{
+            return false;
+        }
+    }
+    public static void saveSportAuthorise(ImibabyApp mApp,String eid,int status){
+        JSONObject pl = new JSONObject();
+        pl.put(Constants.KEY_NAME_AUTHORISE,status);
+        pl.put(Constants.APP_SCORE_TIMESTAMP,TimeUtil.getTimeStampLocal());
+        mApp.setValue(Constants.SHARE_PREF_AUTHORISE_SPORT + eid,pl.toJSONString());
+    }
+    public static void showSportAuthorisedDialog(Context context,ImibabyApp mApp,String uid,String eid,final DialogClickListener listener){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        String pro = context.getString(R.string.app_name);
+        AuthAdminDialog dlg = new AuthAdminDialog(context, context.getString(R.string.personal_authorise_sport_title)
+                , context.getString(R.string.personal_authorise_sport_content,pro,pro),
+                new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_SPORT, 0, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(0);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                },
+                new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_SPORT, 1, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(1);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                });
+        dlg.show();
+    }
+    public static void showSportAuthorisedNotAdminDialog(Activity context,ImibabyApp mApp){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        String pro = context.getString(R.string.app_name);
+        Dialog dialog = DialogUtil.CustomNormalDialog(context, context.getString(R.string.personal_authorise_sport_title),
+                context.getString(R.string.personal_authorise_sport_content_not_admin,pro), new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        context.finish();
+                    }
+                },context.getString(R.string.donothing_text));
+        dialog.setCancelable(false);
+        dialog.show();
+    }
+    //运动GPS信息授权
+    public static boolean isSportGPSAuthorised(ImibabyApp mApp,String eid){
+        String pref = mApp.getStringValue(Constants.SHARE_PREF_AUTHORISE_SPORT_GPS + eid,"");
+        if(!pref.equals("")){
+            JSONObject pl = (JSONObject) JSONValue.parse(pref);
+            int isAuth = (int)pl.get(Constants.KEY_NAME_AUTHORISE);
+            return isAuth == 1;
+        }else{
+            return false;
+        }
+    }
+    public static void saveSportGPSAuthorise(ImibabyApp mApp,String eid,int status){
+        JSONObject pl = new JSONObject();
+        pl.put(Constants.KEY_NAME_AUTHORISE,status);
+        pl.put(Constants.APP_SCORE_TIMESTAMP,TimeUtil.getTimeStampLocal());
+        mApp.setValue(Constants.SHARE_PREF_AUTHORISE_SPORT_GPS + eid,pl.toJSONString());
+    }
+    public static void showSportGPSAuthorisedDialog(Context context,ImibabyApp mApp,String uid,String eid,final DialogClickListener listener){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        String pro = context.getString(R.string.app_name);
+        AuthAdminDialog dlg = new AuthAdminDialog(context, context.getString(R.string.personal_authorise_sport_gps_title)
+                , context.getString(R.string.personal_authorise_sport_gps_content,pro,pro),
+                new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_SPORT_GPS, 0, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(0);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                },
+                new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_SPORT_GPS, 1, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(1);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                });
+        dlg.show();
+    }
+    public static void showSportGPSAuthorisedNotAdminDialog(Activity context,ImibabyApp mApp){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        String pro = context.getString(R.string.app_name);
+        Dialog dialog = DialogUtil.CustomNormalDialog(context, context.getString(R.string.personal_authorise_sport_gps_title),
+                context.getString(R.string.personal_authorise_sport_gps_content_not_admin,pro), new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        //context.finish();
+                    }
+                },context.getString(R.string.donothing_text));
+        dialog.setCancelable(false);
+        dialog.show();
+    }
+    //心率数据授权
+    public static boolean isHeartRateAuthorised(ImibabyApp mApp,String eid){
+        String pref = mApp.getStringValue(Constants.SHARE_PREF_AUTHORISE_HEART_RATE + eid,"");
+        if(!pref.equals("")){
+            JSONObject pl = (JSONObject) JSONValue.parse(pref);
+            int isAuth = (int)pl.get(Constants.KEY_NAME_AUTHORISE);
+            return isAuth == 1;
+        }else{
+            return false;
+        }
+    }
+    public static void saveHeartRateAuthorise(ImibabyApp mApp,String eid,int status){
+        JSONObject pl = new JSONObject();
+        pl.put(Constants.KEY_NAME_AUTHORISE,status);
+        pl.put(Constants.APP_SCORE_TIMESTAMP,TimeUtil.getTimeStampLocal());
+        mApp.setValue(Constants.SHARE_PREF_AUTHORISE_HEART_RATE + eid,pl.toJSONString());
+    }
+    public static void showHeartRateAuthorisedDialog(Context context,ImibabyApp mApp,String uid,String eid,final DialogClickListener listener){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        String pro = context.getString(R.string.app_name);
+        AuthAdminDialog dlg = new AuthAdminDialog(context, context.getString(R.string.personal_authorise_heartrate_title)
+                , context.getString(R.string.personal_authorise_heartrate_content,pro,pro),
+                new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_HEARTRATE, 0, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(0);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                },
+                new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_HEARTRATE, 1, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(1);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                });
+        dlg.show();
+    }
+    public static void showHeartRateAuthorisedNotAdminDialog(Activity context,ImibabyApp mApp){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        String pro = context.getString(R.string.app_name);
+        Dialog dialog = DialogUtil.CustomNormalDialog(context, context.getString(R.string.personal_authorise_heartrate_title),
+                context.getString(R.string.personal_authorise_heartrate_content_not_admin,pro), new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        context.finish();
+                    }
+                },context.getString(R.string.donothing_text));
+        dialog.setCancelable(false);
+        dialog.show();
+    }
+
+    //AI英语数据授权
+    public static boolean isAIEnglishAuthorised(ImibabyApp mApp,String eid){
+        String pref = mApp.getStringValue(Constants.SHARE_PREF_AUTHORISE_AI_ENGLISH + eid,"");
+        if(!pref.equals("")){
+            JSONObject pl = (JSONObject) JSONValue.parse(pref);
+            int isAuth = (int)pl.get(Constants.KEY_NAME_AUTHORISE);
+            return isAuth == 1;
+        }else{
+            return false;
+        }
+    }
+    public static void saveAIEnglishAuthorise(ImibabyApp mApp,String eid,int status){
+        JSONObject pl = new JSONObject();
+        pl.put(Constants.KEY_NAME_AUTHORISE,status);
+        pl.put(Constants.APP_SCORE_TIMESTAMP,TimeUtil.getTimeStampLocal());
+        mApp.setValue(Constants.SHARE_PREF_AUTHORISE_AI_ENGLISH + eid,pl.toJSONString());
+    }
+    public static void showAIEnglishAuthorisedDialog(Context context,ImibabyApp mApp,String uid,String eid,final DialogClickListener listener){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        String pro = context.getString(R.string.app_name);
+        AuthAdminDialog dlg = new AuthAdminDialog(context, context.getString(R.string.personal_authorise_aienglish_title)
+                , context.getString(R.string.personal_authorise_aienglish_content,pro,pro,pro),
+                new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_AIENGLISH, 0, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(0);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                },
+                new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_AIENGLISH, 1, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(1);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                });
+        dlg.show();
+    }
+    public static void showAIEnglishAuthorisedNotAdminDialog(Activity context,ImibabyApp mApp){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        String pro = context.getString(R.string.app_name);
+        Dialog dialog = DialogUtil.CustomNormalDialog(context, context.getString(R.string.personal_authorise_aienglish_title),
+                context.getString(R.string.personal_authorise_aienglish_content_not_admin,pro), new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        context.finish();
+                    }
+                },context.getString(R.string.donothing_text));
+        dialog.setCancelable(false);
+        dialog.show();
+    }
+
+    //小米云相册数据授权
+    public static boolean isMiAlbumAuthorised(ImibabyApp mApp,String eid){
+        String pref = mApp.getStringValue(Constants.SHARE_PREF_AUTHORISE_MIALBUM + eid,"");
+        if(!pref.equals("")){
+            JSONObject pl = (JSONObject) JSONValue.parse(pref);
+            int isAuth = (int)pl.get(Constants.KEY_NAME_AUTHORISE);
+            return isAuth == 1;
+        }else{
+            return false;
+        }
+    }
+    public static void saveMiAlbumAuthorise(ImibabyApp mApp,String eid,int status){
+        JSONObject pl = new JSONObject();
+        pl.put(Constants.KEY_NAME_AUTHORISE,status);
+        pl.put(Constants.APP_SCORE_TIMESTAMP,TimeUtil.getTimeStampLocal());
+        mApp.setValue(Constants.SHARE_PREF_AUTHORISE_MIALBUM + eid,pl.toJSONString());
+    }
+    public static void showMiAlbumAuthorisedDialog(Context context,ImibabyApp mApp,String uid,String eid,final DialogClickListener listener){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        String pro = context.getString(R.string.app_name);
+        AuthAdminDialog dlg = new AuthAdminDialog(context, context.getString(R.string.personal_authorise_album_title)
+                , context.getString(R.string.personal_authorise_album_content,pro),
+                new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_MIALBUM, 0, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(0);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                },
+                new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_MIALBUM, 1, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(1);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                });
+        dlg.show();
+    }
+    public static void showMiAlbumAuthorisedNotAdminDialog(Activity context,ImibabyApp mApp){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        String pro = context.getString(R.string.app_name);
+        Dialog dialog = DialogUtil.CustomNormalDialog(context, context.getString(R.string.personal_authorise_album_title),
+                context.getString(R.string.personal_authorise_album_conent_not_admin,pro), new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        context.finish();
+                    }
+                },context.getString(R.string.donothing_text));
+        dialog.setCancelable(false);
+        dialog.show();
+    }
+
+    //动态消息数据授权
+    public static boolean isMsgeAuthorised(ImibabyApp mApp,String eid){
+        String pref = mApp.getStringValue(Constants.SHARE_PREF_AUTHORISE_MSG + eid,"");
+        if(!pref.equals("")){
+            JSONObject pl = (JSONObject) JSONValue.parse(pref);
+            int isAuth = (int)pl.get(Constants.KEY_NAME_AUTHORISE);
+            return isAuth == 1;
+        }else{
+            return false;
+        }
+    }
+    public static void saveMsgAuthorise(ImibabyApp mApp,String eid,int status){
+        JSONObject pl = new JSONObject();
+        pl.put(Constants.KEY_NAME_AUTHORISE,status);
+        pl.put(Constants.APP_SCORE_TIMESTAMP,TimeUtil.getTimeStampLocal());
+        mApp.setValue(Constants.SHARE_PREF_AUTHORISE_MSG + eid,pl.toJSONString());
+    }
+    public static void showMsgAuthorisedDialog(Context context,ImibabyApp mApp,String uid,String eid,final DialogClickListener listener){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        String pro = context.getString(R.string.app_name);
+        AuthAdminDialog dlg = new AuthAdminDialog(context, context.getString(R.string.personal_authorise_msg_title)
+                , context.getString(R.string.personal_authorise_msg_content,pro),
+                new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_MSG, 0, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(0);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                },
+                new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_MSG, 1, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(1);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                });
+        dlg.show();
+    }
+    public static void showMsgAuthorisedNotAdminDialog(Activity context,ImibabyApp mApp){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        String pro = context.getString(R.string.app_name);
+        Dialog dialog = DialogUtil.CustomNormalDialog(context, context.getString(R.string.personal_authorise_msg_title),
+                context.getString(R.string.personal_authorise_msg_content_not_admin,pro), new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                    }
+                },context.getString(R.string.donothing_text));
+        dialog.show();
+    }
+
+    public static void saveTemperatureAuthorise(ImibabyApp mApp,String eid,int status){
+        JSONObject pl = new JSONObject();
+        pl.put(Constants.KEY_NAME_AUTHORISE,status);
+        pl.put(Constants.APP_SCORE_TIMESTAMP,TimeUtil.getTimeStampLocal());
+        mApp.setValue(Constants.SHARE_PREF_AUTHORISE_TEMPTURE + eid,pl.toJSONString());
+    }
+
+    //测温记录查询
+    public static boolean isTemptureAuthorised(ImibabyApp mApp,String eid){
+        String pref = mApp.getStringValue(Constants.SHARE_PREF_AUTHORISE_TEMPTURE + eid,"");
+        if(!pref.equals("")){
+            JSONObject pl = (JSONObject) JSONValue.parse(pref);
+            int isAuth = (int)pl.get(Constants.KEY_NAME_AUTHORISE);
+            return isAuth == 1;
+        }else{
+            return false;
+        }
+    }
+    public static void showTempAuthorisedDialog(Context context,ImibabyApp mApp,String uid,String eid,final DialogClickListener listener){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        String pro = context.getString(R.string.app_name);
+        AuthAdminDialog dlg = new AuthAdminDialog(context, context.getString(R.string.watch_auth_title_13)
+                , context.getString(R.string.personal_authorise_temperature_content,pro,pro),
+                new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_TEMPERATURE, 0, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(0);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                },
+                new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_TEMPERATURE, 1, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(1);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                });
+        dlg.show();
+    }
+    public static void showTempAuthorisedNotAdminDialog(Activity context,ImibabyApp mApp){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        String pro = context.getString(R.string.app_name);
+        Dialog dialog = DialogUtil.CustomNormalDialog(context, context.getString(R.string.watch_auth_title_13),
+                context.getString(R.string.personal_authorise_temperature_content_not_admin,pro), new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        context.finish();
+                    }
+                },context.getString(R.string.donothing_text));
+        dialog.setCancelable(false);
+        dialog.show();
+    }
+
+
+    //通话记录授权
+    public static boolean isCallLogeAuthorised(ImibabyApp mApp,String eid){
+        String pref = mApp.getStringValue(Constants.SHARE_PREF_AUTHORISE_CALLLOG + eid,"");
+        if(!pref.equals("")){
+            JSONObject pl = (JSONObject) JSONValue.parse(pref);
+            int isAuth = (int)pl.get(Constants.KEY_NAME_AUTHORISE);
+            return isAuth == 1;
+        }else{
+            return false;
+        }
+    }
+    public static void saveCallLogAuthorise(ImibabyApp mApp,String eid,int status){
+        JSONObject pl = new JSONObject();
+        pl.put(Constants.KEY_NAME_AUTHORISE,status);
+        pl.put(Constants.APP_SCORE_TIMESTAMP,TimeUtil.getTimeStampLocal());
+        mApp.setValue(Constants.SHARE_PREF_AUTHORISE_CALLLOG + eid,pl.toJSONString());
+    }
+    public static void showCallLogAuthorisedDialog(Context context,ImibabyApp mApp,String uid,String eid,final DialogClickListener listener){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        String pro = context.getString(R.string.app_name);
+        AuthAdminDialog dlg = new AuthAdminDialog(context, context.getString(R.string.personal_authorise_calllog_title)
+                , context.getString(R.string.personal_authorise_calllog_content,pro),
+                new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_CALLLOG, 0, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(0);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                },
+                new AuthAdminDialog.OnDialogListener() {
+                    @Override
+                    public void onClick(View v,AuthAdminDialog dialog) {
+                        sendAuthResultToCloud(uid, eid, Constants.KEY_NAME_AUTHORISE_CALLLOG, 1, mApp, new AuthResultListener() {
+                            @Override
+                            public void onResult(int code, String msg) {
+                                if(code == 0){
+                                    listener.onClick(1);
+                                }else{
+                                    ToastUtil.show(context,context.getString(R.string.personal_authorise_send_result_failed));
+                                }
+                                dialog.setProgressBarVisibility(View.GONE);
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                });
+        dlg.show();
+    }
+    public static void showCallLogAuthorisedNotAdminDialog(Activity context,ImibabyApp mApp){
+        if(CommonUtil.isDestroy((Activity)context)) return;
+        String pro = context.getString(R.string.app_name);
+        Dialog dialog = DialogUtil.CustomNormalDialog(context, context.getString(R.string.personal_authorise_calllog_title),
+                context.getString(R.string.personal_authorise_calllog_content_not_admin,pro), new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        context.finish();
+                    }
+                },context.getString(R.string.donothing_text));
+        dialog.setCancelable(false);
+        dialog.show();
+    }
+
+    /**
+     * 获取授权状态
+     * @param eid 设备eid
+     * @param authType 授权类型
+     * @param mApp
+     * @param listener 获取结果回调
+     */
+    public static void getAuthResultFromCloud(String eid,String authType,ImibabyApp mApp,AuthResultListener listener){
+        Observable.create(new ObservableOnSubscribe<String>() {
+            @Override
+            public void subscribe(ObservableEmitter<String> e) throws Exception {
+                JSONObject pl = new JSONObject();
+                pl.put("eid",eid);
+                pl.put("type",authType);
+                LogUtil.e("getAuthResultFromCloud post : " + pl.toJSONString());
+                String body = Base64.encodeToString(AESUtil.encryptAESCBC(pl.toJSONString(),
+                        mApp.getNetService().AES_KEY, mApp.getNetService().AES_KEY),
+                        Base64.NO_WRAP) + mApp.getToken();
+                HttpWorks.HttpWorksResponse response = HttpWorks.httpPost(Const.AUTHORISE_GET_RESULT_URL,body);
+                if(response.isSuccess()){
+                    e.onNext(response.data);
+                }else{
+                    listener.onResult(-1,"network error");
+                }
+                e.onComplete();
+            }
+        }).subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<String>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+
+            }
+
+            @Override
+            public void onNext(String s) {
+                handleGetAuthSendResult(authType,mApp,eid,s);  //获取状态存储到本地
+                listener.onResult(0,"Success");
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                listener.onResult(-1,"Error");
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
+        });
+    }
+
+    /**
+     * 上传授权结果
+     * @param uid   用户id
+     * @param eid   设备id
+     * @param authType  授权类型
+     * @param result    授权结果
+     * @param mApp  Application
+     * @param listener  上传结果回调
+     */
+    public static void sendAuthResultToCloud(String uid,String eid,String authType,int result,ImibabyApp mApp,AuthResultListener listener){
+        Observable.create(new ObservableOnSubscribe<String>() {
+            @Override
+            public void subscribe(ObservableEmitter<String> e) throws Exception {
+                JSONObject pl = new JSONObject();
+                pl.put("uid",uid);
+                pl.put("eid",eid);
+                pl.put("type",authType);
+                pl.put("val",result);
+                LogUtil.e("sendAuthResultToCloud : " + pl.toJSONString());
+                String body = Base64.encodeToString(AESUtil.encryptAESCBC(pl.toJSONString(),
+                        mApp.getNetService().AES_KEY, mApp.getNetService().AES_KEY),
+                        Base64.NO_WRAP) + mApp.getToken();
+                HttpWorks.HttpWorksResponse response = HttpWorks.httpPost(Const.AUTHORISE_UPLOAD_RESULT_URL,body);
+                if(response.isSuccess()){
+                    e.onNext(response.data);
+                }else{
+                    listener.onResult(-1,"network error");
+                }
+                e.onComplete();
+            }
+        }).subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<String>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+
+            }
+
+            @Override
+            public void onNext(String s) {
+                handleAuthSendResult(authType,mApp,eid,result);
+                listener.onResult(0,"success");
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                listener.onResult(-1,"network error");
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
+        });
+    }
+
+    private static void handleAuthSendResult(String type,ImibabyApp mApp,String eid,int status){
+        switch (type){
+            case Constants.KEY_NAME_AUTHORISE_MAP:
+                saveMapDataAuthorise(mApp,eid,status);
+                mApp.setValue(Constants.SHARE_PREF_AUTHORISE_PERSONAL_MAP_DATA_FIRST_SHOW + eid,1);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_PRIVACY:
+                savePersonalInfoAuthorise(mApp,eid,status);
+                mApp.setValue(Constants.SHARE_PREF_AUTHORISE_PERSONAL_INFO_FIRST_SHOW + eid,1);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_TRACE:
+                saveTraceAuthorise(mApp,eid,status);
+                mApp.setValue(Constants.SHARE_PREF_AUTHORISE_TRACE_FIRST_SHOW + eid,1);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_DATAUSAGE:
+                saveDataUsageAuthorise(mApp,eid,status);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_WIFI:
+                saveWifiAuthorise(mApp,eid,status);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_APPSTORE:
+                saveAppStoreAuthorise(mApp,eid,status);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_SPORT:
+                saveSportAuthorise(mApp,eid,status);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_HEARTRATE:
+                saveHeartRateAuthorise(mApp,eid,status);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_AIENGLISH:
+                saveAIEnglishAuthorise(mApp,eid,status);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_MIALBUM:
+                saveMiAlbumAuthorise(mApp,eid,status);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_MSG:
+                saveMsgAuthorise(mApp,eid,status);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_CALLLOG:
+                saveCallLogAuthorise(mApp,eid,status);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_TEMPERATURE:
+                saveTemperatureAuthorise(mApp,eid,status);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_SPORT_GPS:
+                saveSportGPSAuthorise(mApp,eid,status);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_XIAOPENG_MAP:
+                saveCommontAuthorise(mApp,Constants.KEY_NAME_AUTHORISE_XIAOPENG_MAP, eid,status);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_XIAOPENG_DEVICE:
+                saveCommontAuthorise(mApp,Constants.KEY_NAME_AUTHORISE_XIAOPENG_DEVICE, eid,status);
+                break;
+        }
+    }
+
+    private static void handleGetAuthSendResult(String type,ImibabyApp mApp,String eid,String data){
+        LogUtil.e("handleGetAuthSendResult :" + data);
+        int status = 0;
+        JSONObject resp = (JSONObject) JSONValue.parse(data);
+        int rc = CloudBridgeUtil.getCloudMsgRC(resp);
+        if(rc == CloudBridgeUtil.RC_SUCCESS){
+            JSONObject pl = (JSONObject)resp.get(CloudBridgeUtil.KEY_NAME_PL);
+            if(pl != null){
+                status = (int)pl.get("val");
+            }
+        }
+        switch (type){
+            case Constants.KEY_NAME_AUTHORISE_MAP:
+                saveMapDataAuthorise(mApp,eid,status);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_PRIVACY:
+                savePersonalInfoAuthorise(mApp,eid,status);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_TRACE:
+                saveTraceAuthorise(mApp,eid,status);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_DATAUSAGE:
+                saveDataUsageAuthorise(mApp,eid,status);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_WIFI:
+                saveWifiAuthorise(mApp,eid,status);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_APPSTORE:
+                saveAppStoreAuthorise(mApp,eid,status);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_SPORT:
+                saveSportAuthorise(mApp,eid,status);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_HEARTRATE:
+                saveHeartRateAuthorise(mApp,eid,status);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_AIENGLISH:
+                saveAIEnglishAuthorise(mApp,eid,status);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_MIALBUM:
+                saveMiAlbumAuthorise(mApp,eid,status);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_MSG:
+                saveMsgAuthorise(mApp,eid,status);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_CALLLOG:
+                saveCallLogAuthorise(mApp,eid,status);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_TEMPERATURE:
+                saveTemperatureAuthorise(mApp,eid,status);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_SPORT_GPS:
+                saveSportGPSAuthorise(mApp,eid,status);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_XIAOPENG_MAP:
+                saveCommontAuthorise(mApp,Constants.KEY_NAME_AUTHORISE_XIAOPENG_MAP, eid,status);
+                break;
+            case Constants.KEY_NAME_AUTHORISE_XIAOPENG_DEVICE:
+                saveCommontAuthorise(mApp,Constants.KEY_NAME_AUTHORISE_XIAOPENG_DEVICE, eid,status);
+                break;
+        }
+    }
+}

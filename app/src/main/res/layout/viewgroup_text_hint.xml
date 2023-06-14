@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+	android:layout_height="64dp"
+	android:descendantFocusability="blocksDescendants" >
+    <RelativeLayout
+		android:layout_centerVertical="true"
+		android:layout_alignParentLeft="true"
+		android:layout_marginLeft="23.33dp"
+		android:layout_marginRight="23.33dp"
+       	android:layout_width="wrap_content"
+	    android:layout_height="match_parent" >
+        <TextView
+	        android:id="@+id/tv_hint1"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_centerVertical="true"
+	        android:textColor="@color/title_grey"
+			android:text="@string/app_name"
+	        android:textSize="@dimen/xiaomiMyTextSize12" />
+
+		<TextView
+			android:id="@+id/tv_hint2"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_centerVertical="true"
+			android:textColor="@color/dark_grey"
+			android:text="@string/app_name"
+			android:layout_alignParentEnd="true"
+			android:textSize="@dimen/xiaomiMyTextSize12"/>
+    </RelativeLayout>
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+		android:layout_marginLeft="23.3dp"
+		android:layout_marginRight="23.3dp"
+        android:layout_alignParentTop="true"
+        android:background="@color/color_8"/>
+
+</RelativeLayout>

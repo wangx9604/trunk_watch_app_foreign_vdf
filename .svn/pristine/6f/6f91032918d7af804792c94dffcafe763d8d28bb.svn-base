@@ -1,0 +1,344 @@
+package com.xiaoxun.xun.networkv2.beans;
+
+import androidx.annotation.NonNull;
+
+import com.xiaoxun.xun.utils.TimeUtil;
+
+import java.io.Serializable;
+import java.util.Arrays;
+
+public class TaskDetailInfo extends BaseResponseInfo implements Serializable, Comparable<TaskDetailInfo> {
+    private static final long serialVersionUID = 5539228057102488199L;
+    String id; //任务ID创建不需要带，服务器会自己生成唯一ID，修改/删除需要携带id
+    int optype;//操作类型0新增，1修改，2删除
+    int type;//类型0私有任务，1云任务
+    String tag; //标签，hot官方热门，behavior习惯养成，sport运动计步、outhome户外运动、person我的任务、all、全部任务
+    String name; //任务名称
+    String desc;//任务描述
+    int hot; //热度
+    String repeat;  //one,every,week,month重复类型，one单次，every每天，week周重复，month月重复
+    String repeatts;//one,every这里是空串，week：1111100，1表示重复0不重复，month，重复日期逗号隔开
+    int repeatnum;//目标重复次数
+    String createtime;//创建时间
+    String remindtime;//提醒时间
+    String enddate;//截止日期
+    String finishtime;//完成时间
+    int finishnum;//完成次数
+    String[] finishdate;//多次任务完成日期
+    RewardInfo reward;//奖励
+    String creator;//创建者EID
+    int creatortype = 2;//创建者类型，0官方，1设备，2APP
+    //行为管理1.5版本新增字段
+    String pg_name;   //关联应用名，非关联任务无该字段
+    String pg_app;    //关联应用包名，非关联任务无该字段
+    int speed;        //进度上限
+    int speedself;     //自身进度
+    String speed_dw;   //进度单位，分钟，个数
+    String sup_dt;     //项目限制
+    int sup_vs;     //应用版本限制
+    String subtype;    //应用内类型区分,跑步 run,跳绳 jump,键走 move
+
+    public TaskDetailInfo(int code, String id, int optype, int type, String tag, String name,
+                          String desc, int hot, String repeat, String repeatts, int repeatnum,
+                          String createtime, String remindtime, String enddate, String finishtime,
+                          int finishnum, String[] finishdate, RewardInfo reward, String creator, int creatortype) {
+        super(code);
+        this.id = id;
+        this.optype = optype;
+        this.type = type;
+        this.tag = tag;
+        this.name = name;
+        this.desc = desc;
+        this.hot = hot;
+        this.repeat = repeat;
+        this.repeatts = repeatts;
+        this.repeatnum = repeatnum;
+        this.createtime = createtime;
+        this.remindtime = remindtime;
+        this.enddate = enddate;
+        this.finishtime = finishtime;
+        this.finishnum = finishnum;
+        this.reward = reward;
+        this.creator = creator;
+        this.creatortype = creatortype;
+        this.finishdate = finishdate;
+    }
+
+    public TaskDetailInfo(int i) {
+        super(i);
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public int getOptype() {
+        return optype;
+    }
+
+    public void setOptype(int optype) {
+        this.optype = optype;
+    }
+
+    public int getType() {
+        return type;
+    }
+
+    public void setType(int type) {
+        this.type = type;
+    }
+
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDesc() {
+        return desc;
+    }
+
+    public void setDesc(String desc) {
+        this.desc = desc;
+    }
+
+    public int getHot() {
+        return hot;
+    }
+
+    public void setHot(int hot) {
+        this.hot = hot;
+    }
+
+    public String getRepeat() {
+        return repeat;
+    }
+
+    public void setRepeat(String repeat) {
+        this.repeat = repeat;
+    }
+
+    public String getRepeatts() {
+        return repeatts;
+    }
+
+    public void setRepeatts(String repeatts) {
+        this.repeatts = repeatts;
+    }
+
+    public int getRepeatnum() {
+        return repeatnum;
+    }
+
+    public void setRepeatnum(int repeatnum) {
+        this.repeatnum = repeatnum;
+    }
+
+    public String getCreatetime() {
+        return createtime;
+    }
+
+    public void setCreatetime(String createtime) {
+        this.createtime = createtime;
+    }
+
+    public String getRemindtime() {
+        return remindtime;
+    }
+
+    public void setRemindtime(String remindtime) {
+        this.remindtime = remindtime;
+    }
+
+    public String getEnddate() {
+        return enddate;
+    }
+
+    public void setEnddate(String enddate) {
+        this.enddate = enddate;
+    }
+
+    public String getFinishtime() {
+        return finishtime;
+    }
+
+    public void setFinishtime(String finishtime) {
+        this.finishtime = finishtime;
+    }
+
+    public int getFinishnum() {
+        return finishnum;
+    }
+
+    public void setFinishnum(int finishnum) {
+        this.finishnum = finishnum;
+    }
+
+    public RewardInfo getReward() {
+        return reward;
+    }
+
+    public void setReward(RewardInfo reward) {
+        this.reward = reward;
+    }
+
+    public String getCreator() {
+        return creator;
+    }
+
+    public void setCreator(String creator) {
+        this.creator = creator;
+    }
+
+    public int getCreatortype() {
+        return creatortype;
+    }
+
+    public void setCreatortype(int creatortype) {
+        this.creatortype = creatortype;
+    }
+
+    public String[] getFinishdate() {
+        return finishdate;
+    }
+
+    public void setFinishdate(String[] finishdate) {
+        this.finishdate = finishdate;
+    }
+
+    public String getPg_name() {
+        return pg_name;
+    }
+
+    public void setPg_name(String pg_name) {
+        this.pg_name = pg_name;
+    }
+
+    public String getPg_app() {
+        return pg_app;
+    }
+
+    public void setPg_app(String pg_app) {
+        this.pg_app = pg_app;
+    }
+
+    public int getSpeed() {
+        return speed;
+    }
+
+    public void setSpeed(int speed) {
+        this.speed = speed;
+    }
+
+    public int getSpeedself() {
+        return speedself;
+    }
+
+    public void setSpeedself(int speedself) {
+        this.speedself = speedself;
+    }
+
+    public String getSpeed_dw() {
+        return speed_dw;
+    }
+
+    public void setSpeed_dw(String speed_dw) {
+        this.speed_dw = speed_dw;
+    }
+
+    public String getSup_dt() {
+        return sup_dt;
+    }
+
+    public void setSup_dt(String sup_dt) {
+        this.sup_dt = sup_dt;
+    }
+
+    public int getSup_vs() {
+        return sup_vs;
+    }
+
+    public void setSup_vs(int sup_vs) {
+        this.sup_vs = sup_vs;
+    }
+
+    public String getSubtype() {
+        return subtype;
+    }
+
+    public void setSubtype(String subtype) {
+        this.subtype = subtype;
+    }
+
+    @Override
+    public String toString() {
+        return "TaskDetailInfo{" +
+                "id='" + id + '\'' +
+                ", optype=" + optype +
+                ", type=" + type +
+                ", tag='" + tag + '\'' +
+                ", name='" + name + '\'' +
+                ", desc='" + desc + '\'' +
+                ", hot=" + hot +
+                ", repeat='" + repeat + '\'' +
+                ", repeatts='" + repeatts + '\'' +
+                ", repeatnum=" + repeatnum +
+                ", createtime='" + createtime + '\'' +
+                ", remindtime='" + remindtime + '\'' +
+                ", enddate='" + enddate + '\'' +
+                ", finishtime='" + finishtime + '\'' +
+                ", finishnum=" + finishnum +
+                ", finishdate=" + Arrays.toString(finishdate) +
+                ", reward=" + reward +
+                ", creator='" + creator + '\'' +
+                ", creatortype=" + creatortype +
+                ", pg_name='" + pg_name + '\'' +
+                ", pg_app='" + pg_app + '\'' +
+                ", speed=" + speed +
+                ", speedself=" + speedself +
+                ", speed_dw='" + speed_dw + '\'' +
+                ", sup_dt='" + sup_dt + '\'' +
+                ", sup_vs=" + sup_vs +
+                ", subtype='" + subtype + '\'' +
+                '}';
+    }
+
+    @Override
+    public int compareTo(@NonNull TaskDetailInfo o) {
+        String mOtherRemindTime = o.getRemindtime();
+        String mOtherCompareTime;
+        String mCurCompareTime;
+        mOtherCompareTime = getFormatTimeFromTime(mOtherRemindTime);
+        mCurCompareTime = getFormatTimeFromTime(this.getRemindtime());
+
+        return mCurCompareTime.compareTo(mOtherCompareTime);
+    }
+
+    private String getFormatTimeFromTime(String mOtherRemindTime) {
+        String mCompartTime = TimeUtil.getDay();
+        try {
+            if (mOtherRemindTime.length() >= 12) {
+                mCompartTime = mOtherRemindTime.substring(8, 12);
+            } else {
+                mCompartTime = mOtherRemindTime.substring(0, 2) + mOtherRemindTime.substring(3, 5);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return mCompartTime;
+    }
+}

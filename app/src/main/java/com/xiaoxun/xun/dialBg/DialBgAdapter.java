@@ -1,0 +1,288 @@
+package com.xiaoxun.xun.dialBg;
+
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.RecyclerView;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.TextView;
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.Request;
+import com.bumptech.glide.request.target.SizeReadyCallback;
+import com.bumptech.glide.request.target.Target;
+import com.bumptech.glide.request.transition.Transition;
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.utils.AESUtil;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+public class DialBgAdapter extends RecyclerView.Adapter {
+    public Context context;
+    public ArrayList<DialBgItem> data;
+    ImibabyApp mApp;
+
+    public btnClickListener btnlis;
+
+    public ArrayList<DialBgItem> deleteList = new ArrayList<>();
+
+    private Comparator<DialBgItem> comparator = new Comparator<DialBgItem>() {
+        @Override
+        public int compare(DialBgItem o1, DialBgItem o2) {
+            long t1 = Long.valueOf(o1.getTime());
+            long t2 = Long.valueOf(o2.getTime());
+            if (t2 > t1) {
+                return -1;
+            } else if (t2 < t1) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    };
+
+    public DialBgAdapter(Context ctxt, ImibabyApp mapp, ArrayList<DialBgItem> src){
+        context = ctxt;
+        data = src;
+        mApp = mapp;
+        Collections.sort(data,comparator);
+    }
+
+    @Override
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.dialbg_item_ly,null,false);
+        DialBgHolder holder = new DialBgHolder(itemView);
+        return holder;
+    }
+
+    @Override
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+        DialBgItem item = data.get(position);
+        //if(((DialBgHolder)holder).Tag.equals(""))
+        {
+            if(!item.getImg_path().equals("")) {
+                Glide.with(context)
+                        .load(item.getImg_path())
+                        .fitCenter()
+                        .placeholder(R.drawable.album_list_frame)
+                        .into(((DialBgHolder) holder).bg);
+            }else{
+                Glide.with(context).load(item.getUrl()).downloadOnly(((DialBgHolder)holder));
+            }
+//            Drawable drawable = Drawable.createFromPath(item.getImg_path());
+//            ((DialBgHolder) holder).bg.setImageDrawable(drawable);
+            ((DialBgHolder) holder).name.setText(item.getName());
+            if (DialBgActivity.mode == 1 && item.getStatus() == 0) {
+                ((DialBgHolder) holder).checkBox.setVisibility(View.VISIBLE);
+                if (deleteList.contains(item)) {
+                    ((DialBgHolder) holder).checkBox.setChecked(true);
+                }else{
+                    ((DialBgHolder) holder).checkBox.setChecked(false);
+                }
+            } else {
+                ((DialBgHolder) holder).checkBox.setVisibility(View.INVISIBLE);
+            }
+            if (item.getStatus() == DialBgItem.STATUS_LOCAL) {
+                ((DialBgHolder) holder).btn_operat.setBackgroundResource(R.drawable.dial_bg_status_selector);
+            } else if (item.getStatus() == DialBgItem.STATUS_IN_SERVER) {
+                ((DialBgHolder) holder).btn_operat.setBackgroundResource(R.drawable.btn_syncing);
+            } else {
+                ((DialBgHolder) holder).btn_operat.setBackgroundResource(R.drawable.btn_synced);
+            }
+            ((DialBgHolder)holder).Tag = item.getImg_path();
+        }
+    }
+
+    @Override
+    public int getItemCount() {
+        return data.size();
+    }
+
+    public void refreshData(ArrayList<DialBgItem> list){
+        data.clear();
+        data = list;
+        Collections.sort(data,comparator);
+        notifyDataSetChanged();
+    }
+
+   public class DialBgHolder extends RecyclerView.ViewHolder implements View.OnClickListener,Target<File> {
+        String Tag = "";
+        RoundImageView bg;
+        CheckBox checkBox;
+        TextView name;
+        Button btn_operat;
+
+
+        public DialBgHolder(View itemView) {
+            super(itemView);
+            bg = itemView.findViewById(R.id.bg);
+            checkBox = itemView.findViewById(R.id.checkbox);
+            name = itemView.findViewById(R.id.name);
+            btn_operat = itemView.findViewById(R.id.btn_operat);
+            btn_operat.setOnClickListener(this);
+            bg.setOnClickListener(this);
+        }
+
+        @Override
+        public void onClick(View v) {
+            DialBgItem item = data.get(getAdapterPosition());
+            if(DialBgActivity.mode == 0){
+                if(v.getId() == R.id.btn_operat){
+                    if(item.getStatus() == DialBgItem.STATUS_LOCAL){
+                        //do upload
+                        btnlis.onClick(item);
+                    }else if(item.getStatus() == DialBgItem.STATUS_IN_SERVER){
+                        //nothing
+                    }else{
+                       //nothing
+                    }
+                }
+            }else{
+                if(v.getId() == R.id.bg) {
+                    if (item.getStatus() == 0) {
+                        if (!checkBox.isChecked()) {
+                            checkBox.setChecked(true);
+                            deleteList.add(item);
+                        } else {
+                            checkBox.setChecked(false);
+                            deleteList.remove(item);
+                        }
+                    }
+                }
+            }
+        }
+
+       @Override
+       public void onLoadStarted(Drawable placeholder) {
+
+       }
+
+       @Override
+       public void onLoadFailed(@Nullable Drawable errorDrawable) {
+
+       }
+
+
+       @Override
+       public void onResourceReady(File resource, Transition<? super File> glideAnimation) {
+           if(resource.exists() && getAdapterPosition() >= 0){
+               String eid = mApp.getCurUser().getFocusWatch().getEid();
+               String eidAes = AESUtil.getInstance().encryptDataStr(eid);
+               String key = eid.substring(0,16);
+               Bitmap bitmap = BitmapFactory.decodeFile(resource.getAbsolutePath());//ToolUtils.decryptImgFile(resource,key);
+               DialBgItem item = data.get(getAdapterPosition());
+               String localName = item.getTime() + ".jpg";
+               String path = mApp.getExternalFilesDir(Const.MY_BASE_DIR + "/DIAL_LOCAL_BG").getAbsolutePath();
+               item.setImg_path(path + "/" + eidAes + "/" + localName);
+               saveBitmapToLocal(bitmap,item.getImg_path());
+               bg.setImageBitmap(bitmap);
+//               new Handler().postDelayed(new Runnable() {
+//                   @Override
+//                   public void run() {
+//                       notifyItemChanged(getAdapterPosition());
+//                   }
+//               },200);
+           }
+       }
+
+       @Override
+       public void onLoadCleared(Drawable placeholder) {
+
+       }
+
+       @Override
+       public void getSize(SizeReadyCallback cb) {
+           cb.onSizeReady(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL);
+       }
+
+       @Override
+       public void removeCallback(@NonNull SizeReadyCallback cb) {
+
+       }
+
+       @Override
+       public void setRequest(Request request) {
+
+       }
+
+       @Override
+       public Request getRequest() {
+           return null;
+       }
+
+       @Override
+       public void onStart() {
+
+       }
+
+       @Override
+       public void onStop() {
+
+       }
+
+       @Override
+       public void onDestroy() {
+
+       }
+   }
+    public void selectAllToDeleteList(){
+        for(int i=0;i<data.size();i++){
+            DialBgItem item = data.get(i);
+            if(item.getStatus() == 0 && !deleteList.contains(item)){
+                deleteList.add(item);
+            }
+        }
+        notifyDataSetChanged();
+    }
+
+    public void unselectAllToDeleteList(){
+        deleteList.clear();
+        notifyDataSetChanged();
+    }
+
+    public static String saveBitmapToLocal(Bitmap bitmap, String path) {
+        FileOutputStream fOut = null;
+        File fp = null;
+        try {
+            fp = new File(path);
+            if(!fp.exists()){
+                fp.createNewFile();
+            }
+            fOut = new FileOutputStream(fp,false);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fOut);
+            fOut.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }finally {
+            try {
+                fOut.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return fp.getAbsolutePath();
+    }
+
+    public void setOnbtnClickListener(btnClickListener lis){
+        btnlis = lis;
+    }
+
+    public interface btnClickListener{
+        void onClick(DialBgItem item);
+    }
+}

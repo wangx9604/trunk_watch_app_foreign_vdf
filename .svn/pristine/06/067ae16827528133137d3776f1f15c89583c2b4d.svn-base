@@ -1,0 +1,11 @@
+package com.xiaoxun.xun.networkv2.beans;
+
+public class TaskInfoRequestInfo extends BaseRequestInfo{
+    String id;
+
+    public TaskInfoRequestInfo(String eid, String id) {
+        super(eid);
+        this.id = id;
+    }
+
+}

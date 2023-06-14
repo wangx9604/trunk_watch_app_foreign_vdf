@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" 
+    android:background="@color/white">
+    <include   
+       android:id="@+id/title"  
+       layout="@layout/activity_title"/>
+	<ListView
+		android:id="@+id/relation_list"
+		android:layout_width="fill_parent"
+		android:layout_height="fill_parent"
+		android:layout_below="@id/title"
+		android:cacheColorHint="@color/transparent"
+		android:divider="@drawable/list_item_divider"
+		android:footerDividersEnabled="true"
+		android:dividerHeight="1px"
+		android:scrollbars="none"
+		android:fadingEdge="none" >
+	</ListView>
+</RelativeLayout>

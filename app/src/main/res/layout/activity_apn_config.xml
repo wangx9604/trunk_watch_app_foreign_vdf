@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white">
+
+    <include
+        android:id="@+id/title"
+        layout="@layout/activity_title" />
+
+    <ScrollView
+        android:layout_width="fill_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/title"
+        android:scrollbars="vertical">
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_apn_desc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/title"
+                android:layout_marginLeft="23.33dp"
+                android:layout_marginRight="23.33dp"
+                android:layout_marginTop="12dp"
+                android:text="@string/apnconfig_desc"
+                android:textColor="@color/txt_grey"
+                android:textSize="@dimen/xiaomiMyTextSize13" />
+
+            <RelativeLayout
+                android:id="@+id/layout_apn_phonenumber"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_apn_desc"
+                android:layout_marginLeft="@dimen/divideleftandright"
+                android:layout_marginRight="@dimen/divideleftandright"
+                android:layout_marginTop="20dp">
+
+                <TextView
+                    android:id="@+id/tv_apn_phonenumber"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/set_watch_phonenum"
+                    android:textColor="@color/color_7"
+                    android:textSize="@dimen/xiaomiMyTextSize1"
+                    android:visibility="visible" />
+
+                <EditText
+                    android:id="@+id/et_apn_phonenumber"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/tv_apn_phonenumber"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/input_box"
+                    android:gravity="center|left|center"
+                    android:hint="@string/apnconfig_phonenumber_hint"
+                    android:inputType="phone"
+                    android:maxLength="18"
+                    android:maxLines="1"
+                    android:paddingStart="12.66dp"
+                    android:textColor="@color/color_7"
+                    android:textColorHint="@color/color_hint"
+                    android:textSize="@dimen/xiaomiMyTextSize2" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/layout_apn_imei"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/layout_apn_phonenumber"
+                android:layout_marginLeft="@dimen/divideleftandright"
+                android:layout_marginRight="@dimen/divideleftandright"
+                android:layout_marginTop="20dp">
+
+                <TextView
+                    android:id="@+id/tv_apn_imei"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/apnconfig_imei"
+                    android:textColor="@color/color_7"
+                    android:textSize="@dimen/xiaomiMyTextSize1"
+                    android:visibility="visible" />
+
+                <EditText
+                    android:id="@+id/et_apn_imei"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/tv_apn_imei"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/input_box"
+                    android:gravity="center|left|center"
+                    android:hint="@string/apnconfig_imei_hint"
+                    android:inputType="number"
+                    android:maxLength="15"
+                    android:maxLines="1"
+                    android:paddingStart="12.66dp"
+                    android:textColor="@color/color_7"
+                    android:textColorHint="@color/color_hint"
+                    android:textSize="@dimen/xiaomiMyTextSize2" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/layout_apn_type"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/layout_apn_imei"
+                android:layout_marginLeft="@dimen/divideleftandright"
+                android:layout_marginRight="@dimen/divideleftandright"
+                android:layout_marginTop="20dp">
+
+                <TextView
+                    android:id="@+id/tv_apn_type"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/apnconfig_type"
+                    android:textColor="@color/color_7"
+                    android:textSize="@dimen/xiaomiMyTextSize1"
+                    android:visibility="visible" />
+
+                <EditText
+                    android:id="@+id/et_apn_type"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/tv_apn_type"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/input_box"
+                    android:gravity="center|left|center"
+                    android:hint="@string/apnconfig_type_hint"
+                    android:maxLength="30"
+                    android:maxLines="1"
+                    android:paddingStart="12.66dp"
+                    android:textColor="@color/color_7"
+                    android:textColorHint="@color/color_hint"
+                    android:textSize="@dimen/xiaomiMyTextSize2" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/layout_apn_type"
+                android:layout_marginLeft="@dimen/divideleftandright"
+                android:layout_marginRight="@dimen/divideleftandright"
+                android:layout_marginTop="20dp">
+
+                <TextView
+                    android:id="@+id/tv_apn_port"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/apnconfig_port"
+                    android:textColor="@color/color_7"
+                    android:textSize="@dimen/xiaomiMyTextSize1"
+                    android:visibility="visible" />
+
+                <EditText
+                    android:id="@+id/et_apn_port"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/tv_apn_port"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/input_box"
+                    android:gravity="center|left|center"
+                    android:hint="@string/apnconfig_port_hint"
+                    android:inputType="number"
+                    android:maxLength="4"
+                    android:maxLines="1"
+                    android:paddingStart="12.66dp"
+                    android:textColor="@color/color_7"
+                    android:textColorHint="@color/color_hint"
+                    android:textSize="@dimen/xiaomiMyTextSize2" />
+            </RelativeLayout>
+
+            <Button
+                android:id="@+id/btn_apn_confirm"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="23dp"
+                android:background="@drawable/btn_dialgo_one_button"
+                android:text="@string/apnconfig_confirm"
+                android:textColor="@color/black"
+                android:textSize="@dimen/xiaomiMyTextSize1" />
+
+            <Button
+                android:id="@+id/btn_apn_default"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_gravity="center_horizontal"
+                android:background="@drawable/btn_dialgo_one_button"
+                android:layout_marginTop="23dp"
+                android:text="@string/apnconfig_default"
+                android:textColor="@color/black"
+                android:textSize="@dimen/xiaomiMyTextSize1" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="23.33dp" />
+        </LinearLayout>
+    </ScrollView>
+
+</RelativeLayout>

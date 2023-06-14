@@ -1,0 +1,322 @@
+package com.xiaoxun.xun.webcenter.activitys;
+
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+
+import android.Manifest;
+import android.annotation.TargetApi;
+import android.app.Activity;
+import android.content.Intent;
+import android.net.Uri;
+
+import androidx.annotation.RequiresApi;
+import androidx.core.app.ActivityCompat;
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.os.Build;
+import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.View;
+import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient;
+import android.webkit.WebView;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+
+import com.github.lzyzsd.jsbridge.BridgeHandler;
+import com.github.lzyzsd.jsbridge.BridgeWebView;
+import com.github.lzyzsd.jsbridge.BridgeWebViewClient;
+import com.github.lzyzsd.jsbridge.CallBackFunction;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.xiaoxun.calendar.LoadingDialog;
+import com.xiaoxun.xun.CalendarTable.custom.CustomSelectorDialog;
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.Constants;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.activitys.MainActivity;
+import com.xiaoxun.xun.activitys.NormalAppCompatActivity;
+import com.xiaoxun.xun.communityTopics.activitys.ImagePreViewActivity;
+import com.xiaoxun.xun.communityTopics.activitys.ImageSelectorActivity;
+import com.xiaoxun.xun.communityTopics.beans.Image;
+import com.xiaoxun.xun.interfaces.InterfacesUtil;
+import com.xiaoxun.xun.interfaces.MsgCallback;
+import com.xiaoxun.xun.utils.BitmapUtil;
+import com.xiaoxun.xun.utils.CloudBridgeUtil;
+import com.xiaoxun.xun.utils.CommonUtil;
+import com.xiaoxun.xun.utils.LogUtil;
+import com.xiaoxun.xun.utils.WebViewUtil;
+
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
+import net.minidev.json.JSONValue;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+
+public class WebJsBridgeActivity extends NormalAppCompatActivity {
+
+    @BindView(R.id.webcontent)
+    public BridgeWebView mBridgeWebView;
+    @BindView(R.id.pg_progres_store)
+    public ProgressBar pg_progress;
+    @BindView(R.id.tv_title)
+    public TextView tv_title;
+
+    private String mFunWebUrl_0;
+    private LoadingDialog mLoadingDialog;
+
+    private static ArrayList<Image> mTempImages;
+    private ArrayList<Image> mImages;
+
+    public static void openActivity(Activity activity, ArrayList<Image> images) {
+        mTempImages = images;
+        Intent intent = new Intent(activity, WebJsBridgeActivity.class);
+        activity.startActivity(intent);
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_web_js_bridge);
+        ButterKnife.bind(this);
+        LogUtil.e("jsbridge:onCreate:");
+        mFunWebUrl_0 = getIntent().getStringExtra("targetUrl");
+        mLoadingDialog = new LoadingDialog(this, R.style.Theme_DataSheet, null);
+        mLoadingDialog.setCancelable(false);
+
+
+        WebViewUtil.getInstance().initWebSettings(mBridgeWebView,this, getMyApp().miit_oaid);
+        WebViewUtil.getInstance().dealJavascriptLeak(mBridgeWebView);
+        mBridgeWebView.loadUrl(mFunWebUrl_0);
+        //1:初始化webView
+        initWebView();
+
+        //2：jsBridge特别处理
+        initJsBridgeHandle();
+    }
+
+    private void initWebView() {
+        mBridgeWebView.setWebChromeClient(new WebChromeClient() {
+
+            public void onReceivedTitle(WebView view, String title) {
+                super.onReceivedTitle(view, title);
+                tv_title.setText(title);
+            }
+
+            @Override
+            public void onProgressChanged(WebView view, int newProgress) {
+                super.onProgressChanged(view, newProgress);
+                if(newProgress==100){
+                    pg_progress.setVisibility(View.GONE);//加载完网页进度条消失
+                }
+                else{
+                    pg_progress.setVisibility(View.VISIBLE);//开始加载网页时显示进度条
+                    pg_progress.setProgress(newProgress);//设置进度值
+                }
+            }
+        });
+        mBridgeWebView.setWebViewClient(new JsBridgeWebView(mBridgeWebView));
+    }
+
+    class JsBridgeWebView extends BridgeWebViewClient {
+
+        public JsBridgeWebView(BridgeWebView webView) {
+            super(webView);
+        }
+
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+            if(url.contains(Constants.to_Url)){
+                String str=url.substring(21);
+                Log.i("CUI","url2:="+str);
+                //登录
+                Intent intent=new Intent(WebJsBridgeActivity.this, getMyApp().getLoginClass());
+                intent.putExtra(MainActivity.isShowBack,"true");
+                intent.putExtra(Constants.store_url,str);
+                intent.putExtra(Constants.login_channel,Constants.FINAL_CHANNEL_SUB_FIND);
+                startActivity(intent);
+                try {
+                    URLEncoder.encode(url,"utf-8");
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+                return  true;
+            }else if(url.contains("xiaoxunapp://open")) {
+                //该链接直接打开url
+                int indexOf = url.indexOf("?url=");
+                String toUrl = url.substring(indexOf + 5);
+                boolean isTestPlatfrom = getMyApp().getIntValue(Const.SHARE_PREF_FIELD_DEV_SERVER_FLAG, 0) > 0;
+                String Channel = WebViewUtil.onGetChannalByUrl(toUrl, isTestPlatfrom, Constants.FINAL_CHANNEL_SUB_FIND);
+                WebViewUtil.onNextPage(WebJsBridgeActivity.this, toUrl, Channel);
+                return true;
+            }else{
+                return super.shouldOverrideUrlLoading(view, url);
+            }
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+
+        mImages = mTempImages;
+        mTempImages = null;
+
+        //1:使用Rxjava处理，后台处理压缩和裁剪图片
+        if(mImages != null) {
+            SetPicToServierByJs();
+        }
+
+        //2:加载当前连接
+        mFunWebUrl_0 = getIntent().getStringExtra("targetUrl");
+        if(!TextUtils.isEmpty(mFunWebUrl_0)){
+            LogUtil.e("onNewIntent jsBridge:"+mFunWebUrl_0);
+            mBridgeWebView.loadUrl(mFunWebUrl_0);
+
+            initJsBridgeHandle();
+        }
+    }
+
+    private void SetPicToServierByJs() {
+        Observable.create(new ObservableOnSubscribe<JSONArray>() {
+
+            @Override
+            public void subscribe(final ObservableEmitter<JSONArray> e) {
+                //:2:图片压缩后生成JSON数组
+                JSONArray picArray = BitmapUtil.CompressImageFormSizeAndWH(WebJsBridgeActivity.this, mImages, 1000, 1024*(1024/mImages.size()));
+                //String picdata = intent.getStringExtra("picstr");
+                e.onNext(picArray);
+            }
+        })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        new Observer<JSONArray>() {
+                            @Override
+                            public void onSubscribe(Disposable d) {
+                                //1：网络请求加载框
+                                mLoadingDialog.changeStatus(1, getString(R.string.pic_to_server));
+                                mLoadingDialog.show();
+                            }
+
+                            @Override
+                            public void onNext(JSONArray picArray) {
+                                //3:图片内容上传
+                                if(picArray.size() > 0) {
+                                    mBridgeWebView.callHandler("setImg", new Gson().toJson(picArray), new CallBackFunction() {
+                                        @Override
+                                        public void onCallBack(String data) {
+                                            LogUtil.e("setImg jsBridge data:" + data);
+                                        }
+                                    });
+                                }
+                                //4：流程完成处理通知
+                                onComplete();
+                            }
+
+                            @Override
+                            public void onError(Throwable e) {
+
+                            }
+
+                            @Override
+                            public void onComplete() {
+                                //5：结束网络加载框
+                                mLoadingDialog.dismiss();
+                            }
+                        }
+                );
+
+    }
+
+    private void initJsBridgeHandle() {
+        mBridgeWebView.registerHandler("getImg", new BridgeHandler(){
+            @Override//指定handler来接受来自web的数据data
+            public void handler(String data, CallBackFunction function) {
+                LogUtil.e("getImg jsBridge data:"+data);
+                JSONObject jsonObject = (JSONObject) JSONValue.parse(data);
+                String mNum = String.valueOf(jsonObject.get("imgCount"));
+                Intent _intent = new Intent(WebJsBridgeActivity.this, ImageSelectorActivity.class);
+                _intent.putExtra(Constants.IMAGE_SELECT_MAX, mNum);
+                startActivity(_intent);
+            }
+        });
+    }
+
+    @Override
+    public void onBackPressed() {
+        onActionBack();
+    }
+
+    @OnClick(R.id.iv_title_back)
+    public void onClickTitleBack() {
+        onActionBack();
+    }
+
+    @OnClick(R.id.iv_title_menu)
+    public void onActionMainMenu(){
+        finish();
+    }
+
+    private void onActionBack() {
+        if (mBridgeWebView.canGoBack()) {
+            mBridgeWebView.goBack();
+        } else {
+            mBridgeWebView.callHandler("contentChange","",new CallBackFunction(){
+                @Override
+                public void onCallBack(String data) {
+                    LogUtil.e("contentChange jsBridge：" + data);
+                    if("0".equals(data)){
+                        finish();
+                    }else{
+                        new CustomSelectorDialog.Builder(WebJsBridgeActivity.this)
+                                .setmDailogType(5)
+                                .setTitle(getString(R.string.pulic_save_drafts))
+                                .setContent(getString(R.string.pulic_giveup))
+                                .setmHightLightColor2(getResources().getColor(R.color.warining_red))
+                                .setmSmallBtnLeftListener(new InterfacesUtil.UpdateViewData() {
+                                    @Override
+                                    public void UpdateView(View view, String resq) {
+                                        //1:保存草稿箱
+                                        LogUtil.e("here is save drafts!");
+                                        mBridgeWebView.callHandler("unpublishedAdd","1",new CallBackFunction(){
+                                            @Override
+                                            public void onCallBack(String data) {
+                                                LogUtil.e("jsBridage unpublishedAdd：" + data);
+                                                finish();
+                                            }
+                                        });
+                                    }
+                                })
+                                .setmSmallBtnRightListener(new InterfacesUtil.UpdateViewData() {
+                                    @Override
+                                    public void UpdateView(View view, String resq) {
+                                        //2:放弃保存
+                                        LogUtil.e("here is give up save!");
+                                        finish();
+                                    }
+                                })
+                                .build().show();
+                    }
+                }
+            });
+        }
+    }
+
+}

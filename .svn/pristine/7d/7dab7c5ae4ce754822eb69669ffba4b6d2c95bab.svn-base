@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/white"
+    android:orientation="vertical">
+
+    <include
+        android:id="@+id/title"
+        layout="@layout/activity_title" />
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:paddingLeft="@dimen/divideleftandright"
+        android:paddingRight="@dimen/divideleftandright"
+        android:src="@color/line_grey" />
+
+    <com.xiaoxun.xun.views.NoticeManagerView
+        android:id="@+id/location_notice_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:checked="true"
+        app:notice_title="@string/location_notice"
+        app:notice_title_size="@dimen/xiaomiMyTextSize1"></com.xiaoxun.xun.views.NoticeManagerView>
+
+    <com.xiaoxun.xun.views.NoticeManagerView
+        android:id="@+id/battery_notice_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:checked="true"
+        app:notice_title="@string/battery_notice"
+        app:notice_title_size="@dimen/xiaomiMyTextSize1"></com.xiaoxun.xun.views.NoticeManagerView>
+
+    <com.xiaoxun.xun.views.NoticeManagerView
+        android:id="@+id/steps_notice_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:checked="true"
+        app:notice_title="@string/steps_notice"
+        app:notice_title_size="@dimen/xiaomiMyTextSize1"></com.xiaoxun.xun.views.NoticeManagerView>
+
+    <com.xiaoxun.xun.views.NoticeManagerView
+        android:id="@+id/group_notice_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:checked="true"
+        app:notice_title="@string/group_notice"
+        app:notice_title_size="@dimen/xiaomiMyTextSize1"></com.xiaoxun.xun.views.NoticeManagerView>
+
+    <com.xiaoxun.xun.views.NoticeManagerView
+        android:id="@+id/sms_notice_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:checked="true"
+        app:notice_title="@string/sms_notice"
+        app:notice_title_size="@dimen/xiaomiMyTextSize1"></com.xiaoxun.xun.views.NoticeManagerView>
+
+    <com.xiaoxun.xun.views.NoticeManagerView
+        android:id="@+id/download_notice_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:checked="true"
+        app:notice_title="@string/download_notice"
+        app:notice_title_size="@dimen/xiaomiMyTextSize1"></com.xiaoxun.xun.views.NoticeManagerView>
+
+</LinearLayout>

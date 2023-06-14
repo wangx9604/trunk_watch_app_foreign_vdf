@@ -1,0 +1,385 @@
+package com.xiaoxun.calendar;
+
+import android.app.Activity;
+import android.content.Context;
+import android.graphics.drawable.ColorDrawable;
+import android.os.Handler;
+import android.support.v4.view.ViewPager;
+import android.text.format.Time;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.widget.ImageButton;
+import android.widget.PopupWindow;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.ViewFlipper;
+
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.beans.MyMsgData;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.interfaces.MsgCallback;
+import com.xiaoxun.xun.utils.CloudBridgeUtil;
+import com.xiaoxun.xun.utils.TimeUtil;
+import com.xiaoxun.xun.utils.ToastUtil;
+
+import net.minidev.json.JSONObject;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
+
+/**
+ * Created by xilvkang on 2015/9/1.
+ */
+public class calendarViewForSteps extends PopupWindow implements
+        View.OnClickListener, CalendarCardForSteps.OnCellClickListener,MsgCallback {
+
+    private ViewPager mViewPager;
+    private int mCurrentIndex = 2;
+    private CalendarCardForSteps[] mShowViews;
+    private CalendarViewAdapter<CalendarCardForSteps> adapter;
+
+    private ImageButton preImgBtn, nextImgBtn;
+    private TextView monthText;
+
+    private SildeDirection mDirection = SildeDirection.NO_SILDE;
+
+    private OnItemClickListener mOnItemClickListener;
+    private CustomDate touchDate;
+    private int touchNum;
+    private boolean isTouchItem = false;
+
+    private Context mContext;
+
+    //public int needUpdate = 0;
+
+    private WatchData curWatch;
+    private ImibabyApp myApp;
+
+    private View mView;
+    private ViewFlipper flipper;
+
+
+    public interface OnItemClickListener {
+        void getItemDate(CustomDate date, int num);
+    }
+    /**
+    * 类名称：calendarView
+    * 修改人：zhangjun5
+    * 修改时间：2016/3/2 15:24
+    * 方法描述: 初始化日历控件，该控件使用与轨迹和计步功能上，因为计步需求的不同，
+    *              需要对该控件初始化结构进行调整
+    * 修改描述：添加一个boolean，来分辨出是轨迹或者计步，计步和轨迹的初始化信息不同
+    *
+    */
+    public calendarViewForSteps(Context context, OnItemClickListener listen) {
+        super(context);
+        mContext = context;
+        myApp = (ImibabyApp) ((Activity)(mContext)).getApplication();
+        curWatch = myApp.getCurUser().getFocusWatch();
+        LayoutInflater inflater = (LayoutInflater) context
+                .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        mView = inflater.inflate(R.layout.calendar_view_layout, null);
+        flipper = mView.findViewById(R.id.flipper);
+        mViewPager = mView.findViewById(R.id.vp_calendar);
+        preImgBtn = mView.findViewById(R.id.btnPreMonth);
+        nextImgBtn = mView.findViewById(R.id.btnNextMonth);
+        monthText = mView.findViewById(R.id.tvCurrentMonth);
+
+        initCurselectItem();
+        CalendarCardForSteps[] views;
+        views = new CalendarCardForSteps[2];
+        for (int i = 0; i < 2; i++) {
+            views[i] = new CalendarCardForSteps(context, this);
+        }
+        adapter = new CalendarViewAdapter<CalendarCardForSteps>(views);
+        setViewPagerForSteps();
+
+
+        mOnItemClickListener = listen;
+
+        preImgBtn.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                mViewPager.setCurrentItem(mViewPager.getCurrentItem() - 1);
+            }
+        });
+        nextImgBtn.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                mViewPager.setCurrentItem(mViewPager.getCurrentItem() + 1);
+            }
+        });
+
+        mView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                int top = flipper.getTop();
+                int bottom = flipper.getBottom();
+                int y = (int) motionEvent.getY();
+                int x = (int) motionEvent.getX();
+                if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
+                    if (y < top || y > bottom) {
+                        showNextFromDown();
+                    }
+                }
+                return true;
+            }
+        });
+
+        //设置ChatPopupWindow的View
+        this.setContentView(mView);
+        //设置ChatPopupWindow弹出窗体的宽
+        this.setWidth(ViewGroup.LayoutParams.MATCH_PARENT);
+        //设置ChatPopupWindow弹出窗体的高
+        this.setHeight(ViewGroup.LayoutParams.MATCH_PARENT);
+        //设置ChatPopupWindow弹出窗体可点击
+        this.setFocusable(true);
+        //设置ChatPopupWindow弹出窗体动画效果
+//        this.setAnimationStyle(R.anim.main_title_popup);
+        //实例化一个ColorDrawable颜色为透明
+        ColorDrawable dw = new ColorDrawable(0x00000000);
+        //设置ChatPopupWindow弹出窗体的背景
+        this.setBackgroundDrawable(dw);
+
+        flipper.getInAnimation().setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                int num = flipper.getDisplayedChild();
+                if(flipper.getDisplayedChild() == 1) {
+                    if(isTouchItem) {
+                        mOnItemClickListener.getItemDate(touchDate, touchNum);
+                        isTouchItem = false;
+                    }
+                    Handler mhandler = new Handler();
+                    mhandler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            dismiss();
+                        }
+                    },10);
+                    //dismiss();
+                }
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+    }
+    /**
+    * 类名称：calendarView
+    * 创建人：zhangjun5
+    * 创建时间：2016/3/2 15:29
+    * 方法描述：计步器使用的适配器初始化函数
+    */
+    private void setViewPagerForSteps() {
+        mViewPager.setAdapter(adapter);
+        mViewPager.setCurrentItem(1);//498
+        mViewPager.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+
+            @Override
+            public void onPageSelected(int position) {
+                if(position > 2)return;
+                measureDirection(position);
+                updateCalendarView(position);
+                if(mCurrentIndex == 0){
+                    preImgBtn.setBackgroundDrawable(mContext.getResources().getDrawable(R.drawable.left_small_arrow_1));
+                    nextImgBtn.setBackgroundDrawable(mContext.getResources().getDrawable(R.drawable.right_small_arrow_0));
+                }else if(mCurrentIndex == 1){
+                    preImgBtn.setBackgroundDrawable(mContext.getResources().getDrawable(R.drawable.left_small_arrow_0));
+                    nextImgBtn.setBackgroundDrawable(mContext.getResources().getDrawable(R.drawable.right_small_arrow_1));
+                }else{
+                    preImgBtn.setBackgroundDrawable(mContext.getResources().getDrawable(R.drawable.left_small_arrow_0));
+                    nextImgBtn.setBackgroundDrawable(mContext.getResources().getDrawable(R.drawable.right_small_arrow_0));
+                }
+            }
+
+            @Override
+            public void onPageScrolled(int arg0, float arg1, int arg2) {
+
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int arg0) {
+
+            }
+        });
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.btnPreMonth:
+                mViewPager.setCurrentItem(mViewPager.getCurrentItem() - 1);
+                break;
+            case R.id.btnNextMonth:
+                mViewPager.setCurrentItem(mViewPager.getCurrentItem() + 1);
+                break;
+            default:
+                break;
+        }
+    }
+
+    @Override
+    public void clickDate(CustomDate date, int num) {
+        DatePointForSteps.curSelectItem = date;
+        touchDate = date;
+        touchNum = num;
+        isTouchItem = true;
+        showNextFromDown();
+    }
+
+    @Override
+    public void changeDate(CustomDate date) {
+        monthText.setText(date.year + "-" + date.month + "");
+    }
+
+    /**
+     * 计算方向
+     *
+     * @param arg0
+     */
+    private void measureDirection(int arg0) {
+
+        if (arg0 > mCurrentIndex && mCurrentIndex < 2) {
+            mDirection = SildeDirection.RIGHT;
+            mCurrentIndex = arg0;
+        } else if (arg0 < mCurrentIndex && mCurrentIndex > 0) {
+            mDirection = SildeDirection.LEFT;
+            mCurrentIndex = arg0;
+        }else{
+            mDirection = SildeDirection.NO_SILDE;
+        }
+        DatePointForSteps.curPageIndex = mCurrentIndex;
+    }
+
+    // 更新日历视图
+    private void updateCalendarView(int arg0) {
+        mShowViews = adapter.getAllItems();
+        if (mDirection == SildeDirection.RIGHT) {
+            mShowViews[arg0 % mShowViews.length].rightSlide();
+        } else if (mDirection == SildeDirection.LEFT) {
+            mShowViews[arg0 % mShowViews.length].leftSlide();
+        }
+        mDirection = SildeDirection.NO_SILDE;
+    }
+
+    public void updateAllCalendarView(){
+        mShowViews = adapter.getAllItems();
+        mShowViews[0].update();
+        mShowViews[1].update();
+        mShowViews[2].update();
+    }
+    /**
+    * 类名称：calendarView
+    * 创建人：zhangjun5
+    * 创建时间：2016/3/2 19:49
+    * 方法描述：更新所有的视图，使用时计步功能
+    */
+    public void updateAllCalendarViewToSteps(){
+        mShowViews = adapter.getAllItems();
+        mShowViews[0].update();
+        mShowViews[1].update();
+    }
+
+    enum SildeDirection {
+        RIGHT, LEFT, NO_SILDE
+    }
+
+
+    private String[] dateCounter = new String[92];
+    private void datePointCatch() {
+        Calendar date = Calendar.getInstance();
+        final SimpleDateFormat formatDateKey = new SimpleDateFormat("yyyyMMdd",
+                Locale.CHINA);
+        for (int i = 0; i < 92; i++) {
+            date.add(Calendar.DAY_OF_MONTH, -1);
+            Date item = date.getTime();
+            dateCounter[i] = formatDateKey.format(item);
+        }
+        getTraceCounterGroupByDay(dateCounter);
+    }
+
+    private void getTraceCounterGroupByDay(String[] data) {
+        MyMsgData retrieve = new MyMsgData();
+        retrieve.setCallback(calendarViewForSteps.this);
+        // set msg info
+        JSONObject pl = new JSONObject();
+        pl.put(CloudBridgeUtil.KEY_NAME_EID, curWatch.getEid());
+        pl.put(CloudBridgeUtil.KEY_NAME_HISTORYTRACE_DAYS, data);
+        retrieve.setReqMsg(CloudBridgeUtil.obtainCloudMsgContent(
+                CloudBridgeUtil.CID_TRACE_COUNTER_DATA,
+                Long.valueOf(TimeUtil.getTimeStampGMT()).intValue(),
+                myApp.getToken(), pl));
+        if (myApp.getNetService() != null) {
+            myApp.getNetService().sendNetMsg(retrieve);
+        }
+    }
+
+
+    @Override
+    public void doCallBack(JSONObject reqMsg, JSONObject respMsg) {
+        int rc = CloudBridgeUtil.getCloudMsgRC(respMsg);
+        if (1 == rc){
+            int cid = (Integer) respMsg.get(CloudBridgeUtil.KEY_NAME_CID);
+            switch (cid){
+                case CloudBridgeUtil.CID_TRACE_COUNTER_DATA_RESP:
+                    JSONObject pointPl = (JSONObject) respMsg
+                            .get(CloudBridgeUtil.KEY_NAME_PL);
+                    int count = pointPl.size();
+                    if (count > 0) {
+                        DatePointForSteps.setDateToCalenderPointList(pointPl);
+                        updateAllCalendarView();
+                    }
+                    break;
+            }
+        }else if (rc == CloudBridgeUtil.RC_TIMEOUT
+                ||rc == CloudBridgeUtil.RC_NETERROR
+                || rc == CloudBridgeUtil.RC_SOCKET_NOTREADY){
+            ToastUtil.showMyToast(mContext,
+                    mContext.getResources().getText(R.string.network_error_prompt).toString(),
+                    Toast.LENGTH_SHORT) ;
+        }
+    }
+
+    @Override
+    public void dismiss() {
+        super.dismiss();
+    }
+
+    public void showCalendar(){
+        //flipper.showNext();
+        showNextFromUp();
+    }
+
+    public void showNextFromUp(){
+        flipper.setDisplayedChild(1);
+        flipper.showNext();
+    }
+
+    public void showNextFromDown(){
+        flipper.showPrevious();
+    }
+
+    private void initCurselectItem(){
+        Time t = new Time();
+        t.setToNow();
+        DatePointForSteps.curSelectItem.setDay(t.monthDay);
+        DatePointForSteps.curSelectItem.setYear(t.year);
+        DatePointForSteps.curSelectItem.setMonth(t.month+1);
+    }
+}

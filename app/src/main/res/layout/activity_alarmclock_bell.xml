@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/xiaomi_bg_grey"
+    android:orientation="vertical">
+
+    <include
+        android:id="@+id/alarmclock_bell_title"
+        layout="@layout/activity_title" />
+
+    <ListView
+        android:id="@+id/listview_slect_bell"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/alarmclock_bell_title"
+        android:cacheColorHint="@color/transparent"
+        android:divider="@drawable/list_item_divider"
+        android:dividerHeight="1px"
+        android:fadingEdge="none"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:layout_below="@id/listview_slect_bell"
+        android:layout_marginLeft="23.33dp"
+        android:layout_marginRight="23.33dp"
+        android:background="@color/divider_color" />
+
+    <Button
+        android:id="@+id/confirm"
+        android:layout_width="wrap_content"
+        android:layout_height="41dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:layout_marginBottom="23dp"
+        android:background="@drawable/btn_security_next_selector"
+        android:text="@string/confirm"
+        android:textSize="@dimen/xiaomiMyTextSize1" />
+
+</RelativeLayout>

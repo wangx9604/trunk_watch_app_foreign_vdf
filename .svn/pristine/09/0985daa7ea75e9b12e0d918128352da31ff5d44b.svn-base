@@ -1,0 +1,438 @@
+package com.xiaoxun.xun.activitys;
+
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AbsListView;
+import android.widget.BaseAdapter;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+
+import com.xiaoxun.calendar.LoadingDialog;
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.beans.CallLogData;
+import com.xiaoxun.xun.beans.MyMsgData;
+import com.xiaoxun.xun.beans.PhoneNumber;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.interfaces.MsgCallback;
+import com.xiaoxun.xun.utils.CloudBridgeUtil;
+import com.xiaoxun.xun.utils.TimeUtil;
+import com.xiaoxun.xun.utils.ToastUtil;
+
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
+import net.minidev.json.JSONValue;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+
+/**
+ * Created by guxiaolong on 2016/6/21.
+ */
+public class CallLogActivity extends NormalActivity implements View.OnClickListener, MsgCallback, LoadingDialog.OnConfirmClickListener {
+
+    private ImageButton mBackBtn;
+    private ListView mCallLogList;
+    private String mCurWatchEid;
+    private ArrayList<CallLogData> mCallLogDataList;
+    private CallLogAdapter mCallLogAdapter;
+    private RelativeLayout mNoCallLogLayout;
+    private WatchData mCurWatch;
+    private BroadcastReceiver mBroadcastReceiver;
+    private LoadingDialog mLoadingDlg;
+    private RelativeLayout mRefreshLayout;
+    private Button mRefreshBtn;
+    private String mNextKey;
+
+    public static final int CALL_LOG_TYPE_OUTGOING_SUCCESS = 1;
+    public static final int CALL_LOG_TYPE_COMING_FAIL = 2;
+    public static final int CALL_LOG_TYPE_COMING_SUCCESS = 3;
+    public static final int CALL_LOG_TYPE_COMING_REJECT = 4;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_call_log);
+        mCurWatchEid = getIntent().getExtras().getString(Const.KEY_WATCH_ID);
+        mCurWatch = myApp.getCurUser().queryWatchDataByEid(mCurWatchEid);
+        mCallLogDataList = new ArrayList<CallLogData>();
+
+        if (mCurWatch == null) {
+            finish();
+            return;
+        }
+        initViews();
+        //getCallLogDataFromLocal();
+        mNextKey = "EP/" + mCurWatchEid + "/CALLLOG/" + TimeUtil.getOrderTime(Const.FUTURE_TIME_KEY).substring(0, 14);
+        getCallLogDataFromCloudBridge(mNextKey);
+
+        mBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String action = intent.getAction();
+                if (action.equals(Const.ACTION_GET_CONTACT_SUCCESS)) {
+                    //getCallLogDataFromLocal();
+                    updateCallLogData();
+                }
+            }
+        };
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(Const.ACTION_GET_CONTACT_SUCCESS);
+        this.registerReceiver(mBroadcastReceiver, intentFilter);
+
+        if (myApp.getNetService() != null) {
+            myApp.getNetService().sendGetContactReq(mCurWatchEid);
+        }
+
+        mCallLogList.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+                if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {
+                    // 判断是否滚动到底部
+                    if (view.getLastVisiblePosition() == view.getCount() - 1) {
+                        getCallLogDataFromCloudBridge(mNextKey);
+                    }
+                }
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+
+            }
+        });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mCallLogDataList.size() == 0) {
+            mNoCallLogLayout.setVisibility(View.VISIBLE);
+            mCallLogList.setVisibility(View.GONE);
+        } else {
+            mNoCallLogLayout.setVisibility(View.GONE);
+            mCallLogList.setVisibility(View.VISIBLE);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mBroadcastReceiver != null) {
+            unregisterReceiver(mBroadcastReceiver);
+        }
+        if (mLoadingDlg != null && mLoadingDlg.isShowing()) {
+            mLoadingDlg.dismiss();
+        }
+        mLoadingDlg = null;
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (v == mBackBtn) {
+            finish();
+        } else if (v == mRefreshBtn) {
+            mRefreshLayout.setVisibility(View.GONE);
+            getCallLogDataFromCloudBridge(mNextKey);
+        }
+    }
+
+    @Override
+    public void doCallBack(JSONObject reqMsg, JSONObject respMsg) {
+        int cid = (Integer) respMsg.get(CloudBridgeUtil.KEY_NAME_CID);
+        int rc = CloudBridgeUtil.getCloudMsgRC(respMsg);
+        JSONObject pl = (JSONObject) respMsg.get(CloudBridgeUtil.KEY_NAME_PL);
+        switch (cid) {
+            case CloudBridgeUtil.CID_C2E_RESP:
+                if (mLoadingDlg != null && mLoadingDlg.isShowing()) {
+                    mLoadingDlg.dismiss();
+                }
+                if (rc == CloudBridgeUtil.RC_SUCCESS) {
+                    if (pl != null) {
+                        JSONArray list = (JSONArray) pl.get(CloudBridgeUtil.KEY_NAME_LIST);
+                        //mCallLogDataList.clear();
+                        for (int i = 0; i < list.size(); i++) {
+                            JSONObject content = (JSONObject) list.get(i);
+                            mCallLogDataList.add(getCallLogData(content));
+                        }
+                        mCallLogAdapter.notifyDataSetChanged();
+                        mNextKey = (String) pl.get(CloudBridgeUtil.KEY_NAME_NEXT_KEY);
+                        //myApp.setValue(Const.SHARE_PREF_CALL_LOG_DATA_FLAG + mCurWatchEid, list.toString());
+                        if (mCallLogDataList.size() > 0) {
+                            mNoCallLogLayout.setVisibility(View.GONE);
+                            mCallLogList.setVisibility(View.VISIBLE);
+                        }
+                    }
+                } else {
+                    mRefreshLayout.setVisibility(View.VISIBLE);
+                    mRefreshBtn.setVisibility(View.VISIBLE);
+                }
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    private void getCallLogDataFromLocal() {
+        mCallLogDataList.clear();
+        String dataList = myApp.getStringValue(Const.SHARE_PREF_CALL_LOG_DATA_FLAG + mCurWatchEid, null);
+        if (dataList != null && dataList.length() > 0) {
+            try {
+                JSONArray jsonArray = (JSONArray) JSONValue.parse(dataList);
+                for (int i = 0; i < jsonArray.size(); i++) {
+                    JSONObject content = (JSONObject) jsonArray.get(i);
+                    mCallLogDataList.add(getCallLogData(content));
+                }
+                mCallLogAdapter.notifyDataSetChanged();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        if (mCallLogDataList.size() > 0) {
+            mNoCallLogLayout.setVisibility(View.GONE);
+            mCallLogList.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void initViews() {
+        ((TextView) findViewById(R.id.tv_title)).setText(mCurWatch.getNickname());// + getString(R.string.call_log_message)
+        mBackBtn = findViewById(R.id.iv_title_back);
+        mBackBtn.setOnClickListener(this);
+
+        mCallLogAdapter = new CallLogAdapter(this, mCallLogDataList);
+        mCallLogList = findViewById(R.id.call_log_list);
+        mCallLogList.setAdapter(mCallLogAdapter);
+
+        mNoCallLogLayout = findViewById(R.id.layout_no_call_log);
+        mLoadingDlg = new LoadingDialog(this, R.style.Theme_DataSheet, this);
+        mRefreshLayout = findViewById(R.id.layout_refresh);
+        mRefreshBtn = findViewById(R.id.btn_refresh);
+        mRefreshBtn.setOnClickListener(this);
+    }
+
+    private CallLogData getCallLogData(JSONObject content) {
+        CallLogData callLogData = new CallLogData();
+        callLogData.setWatchEid(mCurWatchEid);
+        String name = (String) content.get("name");
+        String number = (String) content.get("number");
+        if (number != null && number.length() > 0) {
+            PhoneNumber phoneNumber = myApp.getPhoneWhiteDataByNumber(mCurWatchEid, number);
+            if (phoneNumber != null && phoneNumber.nickname != null && phoneNumber.nickname.length() > 0) {
+                name = phoneNumber.nickname;
+            }
+//            if (phoneNumber != null && myApp.getCurUser().getEid().equals(phoneNumber.userEid)) {
+//                name = name + "（我）";
+//            }
+        }
+        callLogData.setName(name);
+        callLogData.setNumber(number);
+        callLogData.setLocalNumber((String) content.get("local_num"));
+        callLogData.setTimestamp(TimeUtil.getOrderTime(content.get("time") + "000"));
+        try {
+            callLogData.setDuration((Integer) content.get("duration"));
+        } catch (Exception e) {
+            callLogData.setDuration(0);
+        }
+        callLogData.setType((Integer) content.get("type"));
+        return callLogData;
+    }
+
+    private class CallLogAdapter extends BaseAdapter {
+        private Context mContext;
+        private ArrayList<CallLogData> mCallLogDatas;
+
+        public CallLogAdapter(Context context, ArrayList<CallLogData> callLogDatas) {
+            this.mContext = context;
+            this.mCallLogDatas = callLogDatas;
+        }
+
+        @Override
+        public int getCount() {
+            return mCallLogDatas.size();
+        }
+
+        @Override
+        public Object getItem(int position) {
+            return mCallLogDatas.get(position);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return position;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            CallLogData callLogData = mCallLogDatas.get(position);
+            CallLogItem callLogItem;
+
+            if (convertView == null) {
+                callLogItem = new CallLogItem();
+                convertView = LayoutInflater.from(mContext).inflate(R.layout.call_log_item, null);
+
+                callLogItem.mCallLogName = convertView.findViewById(R.id.tv_call_log_name);
+                callLogItem.mCallLogNumber = convertView.findViewById(R.id.tv_call_log_number);
+                callLogItem.mCallLogTime = convertView.findViewById(R.id.tv_call_log_time);
+                callLogItem.mCallLogDuration = convertView.findViewById(R.id.tv_call_log_duration);
+                callLogItem.mCallLogType = convertView.findViewById(R.id.iv_call_log_type);
+
+                convertView.setTag(callLogItem);
+            } else {
+                callLogItem = (CallLogItem) convertView.getTag();
+            }
+
+            if (callLogData.getNumber() != null && callLogData.getNumber().length() > 0 && !callLogData.getNumber().equals("-1")) {
+                callLogItem.mCallLogNumber.setText(callLogData.getNumber());
+                callLogItem.mCallLogNumber.setVisibility(View.VISIBLE);
+            } else {
+                callLogItem.mCallLogNumber.setText(R.string.unknown_number);
+            }
+
+            if (callLogData.getName() != null && callLogData.getName().length() > 0) {
+                callLogItem.mCallLogName.setText(callLogData.getName());
+            } else {
+                callLogItem.mCallLogName.setText(callLogItem.mCallLogNumber.getText());
+                callLogItem.mCallLogNumber.setVisibility(View.GONE);
+            }
+
+            callLogItem.mCallLogTime.setText(TimeUtil.getTime(mContext, TimeUtil.chnToLocalTimestamp(callLogData.getTimestamp())));
+
+            switch (callLogData.getType()) {
+                case CALL_LOG_TYPE_OUTGOING_SUCCESS:
+                    callLogItem.mCallLogName.setTextColor(getResources().getColor(R.color.color_7));
+                    callLogItem.mCallLogType.setImageResource(R.drawable.call_out_0);
+                    if (callLogData.getDuration() == 0) {
+                        callLogItem.mCallLogDuration.setText(R.string.call_not_connect);
+                    } else {
+                        callLogItem.mCallLogDuration.setText(getString(R.string.call_out) + getTimeDuration(callLogData.getDuration()));
+                    }
+                    callLogItem.mCallLogDuration.setTextColor(getResources().getColor(R.color.color_5));
+                    break;
+                case CALL_LOG_TYPE_COMING_FAIL:
+                    callLogItem.mCallLogName.setTextColor(getResources().getColor(R.color.color_fail));
+                    callLogItem.mCallLogType.setImageResource(R.drawable.missed_call_in_0);
+                    callLogItem.mCallLogDuration.setText(R.string.call_not_connect);
+                    callLogItem.mCallLogDuration.setTextColor(getResources().getColor(R.color.color_fail));
+                    break;
+                case CALL_LOG_TYPE_COMING_SUCCESS:
+                    callLogItem.mCallLogName.setTextColor(getResources().getColor(R.color.color_7));
+                    callLogItem.mCallLogType.setImageResource(R.drawable.call_in_0);
+                    if (callLogData.getDuration() != 0) {
+                        callLogItem.mCallLogDuration.setText(getString(R.string.call_in) + getTimeDuration(callLogData.getDuration()));
+                    } else {
+                        callLogItem.mCallLogDuration.setText(R.string.hung_up_already);
+                    }
+                    callLogItem.mCallLogDuration.setTextColor(getResources().getColor(R.color.color_5));
+                    break;
+                case CALL_LOG_TYPE_COMING_REJECT:
+                    callLogItem.mCallLogName.setTextColor(getResources().getColor(R.color.color_7));
+                    callLogItem.mCallLogType.setImageResource(R.drawable.call_in_0);
+                    callLogItem.mCallLogDuration.setText(R.string.hung_up_already);
+                    callLogItem.mCallLogDuration.setTextColor(getResources().getColor(R.color.color_5));
+                    break;
+                default:
+                    break;
+            }
+            return convertView;
+        }
+    }
+
+    private class CallLogItem {
+        TextView mCallLogName;
+        TextView mCallLogNumber;
+        TextView mCallLogTime;
+        TextView mCallLogDuration;
+        ImageView mCallLogType;
+    }
+
+    private void getCallLogDataFromCloudBridge(String key) {
+        if (key == null || key.length() == 0) {
+            ToastUtil.show(this, getString(R.string.no_more_calllogs));
+            return;
+        }
+        if (mLoadingDlg != null && !mLoadingDlg.isShowing()) {
+            mLoadingDlg.enableCancel(false);
+            mLoadingDlg.changeStatus(1, getString(R.string.requesting_calllogs));
+            mLoadingDlg.show();
+        }
+        MyMsgData c2e = new MyMsgData();
+        c2e.setCallback(this);
+        JSONObject pl = new JSONObject();
+        pl.put("Key", key);
+        pl.put("Size", 10);
+        c2e.setReqMsg(myApp.obtainCloudMsgContent(CloudBridgeUtil.CID_C2E, pl));
+        if (myApp.getNetService() != null) {
+            myApp.getNetService().sendNetMsg(c2e);
+        }
+    }
+
+    public static final int HOUR_TO_SECOND = 60 * 60;
+    public static final int MINUTE_TO_SECOND = 60;
+
+    private String getTimeDuration(int duration) {
+        StringBuilder timeDuration = new StringBuilder();
+
+        if (duration >= HOUR_TO_SECOND) {
+            timeDuration.append(duration / HOUR_TO_SECOND + getString(R.string.unit_hour));
+            duration = duration % HOUR_TO_SECOND;
+        }
+
+        if (duration >= MINUTE_TO_SECOND) {
+            timeDuration.append(duration / MINUTE_TO_SECOND + getString(R.string.minute));
+            duration = duration % MINUTE_TO_SECOND;
+        }
+
+        if (duration > 0) {
+            timeDuration.append(duration + getString(R.string.second));
+        }
+
+        return " " + timeDuration.toString();
+    }
+
+    @Override
+    public void confirmClick() {
+
+    }
+
+    public static String timeDec(String time) {
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
+        if (time == null) {
+            return time;
+        } else {
+            Date other = null;
+            Date inc = null;
+            try {
+                other = format.parse(time);
+            } catch (ParseException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            inc = new Date(other.getTime() - 1);
+            return format.format(inc);
+        }
+    }
+
+    private void updateCallLogData() {
+        for (int i = 0; i < mCallLogDataList.size(); i++) {
+            String number = mCallLogDataList.get(i).getNumber();
+            if (number != null && number.length() > 0) {
+                PhoneNumber phoneNumber = myApp.getPhoneWhiteDataByNumber(mCurWatchEid, number);
+                if (phoneNumber != null && phoneNumber.nickname != null && phoneNumber.nickname.length() > 0) {
+                    mCallLogDataList.get(i).setName(phoneNumber.nickname);
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,120 @@
+package com.xiaoxun.xun.facebook;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+
+import com.facebook.AccessToken;
+import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
+import com.facebook.GraphRequest;
+import com.facebook.login.LoginManager;
+import com.facebook.login.LoginResult;
+
+import java.util.Arrays;
+
+public class FacebookLoginManager {
+
+    private static CallbackManager mFaceBookCallBack;
+    private volatile static FacebookLoginManager sInstance;
+
+    private FacebookLoginManager() {
+
+    }
+
+    /**
+     * 单例
+     *
+     * @return
+     */
+    public static FacebookLoginManager getInstance() {
+        if (sInstance == null) {
+            synchronized (FacebookLoginManager.class) {
+                if (sInstance == null) {
+                    sInstance = new FacebookLoginManager();
+                }
+            }
+        }
+        return sInstance;
+    }
+
+
+    /**
+     * 开始
+     *
+     * @param context
+     */
+    public void faceBookLogin(Context context) {
+        LoginManager.getInstance()
+                .logInWithReadPermissions((Activity) context,
+                        Arrays.asList("public_profile"));
+    }
+
+
+    /**
+     * 初始化
+     */
+    public void initFaceBook(final Context context,
+                             final OnLoginSuccessListener listener) {
+        mFaceBookCallBack = CallbackManager.Factory.create();
+        if (mFaceBookCallBack != null) {
+            LoginManager.getInstance().registerCallback(mFaceBookCallBack,
+                    new FacebookCallback<LoginResult>() {
+                        @Override
+                        public void onSuccess(LoginResult loginResult) {
+                            if (loginResult != null) {
+                                if (listener != null) {
+                                    listener.OnSuccess(loginResult);
+                                }
+
+                            }
+
+                        }
+
+                        @Override
+                        public void onCancel() {
+                            if (listener != null) {
+                                listener.onCancel();
+                            }
+                        }
+
+                        @Override
+                        public void onError(FacebookException error) {
+                            if (listener != null) {
+                                listener.onError(error);
+                            }
+                        }
+                    });
+
+        }
+    }
+
+
+    /**
+     * 设置登录结果回调
+     *
+     * @param requestCode 请求码
+     * @param resultCode  结果码
+     * @param data        数据
+     */
+    public void setOnActivityResult(int requestCode, int resultCode, Intent data) {
+        if (mFaceBookCallBack != null) {
+            mFaceBookCallBack.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+
+
+    public void getFacebookInfo(AccessToken accessToken, GraphRequest.GraphJSONObjectCallback callback) {
+        GraphRequest request = GraphRequest.newMeRequest(accessToken, callback);
+        Bundle parameters = new Bundle();
+        parameters.putString("fields", "id,first_name,last_name,name,email,gender,birthday");
+        request.setParameters(parameters);
+        request.executeAsync();
+    }
+
+    public void onDestroy() {
+        LoginManager.getInstance().logOut();
+    }
+}

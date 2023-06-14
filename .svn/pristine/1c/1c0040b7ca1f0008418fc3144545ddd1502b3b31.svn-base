@@ -1,0 +1,187 @@
+package com.xiaoxun.xun.fragment;
+
+
+import android.content.Intent;
+import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
+import android.os.Bundle;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.activitys.AppAboutActivity;
+import com.xiaoxun.xun.activitys.BindNewActivity;
+import com.xiaoxun.xun.activitys.NewLoginActivity;
+import com.xiaoxun.xun.activitys.NewMainActivity;
+import com.xiaoxun.xun.beans.MyMsgData;
+import com.xiaoxun.xun.beans.MyUserData;
+import com.xiaoxun.xun.utils.CloudBridgeUtil;
+import com.xiaoxun.xun.utils.ImageUtil;
+import com.xiaoxun.xun.utils.TimeUtil;
+import com.xiaoxun.xun.utils.ToastUtil;
+import com.xiaoxun.xun.views.CustomSettingView;
+
+import net.minidev.json.JSONObject;
+
+/**
+ * @author cuiyufeng
+ * @Description: MeFragment
+ * @date 2018/10/8 14:11
+ */
+public class MeFragment extends Fragment implements View.OnClickListener{
+    private CustomSettingView layout_add_sw,layout_about;
+    private TextView tv_me_loginstate;
+    private ImageView iv_me_head;
+    private RelativeLayout lout_me_head;
+    private ImibabyApp mApp;
+    private ImageView iv_me_arrow;
+
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View viewRoot= inflater.inflate(R.layout.fragment_me, container, false);
+        return viewRoot;
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        //Log.i("cui", "onActivityCreated");
+        mApp = (ImibabyApp)getActivity().getApplication();
+        initViews();
+        initData();
+    }
+
+    private void initViews(){
+        ((TextView) getView().findViewById(R.id.tv_title)).setText(getString(R.string.setting));
+        getView().findViewById(R.id.iv_title_back).setVisibility(View.GONE);
+
+        layout_add_sw= getView().findViewById(R.id.layout_add_sw);
+        layout_about= getView().findViewById(R.id.layout_about);
+        layout_add_sw.setOnClickListener(this);
+        layout_about.setOnClickListener(this);
+        iv_me_head= getView().findViewById(R.id.iv_me_head);
+        tv_me_loginstate= getView().findViewById(R.id.tv_me_loginstate);
+        lout_me_head= getView().findViewById(R.id.lout_me_head);
+        lout_me_head.setOnClickListener(this);
+        iv_me_arrow= getView().findViewById(R.id.iv_me_arrow);
+
+        Resources resources = getActivity().getResources();
+        Drawable drawable = resources.getDrawable(R.drawable.default_head);
+        ImageUtil.setMaskImage(iv_me_head, R.drawable.head_2, drawable);
+        }
+
+     boolean isVisibleToUser;
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        Log.i("cui", "UserVisibleHint---set"+isVisibleToUser);
+        this.isVisibleToUser=isVisibleToUser;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        boolean ishaveWatch= isHaveWatchList();
+        if (isAutoLoginState()) {
+            if(isHaveWatchList()){
+               //NewMainActivity onNewIntent
+            }else{
+                MyUserData userData=mApp.getCurUser();
+                if(userData!=null){
+                    String nikname=mApp.getStringValueNoDecrypt(Const.SHARE_PREF_FIELD_MY_NICKNAME,"");
+                    //tv_me_loginstate.setText(""+nikname);
+                    String loginId=mApp.getLoginId();
+                    if (!TextUtils.isEmpty(loginId)){
+                        tv_me_loginstate.setText(""+nikname);
+                    }
+                    if (loginId.startsWith("facebook")) {
+                        tv_me_loginstate.setText("Facebook" + ":" + nikname);
+                    } else if (loginId.startsWith("google")) {
+                        tv_me_loginstate.setText("Google" + ":" + nikname);
+                    }else {
+                        tv_me_loginstate.setText(getString(R.string.account_type_xiaomi) + ":"+nikname);
+                    }
+                }
+            }
+            iv_me_arrow.setVisibility(View.GONE);
+        }else{
+            tv_me_loginstate.setText(getResources().getString(R.string.me_fragment_log_in));
+            iv_me_arrow.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private boolean isAutoLoginState() {
+        boolean autologin=mApp.needAutoLogin();
+        return mApp.needAutoLogin();
+    }
+
+    private boolean isHaveWatchList(){
+        return mApp.getWatchList() != null && mApp.getWatchList().size() != 0;
+    }
+
+    private void initData(){
+
+    }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()){
+            case R.id.lout_me_head:
+                if (!isAutoLoginState()) {
+                    Intent intent=new Intent(getActivity(), NewLoginActivity.class);
+                    intent.putExtra(NewMainActivity.isShowBack,"true");
+                    startActivity(intent);
+                }
+                break;
+            case R.id.layout_add_sw:
+                if (isAutoLoginState()){
+                    //添加新手表
+                    if (mApp.getCurUser().getWatchList() != null && mApp.getCurUser().getWatchList().size() >= Const.DEVICE_MAX_LIMIT) {
+                        ToastUtil.showMyToast(getActivity(), getString(R.string.max_watch_num_prompt_msg), Toast.LENGTH_SHORT);
+                    } else {
+                        startActivity(new Intent(getActivity(), BindNewActivity.class));
+//                        Intent intent= new Intent(getActivity(), MipcaActivityCapture.class);
+//                        intent.putExtra(MipcaActivityCapture.SCAN_TYPE, "bind");
+//                        startActivity(intent);
+                    }
+                }else{
+                    //ToastUtil.show(getActivity(),"请先登录！");
+                    Intent intent=new Intent(getActivity(), NewLoginActivity.class);
+                    intent.putExtra(NewMainActivity.isShowBack,"true");
+                    intent.putExtra(NewMainActivity.jumpWhere,"goBindNewActivity");
+                    startActivity(intent);
+                }
+                break;
+            case R.id.layout_about:
+                startActivity(new Intent(getActivity(), AppAboutActivity.class));
+                break;
+        }
+    }
+
+    private void sendUserLogout(){
+        MyMsgData mapget = new MyMsgData();
+        mapget.setCallback(null);
+        int sn = Long.valueOf(TimeUtil.getTimeStampGMT()).intValue();
+        JSONObject msg = new JSONObject();
+        msg.put("CID", CloudBridgeUtil.CID_USER_LOGOUT);
+        if (mApp.getToken() != null) {
+            msg.put(CloudBridgeUtil.KEY_NAME_SID, mApp.getToken());
+        }
+        msg.put("SN", sn);
+        mapget.setReqMsg(msg);
+        mApp.getNetService().sendNetMsg(mapget);
+    }
+
+}

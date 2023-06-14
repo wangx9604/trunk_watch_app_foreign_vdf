@@ -1,0 +1,20 @@
+package com.xiaoxun.xun.networkv2.beans;
+
+public class PetInfo extends BaseResponseInfo{
+
+    String type;
+    String name;
+
+    public PetInfo(int code) {
+        super(code);
+    }
+
+    @Override
+    public String toString() {
+        return "PetInfo{" +
+                "type='" + type + '\'' +
+                ", name='" + name + '\'' +
+                ", code=" + code +
+                '}';
+    }
+}

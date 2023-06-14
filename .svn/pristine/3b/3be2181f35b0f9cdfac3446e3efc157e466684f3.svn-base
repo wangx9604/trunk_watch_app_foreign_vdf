@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="58.66dp"
+    android:descendantFocusability="blocksDescendants"
+    android:gravity="center_vertical"
+    android:background="@color/white"
+    android:orientation="vertical">
+	<RelativeLayout
+	    android:layout_width="match_parent"
+	    android:layout_height="58.66dp"
+		android:paddingLeft="23.33dp"
+		android:paddingRight="23.33dp"
+	    android:background="@drawable/list_item_selector">
+	      <ImageView
+			android:id="@+id/relaiton_avatar"
+			android:layout_width="40dp"
+			android:layout_height="40dp"
+            android:layout_centerVertical="true"
+			android:contentDescription="@string/blank_str"
+			android:src="@drawable/mask" />
+	
+		  <LinearLayout 
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_centerVertical="true"
+			android:layout_marginLeft="50dp"
+			android:orientation="vertical" 
+		    >
+			<TextView
+				android:id="@+id/relaiton_name"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_alignParentLeft="true"
+				android:maxWidth="200dp"
+				android:singleLine="true"
+				android:ellipsize="end"
+				android:textColor="@color/black"
+				android:textSize="@dimen/xiaomiMyTextSize1" />
+
+		  </LinearLayout>
+		<ImageView
+			android:id="@+id/iv_selected"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignParentRight="true"
+			android:layout_centerVertical="true"
+			android:src="@drawable/radio_bt_0" />
+		<ImageView
+			android:id="@+id/iv_member_next"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignParentRight="true"
+			android:layout_centerVertical="true"
+			android:src="@drawable/btn_next_selector"
+			android:visibility="invisible"/>
+	</RelativeLayout>
+
+
+	<RelativeLayout
+		android:id="@+id/cover"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:background="#B2ffffff"
+		android:layout_centerVertical="true"
+		android:visibility="invisible">
+	</RelativeLayout>
+
+</RelativeLayout>

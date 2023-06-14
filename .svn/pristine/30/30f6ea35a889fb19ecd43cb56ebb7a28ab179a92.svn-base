@@ -1,0 +1,75 @@
+package com.xiaoxun.xun.ScheduleCard.adapters;
+
+import android.content.Context;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.TextView;
+
+import com.amap.api.services.core.PoiItem;
+import com.xiaoxun.xun.R;
+
+import java.util.ArrayList;
+
+
+public class ScheduleSchoolSelectAdapter extends BaseAdapter {
+
+    private ArrayList<PoiItem> mPoiData;
+    private String[] mData;
+    private Context ctxt;
+    private int mAdapterType = 0;
+
+    public ScheduleSchoolSelectAdapter(Context ctxt, String[] mBaseData, int type){
+        this.ctxt = ctxt;
+        mData = mBaseData;
+        mAdapterType = type;
+    }
+
+    public ScheduleSchoolSelectAdapter(Context ctxt, ArrayList<PoiItem> mPosBaseData, int type){
+        this.ctxt = ctxt;
+        mPoiData = mPosBaseData;
+        mAdapterType = type;
+    }
+
+    @Override
+    public int getCount() {
+        return mAdapterType==0?mData.length:mPoiData.size();
+    }
+
+    @Override
+    public Object getItem(int position) {
+        return mAdapterType==0?mData[position]:mPoiData.get(position);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return position;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder;
+        if (convertView == null) {
+            convertView = View.inflate(ctxt, R.layout.item_select, null);
+            holder = new ViewHolder(convertView);
+            convertView.setTag(holder);
+        }else{
+            holder = (ViewHolder) convertView.getTag();
+        }
+        if(mAdapterType == 0) {
+            holder.info_show.setText(mData[position]);
+        }else{
+            holder.info_show.setText(mPoiData.get(position).getTitle());
+        }
+
+        return convertView;
+    }
+
+    static class ViewHolder{
+        TextView info_show;
+
+        ViewHolder(View view){
+            info_show = view.findViewById(R.id.tv_info_show);
+        }
+    }
+}

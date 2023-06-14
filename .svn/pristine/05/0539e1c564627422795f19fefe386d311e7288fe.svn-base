@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="43.3dp">
+
+    <TextView
+        android:id="@+id/tv_location_nearby_desc"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="13.3dp"
+        android:layout_marginRight="13.3dp"
+        android:layout_toLeftOf="@+id/location_type"
+        android:singleLine="true"
+        android:text="安慧北里怡园8号楼附近"
+        android:textColor="@color/color_7"
+        android:textSize="@dimen/xiaomiMyTextSize2" />
+    <TextView
+        android:id="@+id/location_type"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:text="(手机位置)"
+        android:textColor="@color/color_7"
+        android:layout_toLeftOf="@+id/location_nearby_distance"
+        android:visibility="gone"
+        android:textSize="@dimen/xiaomiMyTextSize2"/>
+
+    <RelativeLayout
+        android:id="@+id/location_nearby_distance"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:layout_marginRight="13.3dp">
+
+        <ImageView
+            android:id="@+id/iv_location_nearby"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/location_nearby"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tv_location_nearby_distance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="300米"
+            android:textColor="@color/color_5"
+            android:textSize="@dimen/xiaomiMyTextSize5" />
+    </RelativeLayout>
+</RelativeLayout>

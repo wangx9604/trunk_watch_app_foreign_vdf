@@ -1,0 +1,18 @@
+package com.xiaoxun.xun.networkv2.retrofitclient;
+
+import com.xiaoxun.xun.Url;
+import com.xiaoxun.xun.networkv2.apis.MotionApi;
+
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
+public class MotionRetrofitClient {
+
+    public static MotionApi getMotionRetrofitClient(){
+        Retrofit retrofit= new Retrofit.Builder()
+                .baseUrl(Url.URL_APP_MOTION)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        return retrofit.create(MotionApi.class);
+    }
+}

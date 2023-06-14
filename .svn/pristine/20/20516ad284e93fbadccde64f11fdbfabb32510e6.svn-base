@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/layer_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/welcome2_ff5a02"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical">
+
+    <View
+        android:id="@+id/title_background"
+        android:layout_width="fill_parent"
+        android:layout_height="@dimen/fragment_title_height"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+
+    <ImageView
+        android:id="@+id/iv_welcom_xun"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/iv_loginback"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="13.3dp"
+        android:background="@drawable/btn_title_back_selector"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="@+id/title_background"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/title_background" />
+
+    <Button
+        android:id="@+id/btn_xiaomi_login"
+        android:layout_width="211dp"
+        android:layout_height="31dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="24dp"
+        android:background="@drawable/xiaomi_login_button"
+        android:gravity="center"
+        android:text="@string/xiaomi_account"
+        android:textColor="#FF5A01"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/tv_other_account"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <View
+        android:id="@+id/view_divider_left"
+        android:layout_width="0dp"
+        android:layout_height="1px"
+        android:layout_marginStart="96dp"
+        android:background="#FFD9CC"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_other_account"
+        app:layout_constraintEnd_toStartOf="@+id/tv_other_account"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/tv_other_account" />
+
+
+    <TextView
+        android:id="@+id/tv_other_account"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="76dp"
+        android:text="@string/other_account"
+        android:textColor="#FFD9CC"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/view_divider_right"
+        app:layout_constraintStart_toEndOf="@+id/view_divider_left" />
+
+    <View
+        android:id="@+id/view_divider_right"
+        android:layout_width="0dp"
+        android:layout_height="1px"
+        android:layout_marginEnd="96dp"
+        android:background="#FFD9CC"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_other_account"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/tv_other_account"
+        app:layout_constraintTop_toTopOf="@+id/tv_other_account" />
+
+    <Button
+        android:id="@+id/facebook_login_button"
+        android:layout_width="23dp"
+        android:layout_height="23dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="6dp"
+        android:layout_marginStart="9dp"
+        android:background="@drawable/facebook_login_button"
+        android:visibility="visible"
+        app:layout_constraintStart_toStartOf="@+id/view_divider_left"
+        app:layout_constraintTop_toBottomOf="@+id/tv_other_account" />
+
+    <Button
+        android:id="@+id/google_login_button"
+        android:layout_width="23dp"
+        android:layout_height="23dp"
+        android:layout_marginTop="6dp"
+        android:layout_marginEnd="9dp"
+        android:background="@drawable/google_login_button"
+        app:layout_constraintEnd_toEndOf="@+id/view_divider_right"
+        app:layout_constraintTop_toBottomOf="@+id/tv_other_account" />
+
+    <android.support.constraint.Group
+        android:id="@+id/group_login"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="visible"
+        app:constraint_referenced_ids="btn_xiaomi_login,view_divider,facebook_login_button,google_login_button" />
+</android.support.constraint.ConstraintLayout>

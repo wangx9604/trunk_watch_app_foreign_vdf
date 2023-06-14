@@ -1,0 +1,193 @@
+package com.xiaoxun.xun.utils;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.TextPaint;
+import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.Constants;
+import com.xiaoxun.xun.FunctionUrl;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.activitys.HelpWebActivity;
+import com.xiaoxun.xun.activitys.LoginActivity;
+
+import net.minidev.json.JSONObject;
+
+public class PromptUtils {
+
+    /**
+     * 手表未联网，请检查手表网络
+     * 手表已关机
+     */
+    public static String getOfflinePrompt1(ImibabyApp mApp, String eid) {
+
+        String prompt = mApp.getString(R.string.watch_offline);
+        Integer state = mApp.getmWatchIsOn().get(eid);
+        if (state != null && state == Const.WATCH_STATE_POWER_OFF) {
+            prompt = mApp.getString(R.string.watch_poweroff);
+        }
+        return prompt;
+    }
+
+    /**
+     * 手表当前未联网，正常联网后会收到消息
+     * 手表当前已关机，正常联网后会收到消息
+     */
+    public static String getOfflinePrompt2(ImibabyApp mApp, String eid) {
+
+        String prompt = mApp.getString(R.string.watch_offline_tips);
+        Integer state = mApp.getmWatchIsOn().get(eid);
+        if (state != null && state == Const.WATCH_STATE_POWER_OFF) {
+            prompt = mApp.getString(R.string.watch_poweroff_tips);
+        }
+        return prompt;
+    }
+
+    /**
+     * 手表已%d天未连接网络
+     * 手表已关机%d天
+     */
+    public static String getOfflinePrompt3(ImibabyApp mApp, String eid, int intervalDay) {
+
+        String prompt = mApp.getString(R.string.watch_offline_state_with_tips, intervalDay);
+        Integer state = mApp.getmWatchIsOn().get(eid);
+        if (state != null && state == Const.WATCH_STATE_POWER_OFF) {
+            prompt = mApp.getString(R.string.watch_poweroff_state_with_tips, intervalDay);
+        }
+        return prompt;
+    }
+
+    /**
+     * %s未联网，设备联网成功后设置才能生效
+     * %s已关机，设备联网成功后设置才能生效
+     */
+    public static String getOfflinePrompt4(ImibabyApp mApp, String eid, String nickname) {
+
+        String prompt = mApp.getString(R.string.watch_offline_set_state, nickname);
+        Integer state = mApp.getmWatchIsOn().get(eid);
+        if (state != null && state == Const.WATCH_STATE_POWER_OFF) {
+            prompt = mApp.getString(R.string.watch_poweroff_set_state, nickname);
+        }
+        return prompt;
+    }
+
+    /**
+     * 未联网
+     * 已关机
+     */
+    public static String getOfflinePrompt5(ImibabyApp mApp, String eid) {
+
+        String prompt = mApp.getString(R.string.watch_state_offline);
+        Integer state = mApp.getmWatchIsOn().get(eid);
+        if (state != null && state == Const.WATCH_STATE_POWER_OFF) {
+            prompt = mApp.getString(R.string.watch_state_poweroff);
+        }
+        return prompt;
+    }
+
+
+    public static void dealAgreementPrivacy(final ImibabyApp mApp, final Activity activity, TextView tvAgreementPrivacy, final ImageView btnAgreementPrivacy) {
+
+        btnAgreementPrivacy.setBackgroundResource(mApp.getIntValue(Constants.SHARE_PREF_FIELD_PRIVACY_AGREE, 0) == 0 ?
+                R.drawable.select_2 : R.drawable.select_0);
+
+        String content = activity.getString(R.string.privacy_prompt_login_desc);
+        SpannableString builder = new SpannableString(content);
+        ClickableSpan clickableSpan1 = new ClickableSpan() {
+            @Override
+            public void onClick(View widget) {
+                showAgreementAndPrivacy(activity, "2");
+            }
+
+            @Override
+            public void updateDrawState(TextPaint ds) {
+                super.updateDrawState(ds);
+                ds.setColor(activity.getResources().getColor(R.color.bg_color_dark_orange));
+            }
+        };
+        String protectionPolicy = activity.getString(R.string.privacy_prompt_protection_policy);
+        int start = content.indexOf(protectionPolicy);
+        builder.setSpan(clickableSpan1, start, start + protectionPolicy.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        ClickableSpan clickableSpan2 = new ClickableSpan() {
+            @Override
+            public void onClick(View widget) {
+                showAgreementAndPrivacy(activity, "1");
+            }
+
+            @Override
+            public void updateDrawState(TextPaint ds) {
+                super.updateDrawState(ds);
+                ds.setColor(activity.getResources().getColor(R.color.bg_color_dark_orange));
+            }
+        };
+        String userService = activity.getString(R.string.privacy_prompt_user_service);
+        start = content.indexOf(userService);
+        builder.setSpan(clickableSpan2, start, start + userService.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+//        ClickableSpan clickableSpan3 = new ClickableSpan() {
+//            @Override
+//            public void onClick(View widget) {
+//                showAgreementAndPrivacy(activity, "3");
+//            }
+//
+//            @Override
+//            public void updateDrawState(TextPaint ds) {
+//                super.updateDrawState(ds);
+//                ds.setColor(activity.getResources().getColor(R.color.bg_color_dark_orange));
+//            }
+//        };
+//        String watchService = activity.getString(R.string.privacy_prompt_watch_service);
+//        start = content.indexOf(watchService);
+//        builder.setSpan(clickableSpan3, start, start + watchService.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        tvAgreementPrivacy.setText(builder);
+        //tvAgreementPrivacy.setClickable(true);
+        tvAgreementPrivacy.setMovementMethod(LinkMovementMethod.getInstance());
+
+        btnAgreementPrivacy.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mApp.getIntValue(Constants.SHARE_PREF_FIELD_PRIVACY_AGREE, 0) == 0) {
+                    mApp.setValue(Constants.SHARE_PREF_FIELD_PRIVACY_AGREE, 1);
+                    btnAgreementPrivacy.setBackgroundResource(R.drawable.select_0);
+                } else {
+                    mApp.setValue(Constants.SHARE_PREF_FIELD_PRIVACY_AGREE, 0);
+                    btnAgreementPrivacy.setBackgroundResource(R.drawable.select_2);
+                }
+            }
+        });
+    }
+
+    public static void showAgreementAndPrivacy(Activity activity, String type) {
+        JSONObject params = new JSONObject();
+        params.put("packageName", activity.getPackageName());
+        params.put("type", type);
+        Intent intent = new Intent(activity, HelpWebActivity.class);
+        if ("1".equals(type)) {
+            intent.putExtra(Const.KEY_WEB_TYPE, Constants.KEY_WEB_TYPE_AGREEMENT);
+        } else {
+            intent.putExtra(Const.KEY_WEB_TYPE, Constants.KEY_WEB_TYPE_PRIVACY_POLICY);
+        }
+        intent.putExtra(Const.KEY_HELP_URL, FunctionUrl.POST_AGREEMENT_AND_PRIVACY_URL);
+        intent.putExtra(Const.KEY_PARAMS, params.toJSONString());
+        activity.startActivity(intent);
+    }
+
+    public static boolean checkAgreementPrivacyState(ImibabyApp mApp, Activity activity) {
+
+        int state = mApp.getIntValue(Constants.SHARE_PREF_FIELD_PRIVACY_AGREE, 0);
+        if (state == 0) {
+            ToastUtil.show(activity, activity.getString(R.string.privacy_prompt_toast_desc));
+        }
+        return state == 1;
+    }
+}

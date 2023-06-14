@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
+
+    <include
+        android:id="@+id/security_warnning_title"
+        layout="@layout/activity_title"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <fragment
+        android:id="@+id/here_mapfragment"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        class="com.here.android.mpa.mapping.AndroidXMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/bottom_layout"
+        app:layout_constraintTop_toBottomOf="@+id/security_warnning_title" />
+
+    <ImageButton
+        android:id="@+id/zoomout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="13dp"
+        android:background="@drawable/btn_zoomout_selector"
+        app:layout_constraintBottom_toTopOf="@+id/zoomin"
+        app:layout_constraintEnd_toEndOf="@+id/here_mapfragment"
+        app:layout_constraintTop_toTopOf="@+id/here_mapfragment"
+        app:layout_constraintVertical_chainStyle="packed" />
+
+    <ImageButton
+        android:id="@+id/zoomin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/btn_zoomin_selector"
+        app:layout_constraintBottom_toTopOf="@+id/bottom_layout"
+        app:layout_constraintEnd_toEndOf="@+id/zoomout"
+        app:layout_constraintStart_toStartOf="@+id/zoomout"
+        app:layout_constraintTop_toBottomOf="@+id/zoomout" />
+
+    <View
+        android:id="@+id/bottom_layout"
+        android:layout_width="match_parent"
+        android:layout_height="79.66dp"
+        android:background="@drawable/bottom_navigation_bar"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <ImageView
+        android:id="@+id/iv_secutity_warnning_head"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="20dp"
+        android:background="@drawable/location_0"
+        app:layout_constraintBottom_toBottomOf="@+id/bottom_layout"
+        app:layout_constraintStart_toStartOf="@+id/bottom_layout"
+        app:layout_constraintTop_toTopOf="@+id/bottom_layout" />
+
+    <TextView
+        android:id="@+id/tv_bottom_title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="15dp"
+        android:layout_marginEnd="23.3dp"
+        android:textColor="@color/color_7"
+        android:textSize="@dimen/xiaomiMyTextSize2"
+        app:layout_constraintBottom_toTopOf="@+id/tv_bottom_address"
+        app:layout_constraintEnd_toEndOf="@+id/bottom_layout"
+        app:layout_constraintStart_toEndOf="@+id/iv_secutity_warnning_head"
+        app:layout_constraintTop_toTopOf="@+id/iv_secutity_warnning_head"
+        app:layout_constraintVertical_chainStyle="packed" />
+
+    <TextView
+        android:id="@+id/tv_bottom_address"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="@string/address"
+        android:textColor="@color/color_5"
+        android:textSize="@dimen/xiaomiMyTextSize4"
+        app:layout_constraintBottom_toTopOf="@+id/tv_bottom_time"
+        app:layout_constraintEnd_toEndOf="@+id/tv_bottom_title"
+        app:layout_constraintStart_toStartOf="@+id/tv_bottom_title"
+        app:layout_constraintTop_toBottomOf="@+id/tv_bottom_title" />
+
+    <TextView
+        android:id="@+id/tv_bottom_time"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:textColor="@color/color_5"
+        android:textSize="@dimen/xiaomiMyTextSize8"
+        app:layout_constraintBottom_toBottomOf="@+id/iv_secutity_warnning_head"
+        app:layout_constraintEnd_toEndOf="@+id/tv_bottom_title"
+        app:layout_constraintStart_toStartOf="@+id/tv_bottom_title"
+        app:layout_constraintTop_toBottomOf="@+id/tv_bottom_address" />
+
+</android.support.constraint.ConstraintLayout>

@@ -1,0 +1,411 @@
+/**
+ * Creation Date:2015-1-9
+ * <p>
+ * Copyright
+ */
+package com.xiaoxun.xun.beans;
+
+import android.content.Context;
+
+import com.google.android.gms.maps.model.LatLng;
+import com.xiaoxun.xun.google.CoordinateConvertUtils2;
+import com.xiaoxun.xun.google.GPSUtil;
+import com.xiaoxun.xun.utils.CloudBridgeUtil;
+import com.xiaoxun.xun.utils.LogUtil;
+import com.xiaoxun.xun.utils.TimeUtil;
+
+import net.minidev.json.JSONObject;
+
+/**
+ * Description Of The Class<br>
+ *
+ * @author liutianxiang
+ * @version 1.000, 2015-1-9
+ *
+ */
+public class LocationData {
+
+    private double longitude;
+    private double latitude;
+    private int radius;
+    private com.google.android.gms.maps.model.LatLng wgs84Latlng;  //WGS84坐标系坐标
+    private LatLng latLng;        //经纬度坐标结构
+    private String description;
+    private String road;
+    private String poi;
+    private String city;
+    private String district;
+    private String timestamp;
+    private String mapType = "0";  //值为"0",表示高德定位;"1",表示百度定位;"2"表示wgs84定位
+    private int type;  //定位返回类型 0：没有得到定位结果；1： gps 定位结果；2：wifi 定位结果；3：混合定位结果；4：基站定位结果；5：其他
+    private float accuracy;    //精度
+    private int use_time = 0;
+    private int status = 0;
+
+    private String floor = "";        //楼层
+    private String business = "";    //商圈信息
+    private String indoor = "0";    //是否在室内 1：室内、0：室外、-1 未知
+    private String bldg = "";        //建筑物信息
+    private String bdid = "";       //定位纠偏使用的cuid
+
+    public LatLng getLatLng() {
+        if (latLng == null) {
+            latLng = new LatLng(latitude, longitude);
+        }
+        return latLng;
+    }
+
+    public void setLatLng(LatLng latLng) {
+        this.latLng = latLng;
+    }
+
+    public double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(double longitude) {
+        this.longitude = longitude;
+    }
+
+    public double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(double latitude) {
+        this.latitude = latitude;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public float getAccuracy() {
+        return accuracy;
+    }
+
+    public void setAccuracy(float accuracy) {
+        this.accuracy = accuracy;
+    }
+
+    public String getRoad() {
+        return road;
+    }
+
+    public void setRoad(String road) {
+        this.road = road;
+    }
+
+    public String getPoi() {
+        return poi;
+    }
+
+    public void setPoi(String poi) {
+        this.poi = poi;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(String timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public int getRadius() {
+        return radius;
+    }
+
+    public void setRadius(int radius) {
+        this.radius = radius;
+    }
+
+    public String getDistrict() {
+        return district;
+    }
+
+    public void setDistrict(String district) {
+        this.district = district;
+    }
+
+    public int getType() {
+        return type;
+    }
+
+    public void setType(int type) {
+        this.type = type;
+    }
+
+    public int getUse_time() {
+        return use_time;
+    }
+
+    public void setUse_time(int use_time) {
+        this.use_time = use_time;
+    }
+
+    public void setMapType(String mapType) {
+        this.mapType = mapType;
+    }
+
+    public String getMapType() {
+        return mapType;
+    }
+
+    public void setFloor(String f) {
+        floor = f;
+    }
+
+    public String getFloor() {
+        return floor;
+    }
+
+    public void setBusiness(String b) {
+        business = b;
+    }
+
+    public String getBusiness() {
+        return business;
+    }
+
+    public void setIndoor(String i) {
+        indoor = i;
+    }
+
+    public String getIndoor() {
+        return indoor;
+    }
+
+    public void setBldg(String bl) {
+        bldg = bl;
+    }
+
+    public String getBldg() {
+        return bldg;
+    }
+
+    public void setBdid(String bl) {
+        bdid = bl;
+    }
+
+    public String getBdid() {
+        return bdid;
+    }
+
+    public com.google.android.gms.maps.model.LatLng getWgs84Latlng() {
+        return wgs84Latlng;
+    }
+
+    public void setWgs84Latlng(com.google.android.gms.maps.model.LatLng wgs84Latlng) {
+        this.wgs84Latlng = wgs84Latlng;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
+    }
+
+    public String toString() {
+        return longitude + "#" + latitude + "#" + description + "#" + district + "#" + timestamp + "#" + type + "#" + city + "#" + accuracy + "#" + mapType;
+    }
+
+    public void parse(String param) {
+        this.longitude = Double.valueOf(param.substring(0, param.indexOf("#")));
+        String n = param.substring(param.indexOf("#") + 1);
+        this.latitude = Double.valueOf(n.substring(0, n.indexOf("#")));
+        n = n.substring(n.indexOf("#") + 1);
+        this.description = n.substring(0, n.indexOf("#"));
+        n = n.substring(n.indexOf("#") + 1);
+        this.district = n.substring(0, n.indexOf("#"));
+        n = n.substring(n.indexOf("#") + 1);
+        this.timestamp = n.substring(0, n.indexOf("#"));
+        n = n.substring(n.indexOf("#") + 1);
+        this.type = Integer.valueOf(n.substring(0, n.indexOf("#")));
+        n = n.substring(n.indexOf("#") + 1);
+        this.city = n.substring(0, n.indexOf("#"));
+        n = n.substring(n.indexOf("#") + 1);
+        this.accuracy = Float.valueOf(n.substring(0, n.indexOf("#")));
+        this.mapType = n.substring(n.indexOf("#") + 1);
+    }
+
+    public static LocationData parseLocation(Context context, JSONObject pl) {
+
+        LocationData location = new LocationData();
+        JSONObject result = (JSONObject) pl.get("result");
+        if (result == null)
+            return location;
+
+        location.setType(Integer.valueOf((String) result.get("type")));
+        String province = null;
+        try {
+            province = (String) result.get(CloudBridgeUtil.KEY_NAME_LOCAITON_PROVINCE);
+        } catch (ClassCastException e) {
+            e.printStackTrace();
+        }
+        String city = (String) result.get(CloudBridgeUtil.KEY_NAME_LOCAITON_CITY);
+        city = (city != null) ? ((city.equals("") && province != null) ? province : city) : "";
+        location.setCity(city);
+        location.setDescription((String) result.get(CloudBridgeUtil.KEY_NAME_LOCAITON_DESC));
+        location.setPoi((String) result.get(CloudBridgeUtil.KEY_NAME_LOCAITON_POI));
+        location.setRadius(Integer.valueOf((String) result.get(CloudBridgeUtil.KEY_NAME_LOCAITON_RADIUS)));
+        location.setAccuracy(Integer.valueOf((String) result.get(CloudBridgeUtil.KEY_NAME_LOCAITON_RADIUS)));
+        location.setRoad((String) result.get(CloudBridgeUtil.KEY_NAME_LOCAITON_ROAD));
+        String maptype = (String) result.get(CloudBridgeUtil.KEY_NAME_LOCATION_MAPTYPE);
+        location.setMapType((maptype == null) ? "0" : maptype);
+        StringBuilder latlng = new StringBuilder((String) result.get(CloudBridgeUtil.KEY_NAME_LOCAITON_LOCATION));
+        int i = latlng.indexOf(",");
+        double longitude = Double.valueOf(latlng.substring(0, i));
+        double latitude = Double.valueOf(latlng.substring(i + 1));
+        location.setLatitude(latitude);
+        location.setLongitude(longitude);
+        location.setWgs84Latlng(new com.google.android.gms.maps.model.LatLng(latitude, longitude));  //先暂时这样写
+
+        if (result.containsKey(CloudBridgeUtil.KEY_NAME_BUSINESS)) {
+            location.setBusiness((String) result.get(CloudBridgeUtil.KEY_NAME_BUSINESS));
+        }
+        if (result.containsKey(CloudBridgeUtil.KEY_NAME_FLOOR)) {
+            location.setFloor((String) result.get(CloudBridgeUtil.KEY_NAME_FLOOR));
+        }
+        if (result.containsKey(CloudBridgeUtil.KEY_NAME_INDOOR)) {
+            location.setIndoor((String) result.get(CloudBridgeUtil.KEY_NAME_INDOOR));
+        }
+        if (result.containsKey(CloudBridgeUtil.KEY_NAME_BLDG)) {
+            location.setBldg((String) result.get(CloudBridgeUtil.KEY_NAME_BLDG));
+        }
+        if (pl.containsKey(CloudBridgeUtil.KEY_NAME_BDID)) {
+            location.setBdid((String) pl.get(CloudBridgeUtil.KEY_NAME_BDID));
+        }
+        if (pl.containsKey(CloudBridgeUtil.KEY_TRACE_TO_STATUS)) {
+            location.setStatus(Integer.parseInt((String) pl.get(CloudBridgeUtil.KEY_TRACE_TO_STATUS)));
+        }
+        location.setTimestamp((String) pl.get(CloudBridgeUtil.KEY_NAME_TIMESTAMP));
+        return location;
+    }
+
+    public static LocationData parseLocation(Context context, JSONObject pl, LocationData location) {
+
+        if (location == null)
+            location = new LocationData();
+
+        JSONObject result = (JSONObject) pl.get("result");
+        if (result == null)
+            return location;
+
+        String mTimeStemp = (String) pl.get(CloudBridgeUtil.KEY_NAME_TIMESTAMP);
+        if (TimeUtil.compareToDiffForTwoTime(mTimeStemp, location.getTimestamp()) > 0) {
+            return location;
+        }
+
+        location.setType(Integer.valueOf((String) result.get("type")));
+        String province = null;
+        try {
+            if (result.containsKey(CloudBridgeUtil.KEY_NAME_LOCAITON_PROVINCE))
+                province = (String) result.get(CloudBridgeUtil.KEY_NAME_LOCAITON_PROVINCE);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        String city = null;
+        if (result.containsKey(CloudBridgeUtil.KEY_NAME_LOCAITON_CITY))
+            city = (String) result.get(CloudBridgeUtil.KEY_NAME_LOCAITON_CITY);
+        city = (city != null) ? ((city.equals("") && province != null) ? province : city) : "";
+        location.setCity(city);
+        location.setDescription((String) result.get(CloudBridgeUtil.KEY_NAME_LOCAITON_DESC));
+        if (result.containsKey(CloudBridgeUtil.KEY_NAME_LOCAITON_POI))
+            location.setPoi((String) result.get(CloudBridgeUtil.KEY_NAME_LOCAITON_POI));
+        location.setRadius(Integer.valueOf((String) result.get(CloudBridgeUtil.KEY_NAME_LOCAITON_RADIUS)));
+        location.setAccuracy(Integer.valueOf((String) result.get(CloudBridgeUtil.KEY_NAME_LOCAITON_RADIUS)));
+        if (result.containsKey(CloudBridgeUtil.KEY_NAME_LOCAITON_ROAD))
+            location.setRoad((String) result.get(CloudBridgeUtil.KEY_NAME_LOCAITON_ROAD));
+        String maptype = null;
+        if (result.containsKey(CloudBridgeUtil.KEY_NAME_LOCATION_MAPTYPE))
+            maptype = (String) result.get(CloudBridgeUtil.KEY_NAME_LOCATION_MAPTYPE);
+        location.setMapType((maptype == null) ? "0" : maptype);
+        String latlng = (String) result.get(CloudBridgeUtil.KEY_NAME_LOCAITON_LOCATION);
+        String[] latlngArray = latlng.split(",");
+        double longitude = Double.valueOf(latlngArray[0]);
+        double latitude = Double.valueOf(latlngArray[1]);
+        location.setLatitude(latitude);
+        location.setLongitude(longitude);
+
+        int region = 460;  //默认460
+        if (result.containsKey(CloudBridgeUtil.KEY_NAME_REGION)) {
+            region = (Integer) result.get(CloudBridgeUtil.KEY_NAME_REGION);
+        }
+        if (region == 460 || region == 461 || region == 454 || region == 455) {  //大陆
+            location.setLatLng(GPSUtil.double_to_latLng(GPSUtil.bd09_To_Gcj02(latitude, longitude)));
+            location.setWgs84Latlng(GPSUtil.double_to_latLng(GPSUtil.bd09_To_Gcj02(latitude, longitude)));
+        } else if (region == 466) {  //台湾
+            location.setLatLng(GPSUtil.double_to_latLng(GPSUtil.bd09_To_gps84(latitude, longitude)));
+            location.setWgs84Latlng(GPSUtil.double_to_latLng(GPSUtil.bd09_To_gps84(latitude, longitude)));
+        } else {  //海外
+            location.setLatLng(new LatLng(latitude, longitude));
+            location.setWgs84Latlng(new LatLng(latitude, longitude));
+        }
+
+//        LogUtil.e("百度转换BDToWGS1"+ GPSUtil.double_to_latLng(CoordinateConvertUtils2.convertBD09ToWGS84(Double.valueOf(25.137438),Double.valueOf(121.470785))));
+//        LogUtil.e("百度转换BDToWGS2"+ GPSUtil.double_to_latLng(GPSUtil.bd09_To_gps84(Double.valueOf(25.137438),Double.valueOf(121.470785))));
+
+        if (result.containsKey(CloudBridgeUtil.KEY_NAME_BUSINESS)) {
+            location.setBusiness((String) result.get(CloudBridgeUtil.KEY_NAME_BUSINESS));
+        }
+        if (result.containsKey(CloudBridgeUtil.KEY_NAME_FLOOR)) {
+            location.setFloor((String) result.get(CloudBridgeUtil.KEY_NAME_FLOOR));
+        } else {
+            location.setFloor(null);
+        }
+        if (result.containsKey(CloudBridgeUtil.KEY_NAME_INDOOR)) {
+            location.setIndoor((String) result.get(CloudBridgeUtil.KEY_NAME_INDOOR));
+        } else {
+            location.setIndoor(null);
+        }
+        if (result.containsKey(CloudBridgeUtil.KEY_NAME_BLDG)) {
+            location.setBldg((String) result.get(CloudBridgeUtil.KEY_NAME_BLDG));
+        }
+        if (pl.containsKey(CloudBridgeUtil.KEY_NAME_BDID)) {
+            location.setBdid((String) pl.get(CloudBridgeUtil.KEY_NAME_BDID));
+        }
+        if (pl.containsKey(CloudBridgeUtil.KEY_TRACE_TO_STATUS)) {
+            location.setStatus(Integer.parseInt((String) pl.get(CloudBridgeUtil.KEY_TRACE_TO_STATUS)));
+        }
+
+        location.setTimestamp((String) pl.get(CloudBridgeUtil.KEY_NAME_TIMESTAMP));
+
+        return location;
+    }
+
+
+    public static double pi = 3.1415926535897932384626;
+    public static double x_pi = 3.14159265358979324 * 3000.0 / 180.0;
+
+    /**
+     * 百度坐标系(BD-09)转火星坐标系(GCJ-02)
+     *
+     * 百度——>谷歌、高德
+     * @param bd_lon 百度坐标纬度
+     * @param bd_lat 百度坐标经度
+     * @return 火星坐标数组
+     */
+    public static LatLng bd09togcj02(double bd_lon, double bd_lat) {
+        double x = bd_lon - 0.0065;
+        double y = bd_lat - 0.006;
+        double z = Math.sqrt(x * x + y * y) - 0.00002 * Math.sin(y * x_pi);
+        double theta = Math.atan2(y, x) - 0.000003 * Math.cos(x * x_pi);
+        double gg_lng = z * Math.cos(theta);
+        double gg_lat = z * Math.sin(theta);
+        return new LatLng(gg_lat,gg_lng);
+    }
+}

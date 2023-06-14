@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <RelativeLayout
+        android:id="@+id/layout_watch_app"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/app_item_height"
+        android:background="@drawable/setting_item_selector"
+        android:gravity="center"
+        android:paddingStart="@dimen/divideleftandright"
+        android:paddingEnd="@dimen/divideleftandright">
+
+        <ImageView
+            android:id="@+id/iv_app_icon"
+            android:layout_width="@dimen/app_icon_side_length"
+            android:layout_height="@dimen/app_icon_side_length"
+            android:layout_centerVertical="true"
+            android:contentDescription="@string/blank_str"
+            android:src="@drawable/relation_custom" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginStart="@dimen/app_item_margin_start"
+            android:layout_centerVertical="true"
+            android:layout_toStartOf="@id/btn_download_app"
+            android:layout_marginEnd="@dimen/dimen5"
+            android:layout_toEndOf="@id/iv_app_icon">
+            <TextView
+                android:id="@+id/tv_app_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/alipay"
+                android:textColor="@color/dark_grey"
+                android:textSize="@dimen/xiaomiMyTextSize1" />
+            <TextView
+                android:id="@+id/tv_app_size"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/alipay"
+                android:textColor="@color/txt_grey"
+                android:textSize="@dimen/xiaomiMyTextSize7" />
+            <TextView
+                android:id="@+id/tv_app_desc"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/alipay"
+                android:maxLines="2"
+                android:textColor="@color/txt_grey"
+                android:textSize="@dimen/xiaomiMyTextSize3" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btn_uninstall_app"
+            android:layout_width="60.66dp"
+            android:layout_height="30dp"
+            android:layout_toStartOf="@id/btn_download_app"
+            android:layout_marginEnd="10dp"
+            android:layout_centerVertical="true"
+            android:background="@drawable/btn_app_uninstall"
+            android:visibility="gone"/>
+
+        <ImageButton
+            android:id="@+id/btn_download_app"
+            android:layout_width="60.66dp"
+            android:layout_height="30dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="@drawable/btn_app_install" />
+
+    </RelativeLayout>
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:layout_below="@id/layout_watch_app"
+        android:paddingStart="@dimen/divideleftandright"
+        android:paddingEnd="@dimen/divideleftandright"
+        android:src="@color/line_grey" />
+
+</RelativeLayout>

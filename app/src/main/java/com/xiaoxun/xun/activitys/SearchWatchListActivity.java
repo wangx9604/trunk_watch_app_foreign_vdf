@@ -1,0 +1,264 @@
+package com.xiaoxun.xun.activitys;
+
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.os.Bundle;
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import android.util.Base64;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.beans.MyMsgData;
+import com.xiaoxun.xun.interfaces.MsgCallback;
+import com.xiaoxun.xun.utils.CloudBridgeUtil;
+import com.xiaoxun.xun.utils.ImageUtil;
+import com.xiaoxun.xun.utils.StrUtil;
+import com.xiaoxun.xun.utils.TimeUtil;
+import com.xiaoxun.xun.utils.ToastUtil;
+
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class SearchWatchListActivity extends NormalActivity implements MsgCallback {
+
+    static final String TAG = "SearchWatchListActivity ";
+
+    private ImageButton mBackBtn;
+    private RecyclerView  mLayoutWatchList;
+    private View mLayoutNoWatch;
+    private TextView mTvNoWatch;
+    private EditText mNumberEdit;
+    private TextView mAddFriendBtn;
+
+    private List<SearchWatchData> mWatchList = new ArrayList<>();
+    private SearchWatchListAdapter mWatchListAdapter;
+    private LinearLayoutManager mLinearLayoutManager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.activity_search_watchlist);
+        initView();
+        initData(getIntent());
+        initListener();
+    }
+
+    private void initView() {
+
+        ((TextView) findViewById(R.id.tv_title)).setText(getString(R.string.search_watch_list));
+        mBackBtn = findViewById(R.id.iv_title_back);
+        mLayoutWatchList = findViewById(R.id.recyclerview_watch_list);
+        mLayoutNoWatch = findViewById(R.id.layout_no_watch);
+        mTvNoWatch = findViewById(R.id.tv_no_watch);
+        mNumberEdit = findViewById(R.id.edit_number);
+        mAddFriendBtn = findViewById(R.id.btn_add_friend);
+    }
+
+    private void initListener() {
+
+        mBackBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                SearchWatchListActivity.this.finish();
+            }
+        });
+
+        mAddFriendBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String number = mNumberEdit.getText().toString();
+                if (StrUtil.isMobileNumber(number, 2)) {
+                    searchFriend(number);
+                } else {
+                    ToastUtil.show(SearchWatchListActivity.this, getString(R.string.format_error));
+                }
+            }
+        });
+
+        setOnItemClickLitener(new OnRecyclerViewItemClickListener() {
+            @Override
+            public void onItemClick(View view, int position) {
+                SearchWatchData watchData = mWatchList.get(position);
+                Intent intent = new Intent();
+                intent.putExtra(CloudBridgeUtil.KEY_NAME_IMEI, watchData.imei);
+                SearchWatchListActivity.this.setResult(RESULT_OK, intent);
+                SearchWatchListActivity.this.finish();
+            }
+        });
+    }
+
+    private void initData(Intent intent) {
+
+        mLinearLayoutManager = new LinearLayoutManager(this);
+        mLayoutWatchList.setLayoutManager(mLinearLayoutManager);
+        mWatchListAdapter = new SearchWatchListAdapter(SearchWatchListActivity.this);
+        mLayoutWatchList.setAdapter(mWatchListAdapter);
+        mWatchListAdapter.notifyDataSetChanged();
+
+        String simNo = intent.getStringExtra(CloudBridgeUtil.KEY_NAME_SIM_NO);
+        searchFriend(simNo);
+        mNumberEdit.setText(simNo);
+        mNumberEdit.setSelection(simNo.length());
+    }
+
+    private void updateViewShow() {
+
+        if (mWatchList.size() == 0) {
+            mLayoutWatchList.setVisibility(View.GONE);
+            mLayoutNoWatch.setVisibility(View.VISIBLE);
+            mTvNoWatch.setText(R.string.search_no_watch);
+        } else {
+            mLayoutWatchList.setVisibility(View.VISIBLE);
+            mLayoutNoWatch.setVisibility(View.GONE);
+            mWatchListAdapter.notifyDataSetChanged();
+        }
+    }
+
+    private void searchFriend(String number) {
+        MyMsgData searchFriendReq = new MyMsgData();
+        searchFriendReq.setCallback(this);
+        JSONObject pl = new JSONObject();
+        pl.put(CloudBridgeUtil.KEY_NAME_SIM_NO, number);
+        searchFriendReq.setReqMsg(CloudBridgeUtil.CloudMapSetContent(CloudBridgeUtil.CID_REQ_SEARCH_WATCH_LIST, Long.valueOf(TimeUtil.getTimeStampGMT()).intValue(), myApp.getToken(), pl));
+        if (myApp.getNetService() != null)
+            myApp.getNetService().sendNetMsg(searchFriendReq);
+    }
+
+    @Override
+    public void doCallBack(JSONObject reqMsg, JSONObject respMsg) {
+
+        int cid = CloudBridgeUtil.getCloudMsgCID(respMsg);
+        int rc = CloudBridgeUtil.getCloudMsgRC(respMsg);
+        switch (cid) {
+            case CloudBridgeUtil.CID_REQ_SEARCH_WATCH_LIST_RESP:
+                mWatchList.clear();
+                if (rc == CloudBridgeUtil.RC_SUCCESS) {
+                    JSONObject pl = (JSONObject) respMsg.get(CloudBridgeUtil.KEY_NAME_PL);
+                    JSONArray watchArray = (JSONArray) pl.get(CloudBridgeUtil.KEY_NAME_WATCH_LIST);
+                    if (watchArray.size() > 0) {
+                        for (int i = 0; i < watchArray.size(); i++) {
+                            mWatchList.add(new SearchWatchData().parseJsonToBean((JSONObject) watchArray.get(i)));
+                        }
+                    }
+                }
+                updateViewShow();
+                break;
+        }
+    }
+
+    class SearchWatchData{
+
+        String imei;
+        String nickName;
+        String headKey;
+
+        SearchWatchData parseJsonToBean(JSONObject jsonObject) {
+            final SearchWatchData watchData = new SearchWatchData();
+            watchData.imei = (String) jsonObject.get(CloudBridgeUtil.KEY_NAME_IMEI);
+            watchData.nickName = (String) jsonObject.get(CloudBridgeUtil.KEY_NAME_WATCH_NICKNAME);
+            watchData.headKey = (String) jsonObject.get(CloudBridgeUtil.KEY_NAME_WATCH_HEAD);
+            return watchData;
+        }
+    }
+
+    class SearchWatchViewHolder extends RecyclerView.ViewHolder {
+
+        ImageView ivWatchHead;
+        TextView tvWatchNickname;
+        ImageButton btnAddFriend;
+
+        SearchWatchViewHolder(@NonNull View itemView) {
+            super(itemView);
+            ivWatchHead = itemView.findViewById(R.id.iv_watch_head);
+            tvWatchNickname = itemView.findViewById(R.id.tv_watch_nickname);
+            btnAddFriend = itemView.findViewById(R.id.btn_add_friend);
+        }
+    }
+
+    class SearchWatchListAdapter extends RecyclerView.Adapter<SearchWatchViewHolder>{
+
+        Context context;
+        public SearchWatchListAdapter(Context context) {
+            this.context = context;
+        }
+
+        @NonNull
+        @Override
+        public SearchWatchViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+            View view = View.inflate(context, R.layout.item_search_watch, null);
+            return new SearchWatchViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull final SearchWatchViewHolder searchWatchViewHolder, int i) {
+
+            final SearchWatchData watchData = mWatchList.get(i);
+            searchWatchViewHolder.tvWatchNickname.setText(watchData.nickName);
+
+            sendHeadImageC2EByKey(watchData.headKey, new MsgCallback() {
+                @Override
+                public void doCallBack(JSONObject reqMsg, JSONObject respMsg) {
+                    int rc = CloudBridgeUtil.getCloudMsgRC(respMsg);
+                    if (rc == CloudBridgeUtil.RC_SUCCESS) {
+                        JSONObject pl = (JSONObject) respMsg.get(CloudBridgeUtil.KEY_NAME_PL);
+                        try {
+                            byte[] bitmapArray = Base64.decode((String) pl.get(CloudBridgeUtil.HEAD_IMAGE_DATA), Base64.NO_WRAP);
+                            Bitmap bitmap = BitmapFactory.decodeByteArray(bitmapArray, 0, bitmapArray.length);
+                            ImageUtil.setMaskImage(searchWatchViewHolder.ivWatchHead,R.drawable.head_1,new BitmapDrawable(bitmap));
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            });
+
+            if (mOnItemClickLitener != null) {
+                searchWatchViewHolder.btnAddFriend.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        int position = searchWatchViewHolder.getLayoutPosition();
+                        mOnItemClickLitener.onItemClick(v, position);
+                    }
+                });
+            }
+        }
+
+        @Override
+        public int getItemCount() {
+            return mWatchList.size();
+        }
+    }
+
+    public void sendHeadImageC2EByKey(String key, MsgCallback callback) {
+
+        MyMsgData c2e = new MyMsgData();
+        c2e.setCallback(callback);
+        JSONObject pl = new JSONObject();
+        pl.put(CloudBridgeUtil.E2C_PL_KEY, key);
+        c2e.setReqMsg(myApp.obtainCloudMsgContent(CloudBridgeUtil.CID_C2E_GET_MESSAGE, pl));
+        if (myApp.getNetService() != null)
+            myApp.getNetService().sendNetMsg(c2e);
+    }
+
+    private OnRecyclerViewItemClickListener mOnItemClickLitener;
+    public void setOnItemClickLitener(OnRecyclerViewItemClickListener mOnItemClickLitener) {
+        this.mOnItemClickLitener = mOnItemClickLitener;
+    }
+    public interface OnRecyclerViewItemClickListener {
+        void onItemClick(View view, int position);
+    }
+}

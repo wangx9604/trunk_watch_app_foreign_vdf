@@ -1,0 +1,313 @@
+package com.xiaoxun.xun.focustime;
+
+import static com.xiaoxun.xun.focustime.FocustimeViewModel.ACTIVITY_REQUEST_CODE_ADD;
+import static com.xiaoxun.xun.focustime.FocustimeViewModel.ACTIVITY_REQUEST_CODE_EDIT;
+import static com.xiaoxun.xun.focustime.FocustimeViewModel.ACTIVITY_RESULT_CODE_ADD_OR_EDIT;
+import static com.xiaoxun.xun.focustime.FocustimeViewModel.ACTIVITY_RESULT_CODE_DEL;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
+import android.widget.ToggleButton;
+
+import androidx.annotation.Nullable;
+import androidx.cardview.widget.CardView;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
+
+import com.xiaoxun.xun.Constants;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.activitys.NormalAppCompatActivity;
+import com.xiaoxun.xun.beans.SilenceTime;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.interfaces.OnItemClickListener;
+import com.xiaoxun.xun.utils.CloudBridgeUtil;
+import com.xiaoxun.xun.utils.LogUtil;
+import com.xiaoxun.xun.utils.StatusBarUtil;
+import com.xiaoxun.xun.utils.ToastUtil;
+
+import java.util.List;
+
+
+public class FocusTimeMainActivity extends NormalAppCompatActivity {
+    private ImibabyApp mApp;
+    private FocustimeViewModel focustimeViewModel;
+
+    private LinearLayout layout_handmove_content;
+    private ConstraintLayout ly_disable1;
+    private ConstraintLayout ly_disable2;
+    private ConstraintLayout ly_disable3;
+
+    private WatchData curWatch;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_focus_time_main);
+        StatusBarUtil.setStatusBarColor(this, R.color.schedule_no_class);
+        mApp = (ImibabyApp) getApplication();
+        curWatch = mApp.getCurUser().getFocusWatch();
+        focustimeViewModel = new ViewModelProvider(this, new ViewModelProvider.NewInstanceFactory()).get(FocustimeViewModel.class);
+
+        initViews();
+        focustimeViewModel.initData(mApp, mApp.getCurUser().getFocusWatch().getEid());
+        if (!mApp.getCurUser().isMeAdminByWatch(curWatch)) {
+            ToastUtil.show(getApplicationContext(), getString(R.string.need_admit_edit));
+            return;
+        }
+//        initManageData();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == ACTIVITY_REQUEST_CODE_ADD) {
+            if (resultCode == ACTIVITY_RESULT_CODE_ADD_OR_EDIT) {// setting save ok
+                assert data != null;
+                FocusTimeBean focusTimeBean = (FocusTimeBean) data.getSerializableExtra("edit_result");
+                List<FocusTimeBean> list = focustimeViewModel.getFocusTimeList().getValue();
+                list.add(focusTimeBean);
+                focustimeViewModel.setFocusTimeList(list);
+                //addNewViewToLayout(focusTimeBean);
+            }
+        } else if (requestCode == ACTIVITY_REQUEST_CODE_EDIT) {
+            if (resultCode == ACTIVITY_RESULT_CODE_ADD_OR_EDIT) {
+                assert data != null;
+                FocusTimeBean focusTimeBean = (FocusTimeBean) data.getSerializableExtra("edit_result");
+                for (FocusTimeBean item : focustimeViewModel.getFocusTimeList().getValue()) {
+                    if (item.timeStampId.equals(focusTimeBean.timeStampId)) {
+                        item.setName(focusTimeBean.getName());
+                        item.setType(focusTimeBean.getType());
+                        item.advanceopt = focusTimeBean.advanceopt;
+                        item.callInOnOff = focusTimeBean.callInOnOff;
+                        item.days = focusTimeBean.days;
+                        item.endhour = focusTimeBean.endhour;
+                        item.endmin = focusTimeBean.endmin;
+                        item.onoff = focusTimeBean.onoff;
+                        item.starthour = focusTimeBean.starthour;
+                        item.startmin = focusTimeBean.startmin;
+                        for (int i = 0; i < layout_handmove_content.getChildCount(); i++) {
+                            FocusTimeItemView mView = (FocusTimeItemView) layout_handmove_content.getChildAt(i);
+                            if (item.timeStampId.equals(mView.getFocusTimeBean().timeStampId)) {
+                                mView.setFocusTimeBean(item);
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+            } else if (resultCode == ACTIVITY_RESULT_CODE_DEL) {
+                assert data != null;
+                FocusTimeBean focusTimeBean = (FocusTimeBean) data.getSerializableExtra("del_result");
+                List<FocusTimeBean> list = focustimeViewModel.getFocusTimeList().getValue();
+                for (FocusTimeBean item : list) {
+                    if (item.timeStampId.equals(focusTimeBean.timeStampId)) {
+                        list.remove(item);
+                        break;
+                    }
+                }
+                focustimeViewModel.setFocusTimeList(list);
+            }
+        }
+    }
+
+    private void initViews() {
+        ImageView iv_back = findViewById(R.id.iv_back);
+        iv_back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                finish();
+            }
+        });
+        ToggleButton switch_focustime = findViewById(R.id.switch_focustime);
+        switch_focustime.setChecked(false);
+        if (!mApp.getCurUser().isMeAdminByWatch(curWatch)) {
+            switch_focustime.setClickable(false);
+        }
+        switch_focustime.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if (compoundButton.isPressed()) {
+                    focustimeViewModel.setFocusTimeOnOff(b);
+                }
+            }
+        });
+        ImageView switch_fest = findViewById(R.id.switch_fest);
+        switch_fest.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (!mApp.getCurUser().isMeAdminByWatch(curWatch) || focustimeViewModel.getFocusTimeOnOff().getValue() == null || !focustimeViewModel.getFocusTimeOnOff().getValue())
+                    return;
+                boolean b = focustimeViewModel.getFestivalOnOff().getValue();
+                focustimeViewModel.setFestivalOnOff(!b);
+            }
+        });
+        ImageView switch_parent_msg = findViewById(R.id.switch_parent_msg);
+        switch_parent_msg.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (!mApp.getCurUser().isMeAdminByWatch(curWatch) || focustimeViewModel.getFocusTimeOnOff().getValue() == null || !focustimeViewModel.getFocusTimeOnOff().getValue())
+                    return;
+                boolean b = focustimeViewModel.getParentMsgOnOff().getValue();
+                focustimeViewModel.setParentMsgOnOff(!b);
+            }
+        });
+        layout_handmove_content = findViewById(R.id.layout_handmove_content);
+        ly_disable1 = findViewById(R.id.ly_disable1);
+        ly_disable2 = findViewById(R.id.ly_disable2);
+        ly_disable3 = findViewById(R.id.ly_disable3);
+        RelativeLayout layout_add_new_time = findViewById(R.id.layout_add_new_time);
+        layout_add_new_time.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (!mApp.getCurUser().isMeAdminByWatch(curWatch) || focustimeViewModel.getFocusTimeOnOff().getValue() == null || !focustimeViewModel.getFocusTimeOnOff().getValue())
+                    return;
+                if (focustimeViewModel.getFocusTimeList().getValue().size() >= 8) {
+                    ToastUtil.show(FocusTimeMainActivity.this, getString(R.string.foucus_time_tip));
+                    return;
+                }
+                Intent intent = new Intent(FocusTimeMainActivity.this, FocusTimeSettingActivity.class);
+                intent.putExtra("mode", 0);
+                startActivityForResult(intent, ACTIVITY_REQUEST_CODE_ADD);
+            }
+        });
+        Button btn_save = findViewById(R.id.btn_save);
+        if (!mApp.getCurUser().isMeAdminByWatch(curWatch)) {
+            btn_save.setVisibility(View.GONE);
+        }
+        btn_save.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                focustimeViewModel.sendDataToCloud(mApp, mApp.getCurUser().getFocusWatch().getEid());
+            }
+        });
+        CardView card_auto_focustime = findViewById(R.id.card_auto_focustime);
+        card_auto_focustime.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (focustimeViewModel.getFocusTimeOnOff().getValue() == null || !focustimeViewModel.getFocusTimeOnOff().getValue())
+                    return;
+                startActivity(new Intent(FocusTimeMainActivity.this, FocusTimeSmartIntroActivity.class));
+            }
+        });
+
+        focustimeViewModel.getFocusTimeOnOff().observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(@Nullable Boolean aBoolean) {
+                if (aBoolean != null) {
+                    switch_focustime.setChecked(aBoolean);
+                    setViewEnable(aBoolean);
+                }
+            }
+        });
+        focustimeViewModel.getFestivalOnOff().observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(@Nullable Boolean aBoolean) {
+                if (aBoolean != null) {
+                    LogUtil.v("holiday switch value changed.");
+                    switch_fest.setBackground(getDrawable(aBoolean ? R.drawable.switch_toggle_on : R.drawable.switch_toggle_off));
+                }
+            }
+        });
+        focustimeViewModel.getParentMsgOnOff().observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(@Nullable Boolean aBoolean) {
+                if (aBoolean != null) {
+                    LogUtil.v("parent msg switch value changed.");
+                    switch_parent_msg.setBackground(getDrawable(aBoolean ? R.drawable.switch_toggle_on : R.drawable.switch_toggle_off));
+                }
+            }
+        });
+        focustimeViewModel.getFocusTimeList().observe(this, new Observer<List<FocusTimeBean>>() {
+            @Override
+            public void onChanged(@Nullable List<FocusTimeBean> focusTimeBeans) {
+                updateListView();
+                if (layout_handmove_content.getChildCount() > 8) {
+                    layout_add_new_time.setVisibility(View.GONE);
+                } else {
+                    layout_add_new_time.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+        focustimeViewModel.getResult().observe(this, new Observer<String>() {
+            @Override
+            public void onChanged(@Nullable String s) {
+                LogUtil.e("FocusTimeMain:" + s);
+                ToastUtil.show(getApplicationContext(), s);
+                if (focustimeViewModel.getFocusTimeOnOff().getValue() != null) {
+                    mApp.setValue(CloudBridgeUtil.KEY_FOCUS_TIME_ONOFF_STATUS,
+                            focustimeViewModel.getFocusTimeOnOff().getValue() ? "1" : "0");
+                }
+                finish();
+            }
+        });
+    }
+
+    private void addNewViewToLayout(FocusTimeBean focusTimeBean) {
+        //1:创建新的View
+        final FocusTimeItemView mMoreView = new FocusTimeItemView(this);
+        mMoreView.setFocusTimeBean(focusTimeBean);
+        mMoreView.setmOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!mApp.getCurUser().isMeAdminByWatch(curWatch) || focustimeViewModel.getFocusTimeOnOff().getValue() == null || !focustimeViewModel.getFocusTimeOnOff().getValue())
+                    return;
+                mMoreView.onRefreshOnOffView();
+            }
+        });
+        mMoreView.setOnItemClickListener(new OnItemClickListener() {
+            @Override
+            public void onItemClick(View view, int position) {
+                if (!mApp.getCurUser().isMeAdminByWatch(curWatch) || focustimeViewModel.getFocusTimeOnOff().getValue() == null || !focustimeViewModel.getFocusTimeOnOff().getValue())
+                    return;
+
+                Intent intent = new Intent(FocusTimeMainActivity.this, FocusTimeSettingActivity.class);
+                intent.putExtra("mode", 1);
+                intent.putExtra("edit_item",
+                        mMoreView.getFocusTimeBean());
+                startActivityForResult(intent, ACTIVITY_REQUEST_CODE_EDIT);
+            }
+
+            @Override
+            public void onItemLongClick(View view, int position) {
+
+            }
+        });
+
+        //2：底层数据添加条目&&添加视图到布局
+        layout_handmove_content.addView(mMoreView, layout_handmove_content.getChildCount() - 1);
+    }
+
+    private void updateListView() {
+        int size = layout_handmove_content.getChildCount() - 1;
+        for (int i = 0; i < size; i++) {
+            layout_handmove_content.removeViewAt(0);
+        }
+        LogUtil.e("updateListView getChildCount = " + layout_handmove_content.getChildCount());
+        List<FocusTimeBean> list = focustimeViewModel.getFocusTimeList().getValue();
+        if (list != null) {
+            for (int i = 0; i < list.size(); i++) {
+                addNewViewToLayout(list.get(i));
+            }
+        }
+    }
+
+    private void setViewEnable(boolean enable) {
+        if (enable) {
+            ly_disable1.setVisibility(View.GONE);
+            ly_disable2.setVisibility(View.GONE);
+            ly_disable3.setVisibility(View.GONE);
+        } else {
+            ly_disable1.setVisibility(View.VISIBLE);
+            ly_disable2.setVisibility(View.VISIBLE);
+            ly_disable3.setVisibility(View.VISIBLE);
+        }
+    }
+}

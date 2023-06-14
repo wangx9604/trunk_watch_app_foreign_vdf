@@ -1,0 +1,350 @@
+package com.xiaoxun.xun.securityarea.activity;
+
+import android.content.Intent;
+import android.graphics.Color;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+
+import com.baidu.mapapi.map.BaiduMap;
+import com.baidu.mapapi.map.BaiduMapOptions;
+import com.baidu.mapapi.map.BitmapDescriptor;
+import com.baidu.mapapi.map.BitmapDescriptorFactory;
+import com.baidu.mapapi.map.CircleOptions;
+import com.baidu.mapapi.map.InfoWindow;
+import com.baidu.mapapi.map.MapStatusUpdate;
+import com.baidu.mapapi.map.MapStatusUpdateFactory;
+import com.baidu.mapapi.map.MapView;
+import com.baidu.mapapi.map.MarkerOptions;
+import com.baidu.mapapi.map.PolygonOptions;
+import com.baidu.mapapi.map.Stroke;
+import com.baidu.mapapi.model.LatLng;
+import com.baidu.mapapi.model.LatLngBounds;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.activitys.MainActivity;
+import com.xiaoxun.xun.activitys.NormalActivity;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.interfaces.MsgCallback;
+import com.xiaoxun.xun.securityarea.bean.EfencesAreaBean;
+import com.xiaoxun.xun.securityarea.bean.NormalEFBean;
+import com.xiaoxun.xun.securityarea.service.SecurityService;
+import com.xiaoxun.xun.utils.CloudBridgeUtil;
+import com.xiaoxun.xun.utils.DensityUtil;
+import com.xiaoxun.xun.utils.StatusBarUtil;
+import com.xiaoxun.xun.utils.ToastUtil;
+
+import net.minidev.json.JSONObject;
+
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+public class SecurityMapMainActivity extends NormalActivity implements View.OnClickListener {
+    private ImageButton mBtnBack;
+    private ImageView ivSet;
+    private ImibabyApp myApp;
+    private WatchData curWatch;
+    private MapView mMapView;
+    private BaiduMap mBaiduMap;
+    private ConstraintLayout cl_map;
+
+    private int common = 0;
+    private int school = 0;
+    private int danger = 0;
+    private int safe = 0;
+    private int city = 0;
+
+
+    List<EfencesAreaBean> mListSafeDanger = new ArrayList<>();//危险安全区域
+    List<NormalEFBean> mListNormal = new ArrayList<>();//常用区域
+    List<LatLng> mLatLng = new ArrayList<>();//绘制区域地图所有坐标集合
+
+    private int countDown = 3;//用于判断网络接口获取数据（安全危险区域/常用区域，为0时代表数据获取完毕，缩放地图使完全显示）
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_security_map_main);
+        StatusBarUtil.changeStatusBarColor(this, getResources().getColor(R.color.schedule_no_class));
+        myApp = (ImibabyApp) getApplication();
+        curWatch = myApp.getCurUser().getFocusWatch();
+        BaiduMapOptions options = new BaiduMapOptions();
+        options.zoomControlsEnabled(false);//缩放控件
+        options.scaleControlEnabled(false);//比例尺
+        mMapView = new MapView(this, options);
+        initViews();
+        initListener();
+        getDangerSafeAreaData();
+        getNormalAreaData();
+        getOnOffStatus();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        countDown = 3;
+        getDangerSafeAreaData();
+        getNormalAreaData();
+        getOnOffStatus();
+    }
+
+    private void initViews() {
+        mBtnBack = findViewById(R.id.iv_title_back);
+        ivSet = findViewById(R.id.iv_title_set);
+        cl_map = findViewById(R.id.cl_map);
+        if (!myApp.isMeAdmin(myApp.getCurUser().getFocusWatch())) {
+            ivSet.setVisibility(View.GONE);
+        }
+        ConstraintLayout.LayoutParams params = new ConstraintLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        cl_map.addView(mMapView, params);
+        mBaiduMap = mMapView.getMap();
+        mBaiduMap.getUiSettings().setRotateGesturesEnabled(false);//禁止通过手势旋转
+        if (curWatch.getCurLocation() != null && curWatch.getCurLocation().getBaidulatLng() != null) {//加载手表定位
+            LatLng latLng = curWatch.getCurLocation().getBaidulatLng();
+            mBaiduMap.setMapStatus(MapStatusUpdateFactory.zoomTo(16));
+            mBaiduMap.setMapStatus(MapStatusUpdateFactory.newLatLng(latLng));
+        }
+    }
+
+    private void initListener() {
+        mBtnBack.setOnClickListener(this);
+        ivSet.setOnClickListener(this);
+    }
+
+    //获取安全危险区域数据
+    private void getDangerSafeAreaData() {
+        if (getMyApp().getNetService() != null) {
+            SecurityService.getInstance(myApp).sendAreaGetMsg(curWatch.getEid(), new MsgCallback() {
+                @Override
+                public void doCallBack(JSONObject reqMsg, JSONObject respMsg) {
+                    countDown--;
+                    int rc = CloudBridgeUtil.getCloudMsgRC(respMsg);
+                    if (rc == CloudBridgeUtil.RC_SUCCESS) {
+                        JSONObject mPl = (JSONObject) respMsg.get(CloudBridgeUtil.KEY_NAME_PL);
+                        if (mPl != null) {
+                            String data = String.valueOf(mPl.get(CloudBridgeUtil.KEY_GUARD_EFFENCES));
+                            Type type = new TypeToken<ArrayList<EfencesAreaBean>>() {
+                            }.getType();
+                            List<EfencesAreaBean> list = new Gson().fromJson(data, type);
+                            if (list != null && list.size() > 0) {
+                                mListSafeDanger = list;
+                            }else{
+                                mListSafeDanger.clear();
+                            }
+                        }
+                    }
+                    if (countDown == 0) {
+                        animMapShow();
+                    }
+                }
+            });
+        }
+    }
+
+    //获取常用区域数据
+    private void getNormalAreaData() {
+        if (myApp.getNetService() != null) {
+            SecurityService.getInstance(myApp).sendNormalAreaGetMsg(curWatch.getEid(), new MsgCallback() {
+                @Override
+                public void doCallBack(JSONObject reqMsg, JSONObject respMsg) {
+                    countDown--;
+                    int rc = CloudBridgeUtil.getCloudMsgRC(respMsg);
+                    if (rc == CloudBridgeUtil.RC_SUCCESS) {
+                        JSONObject mPl = (JSONObject) respMsg.get(CloudBridgeUtil.KEY_NAME_PL);
+                        if (mPl != null) {
+                            if(mPl.entrySet().size() == 0){
+                                mListNormal.clear();
+                            }
+                            for (Map.Entry<String, Object> entry : mPl.entrySet()) {
+                                mListNormal.add(com.alibaba.fastjson.JSONObject.parseObject(String.valueOf(entry.getValue()), NormalEFBean.class));
+                            }
+                        }
+                    }
+                    if (countDown == 0) {
+                        animMapShow();
+                    }
+                }
+            });
+        }
+    }
+
+    //获取开关状态
+    private void getOnOffStatus() {
+        getMyApp().getNetService().sendMapGetMsg(curWatch.getEid(), CloudBridgeUtil.KEY_GUARD_ONOFF_LIST, new MsgCallback() {
+            @Override
+            public void doCallBack(JSONObject reqMsg, JSONObject respMsg) {
+                countDown--;
+                JSONObject mPl = (JSONObject) respMsg.get(CloudBridgeUtil.KEY_NAME_PL);
+                int rc = CloudBridgeUtil.getCloudMsgRC(respMsg);
+                if (rc == 1) {
+                    if (mPl != null) {
+                        String data = (String) mPl.get(CloudBridgeUtil.KEY_GUARD_ONOFF_LIST);
+                        if (data != null) {
+                            String[] mList = new Gson().fromJson(data, String[].class);
+                            common = Integer.parseInt(String.valueOf(mList[0].charAt(mList[0].length() - 1)));
+                            school = Integer.parseInt(String.valueOf(mList[1].charAt(mList[1].length() - 1)));
+                            danger = Integer.parseInt(String.valueOf(mList[2].charAt(mList[2].length() - 1)));
+                            safe = Integer.parseInt(String.valueOf(mList[3].charAt(mList[3].length() - 1)));
+                            city = Integer.parseInt(String.valueOf(mList[4].charAt(mList[4].length() - 1)));
+                        }
+                    }
+                }
+                if (countDown == 0) {
+                    animMapShow();
+                }
+            }
+        });
+    }
+
+
+    //将安全危险区域绘制于地图上
+    private void dangerSafeAreaDraw(List<EfencesAreaBean> list) {
+        for (int i = 0; i < list.size(); i++) {
+            List<LatLng> mapLatLng = new ArrayList<>();
+            String[] points = list.get(i).getPoints();
+            String strLatLng1 = points[0];
+            String[] latLngArray1 = strLatLng1.split(",");
+            double lngMax = Double.parseDouble(latLngArray1[0]);
+            double lngMin = Double.parseDouble(latLngArray1[0]);
+            double latMax = Double.parseDouble(latLngArray1[1]);
+            double latMin = Double.parseDouble(latLngArray1[1]);
+            for (String strLatLng : points) {
+                String[] latLngArray = strLatLng.split(",");
+                double lng = Double.parseDouble(latLngArray[0]);
+                double lat = Double.parseDouble(latLngArray[1]);
+                LatLng latLng = new LatLng(lat, lng);
+                mapLatLng.add(latLng);
+                mLatLng.add(latLng);
+                if (lat > latMax) {
+                    latMax = lat;
+                }
+                if (lat < latMin) {
+                    latMin = lat;
+                }
+                if (lng > lngMax) {
+                    lngMax = lng;
+                }
+                if (lng < lngMin) {
+                    lngMin = lng;
+                }
+            }
+            PolygonOptions mLineOptions = new PolygonOptions().points(mapLatLng);
+            LatLng point = new LatLng((latMax + latMin) / 2, (lngMax + lngMin) / 2);
+            MarkerOptions markOption = new MarkerOptions().position(point);
+            Button button = new Button(getApplicationContext());
+            button.setBackgroundColor(Color.parseColor("#00000000"));
+
+            button.setHeight(DensityUtil.dp2px(getApplicationContext(), 5));
+            button.setTextSize(13);
+            if (list.get(i).getEtype().equals("danger") && danger == 1) {
+                mLineOptions.fillColor(Color.parseColor("#10FF0000"));
+                mLineOptions.stroke(new Stroke(5, Color.parseColor("#FF0000")));
+
+                button.setText("危险区域");
+                button.setTextColor(Color.parseColor("#FF0000"));
+                BitmapDescriptor bitmap = BitmapDescriptorFactory.fromResource(R.drawable.icon_danger_map);
+                markOption.icon(bitmap);
+                markOption.infoWindow(new InfoWindow(button, point, -100));
+                mBaiduMap.addOverlay(markOption);
+                mBaiduMap.addOverlay(mLineOptions);
+
+            } else if (list.get(i).getEtype().equals("safe") && safe == 1) {
+                mLineOptions.fillColor(Color.parseColor("#1000BC81"));
+                mLineOptions.stroke(new Stroke(5, Color.parseColor("#00BC81")));
+
+                button.setText("安全区域");
+                button.setTextColor(Color.parseColor("#00BC81"));
+                BitmapDescriptor bitmap = BitmapDescriptorFactory.fromResource(R.drawable.icon_safe_map);
+                markOption.icon(bitmap);
+                markOption.infoWindow(new InfoWindow(button, point, -100));
+                mBaiduMap.addOverlay(markOption);
+                mBaiduMap.addOverlay(mLineOptions);
+            }
+
+        }
+    }
+
+    //将常用区域绘制于地图上
+    private void normalAreaDraw(List<NormalEFBean> list) {
+        if (common == 1) {
+            for (int i = 0; i < list.size(); i++) {
+                LatLng point = new LatLng(list.get(i).getBdLat(), list.get(i).getBdLng());
+                CircleOptions mCircleOptions = new CircleOptions().center(point)
+                        .radius(list.get(i).getRadius())
+                        .fillColor(Color.parseColor("#100083D5")) //填充颜色
+                        .stroke(new Stroke(5, Color.parseColor("#7AC3F6"))); //边框宽和边框颜色
+                mBaiduMap.addOverlay(mCircleOptions);
+
+                Button button = new Button(getApplicationContext());
+                button.setBackgroundColor(Color.parseColor("#00000000"));
+                button.setHeight(DensityUtil.dp2px(getApplicationContext(), 15));
+                button.setText(list.get(i).getName());
+                button.setTextSize(13);
+                button.setTextColor(Color.parseColor("#3688E2"));
+
+                MarkerOptions markOption = new MarkerOptions().position(point);
+                BitmapDescriptor bitmap = BitmapDescriptorFactory.fromResource(R.drawable.icon_normal_map);
+                markOption.icon(bitmap);
+                markOption.infoWindow(new InfoWindow(button, point, -100));
+                mBaiduMap.addOverlay(markOption);
+
+                mLatLng.add(point);
+            }
+        }
+    }
+
+    //缩放地图，使得所有区域显示
+    private void animMapShow() {
+        normalAreaDraw(mListNormal);
+        dangerSafeAreaDraw(mListSafeDanger);
+        if (mLatLng != null && mLatLng.size() > 0) {
+            LatLngBounds.Builder builder = new LatLngBounds.Builder();
+            LatLngBounds bounds = builder.include(mLatLng)
+                    .build();
+            MapStatusUpdate update = MapStatusUpdateFactory.newLatLngBounds(bounds, mMapView.getWidth() / 12, mMapView.getHeight() / 12, mMapView.getWidth() / 12, mMapView.getHeight() / 12);
+            mBaiduMap.animateMapStatus(update);
+        }
+    }
+
+
+    @Override
+    public void onClick(View v) {
+        if (v == mBtnBack) {
+            finish();
+        } else if (v == ivSet) {
+            startActivity(new Intent(SecurityMapMainActivity.this, SecurityZoneMainActivity.class));
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mMapView.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mMapView.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mMapView.onDestroy();
+    }
+
+    @Override
+    public void onBackPressed() {
+        finish();
+    }
+}

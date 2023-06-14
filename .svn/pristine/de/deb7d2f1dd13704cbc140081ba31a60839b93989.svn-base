@@ -1,0 +1,254 @@
+/**
+ * Creation Date:2015-2-28
+ * <p/>
+ * Copyright
+ */
+package com.xiaoxun.xun.activitys;
+
+import android.Manifest;
+import android.content.Intent;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.util.Log;
+import android.widget.ImageView;
+
+import com.bumptech.glide.Glide;
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.Constants;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.beans.ADShowData;
+import com.xiaoxun.xun.utils.AndroidUtil;
+import com.xiaoxun.xun.utils.LogUtil;
+import com.xiaoxun.xun.utils.PermissionUtils;
+
+public class NewWelcomeActivity extends NormalActivity {
+    private ImibabyApp myApp;
+    private String notificationSOS = null;
+    private String flag;
+    private String cp;
+
+    static final String[] loginPermissions = new String[]{
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_EXTERNAL_STORAGE
+    };
+    private static final int PERMISSION_RESULT_LOGIN = 2;
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case PERMISSION_RESULT_LOGIN:
+                if (PermissionUtils.hasPermissions(NewWelcomeActivity.this, loginPermissions)) {
+                    dealInitNeedPermission();
+                } else {
+                    PermissionUtils.showPermissionPromptDialog(myApp, getString(R.string.run_need_storage_permission));
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.i("cui","NewWelcomeActivity_onStart**************************");
+    }
+
+    private void checkInitPermission() {
+        if (Build.VERSION.SDK_INT < 23 || PermissionUtils.hasPermissions(this, loginPermissions)) {
+            dealInitNeedPermission();
+        } else {
+            ActivityCompat.requestPermissions(NewWelcomeActivity.this, PermissionUtils.getNoGrantedPermissions(this, loginPermissions), PERMISSION_RESULT_LOGIN);
+        }
+    }
+
+    private void dealInitNeedPermission() {
+        myApp.resetCurUser();
+        myApp.setBindAutoLogin(false);
+        myApp.sdcardLog("NewWelcomeActivity onCreate 22:" + this.toString() + "taskid:" + getTaskId());
+        myApp.setMainActivityOpen(false);
+        if (myApp.getNetService() != null) {
+            myApp.getNetService().setKickdownFlag(false);
+        }
+        goToWhere();
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (getPackageName().equals("com.imibaby.client")){
+            setTintColor(getResources().getColor(R.color.welcome_bg_color));
+        }else{
+            setTintColor(getResources().getColor(R.color.welcome2_ff5a02));
+        }
+        setContentView(R.layout.activity_new_welcome);
+        ImageView iv_welcom_xun = findViewById(R.id.iv_newwelcom);
+        Glide.with(this)
+                .load(R.drawable.welcom_mitu)
+                .placeholder(R.drawable.welcom_mitu)
+                .dontAnimate()
+                .centerCrop()
+                .into(iv_welcom_xun);
+
+
+        flag = getIntent().getStringExtra("flag");
+        cp = getIntent().getStringExtra("cp");
+        notificationSOS = getIntent().getStringExtra(Const.KEY_JSON_MSG);
+        myApp = getMyApp();
+        checkInitPermission();
+    }
+
+    /**
+     * isRunGuide 引导页控制开关
+     */
+    private boolean isRunGuideMitu = false;
+    private boolean isRunGuideXiaoxun = false;
+    private void goToWhere(){
+        if (getPackageName().equals("com.imibaby.client")) { //米兔
+            //判断是否第一次安装和更新，是就引导页，不是就以前的逻辑 （key+version）
+            if (isRunGuideMitu && AndroidUtil.isFristInstall(NewWelcomeActivity.this)) {
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        Intent intent =new Intent(NewWelcomeActivity.this, GuideActivity.class);
+                        intent.putExtra("type",1);
+                        startActivityForResult(intent,1);
+                    }
+                }, 3000);
+            }else{
+                myApp.sdcardLog("NewWelcomeActivity needAutoLogin");
+                if (myApp.isAdSplashOnOff() && Constants.CONTROL_IS_OPEN_AD) {
+                    String splshId = myApp.startSplashPage();
+                    if (splshId.equals("#########")) {
+                        ToMainActivity();
+                    } else {
+                        ADShowData taskData = new ADShowData();
+                        int i;
+                        for (i = 0; i < myApp.getAdShowList().size(); i++) {
+                            taskData = myApp.getAdShowList().get(i);
+                            if (taskData.adId.equals(splshId)) {
+                                break;
+                            }
+                        }
+                        if (i == myApp.getAdShowList().size()) {
+                            ToMainActivity();
+                        } else {
+                            Intent _intent = new Intent(this, SplashAdActivity.class);
+                            _intent.putExtra("adfilepath", taskData.adId);
+                            _intent.putExtra("adInterval", taskData.adShowTime);
+                            _intent.putExtra("targetUrl", taskData.adTarUrl);
+                            LogUtil.i("ad_num" + taskData.adId + ":" + taskData.adShowNum);
+                            myApp.sdcardLog("WelcomeActivity needAutoLogin to splashActivity:"
+                                    + "ad_num" + taskData.adId + ":" + taskData.adShowNum);
+                            startActivity(_intent);
+                        }
+                    }
+                } else {
+                    ToMainActivity();
+                }
+            }
+        } else if (getPackageName().equals("com.xiaoxun.xunoversea")) {//小寻
+            if (isRunGuideXiaoxun && AndroidUtil.isFristInstall(NewWelcomeActivity.this)) {
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        Intent intent =new Intent(NewWelcomeActivity.this, GuideActivity.class);
+                        intent.putExtra("type",2);
+                        startActivityForResult(intent,1);
+                    }
+                }, 3000);
+            }else{
+                myApp.sdcardLog("NewWelcomeActivity needAutoLogin");
+                if (myApp.isAdSplashOnOff() && Constants.CONTROL_IS_OPEN_AD) {
+                    String splshId = myApp.startSplashPage();
+                    if (splshId.equals("#########")) {
+                        ToMainActivity();
+                    } else {
+                        ADShowData taskData = new ADShowData();
+                        int i;
+                        for (i = 0; i < myApp.getAdShowList().size(); i++) {
+                            taskData = myApp.getAdShowList().get(i);
+                            if (taskData.adId.equals(splshId)) {
+                                break;
+                            }
+                        }
+                        if (i == myApp.getAdShowList().size()) {
+                            ToMainActivity();
+                        } else {
+                            Intent _intent = new Intent(this, SplashAdActivity.class);
+                            _intent.putExtra("adfilepath", taskData.adId);
+                            _intent.putExtra("adInterval", taskData.adShowTime);
+                            _intent.putExtra("targetUrl", taskData.adTarUrl);
+                            LogUtil.i("ad_num" + taskData.adId + ":" + taskData.adShowNum);
+                            myApp.sdcardLog("WelcomeActivity needAutoLogin to splashActivity:"
+                                    + "ad_num" + taskData.adId + ":" + taskData.adShowNum);
+                            startActivity(_intent);
+                        }
+                    }
+                } else {
+                    ToMainActivity();
+                }
+            }
+        }
+    }
+
+    private void ToMainActivity() {
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Intent intent = new Intent(NewWelcomeActivity.this, NewMainActivity.class);
+                intent.putExtra(Const.KEY_JSON_MSG, notificationSOS);
+                startActivity(intent);
+                myApp.sdcardLog("NewWelcomeActivity open MainActivity BG LOGIN");
+                finish();
+            }
+        },2000);
+    }
+
+    private boolean needAutoLogin() {
+        return (myApp.getLastLoginState() == Const.LOGIN_STATE_LOGIN
+                && myApp.getLoginId() != null
+                && myApp.getLoginId().length() > 0
+                && myApp.getLastppssww() != null
+                && myApp.getLastppssww().length() > 0
+                && (myApp.getCurUser().getWatchList() != null && myApp.getCurUser().getWatchList().size() > 0));
+    }
+
+    @Override
+    protected void onResume() {
+        // TODO Auto-generated method stub
+        myApp.isCurrentRunningForeground = true;
+        super.onResume();
+        sendBroadcast(new Intent(Const.ACTION_CHECK_WEBSOCKET_STATE));
+    }
+
+    @Override
+    protected void onPause() {
+        // TODO Auto-generated method stub
+        super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        // TODO Auto-generated method stub
+        super.onDestroy();
+        myApp.sdcardLog("NewWelcomeActivity onDestroy ");
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode==1&&resultCode==GuideActivity.resultCode){
+            goToWhere();
+            return;
+        }
+
+    }
+}

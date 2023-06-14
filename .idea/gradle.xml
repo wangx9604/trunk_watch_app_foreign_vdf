@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="GradleMigrationSettings" migrationVersion="1" />
+  <component name="GradleSettings">
+    <option name="linkedExternalProjectsSettings">
+      <GradleProjectSettings>
+        <option name="testRunner" value="GRADLE" />
+        <option name="distributionType" value="DEFAULT_WRAPPED" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="gradleJvm" value="jbr-17" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/../../sdk/cache/hosted/pub.flutter-io.cn/audio_session-0.1.13/android" />
+            <option value="$PROJECT_DIR$/../../sdk/cache/hosted/pub.flutter-io.cn/audioplayers_android-3.0.1/android" />
+            <option value="$PROJECT_DIR$/../../sdk/cache/hosted/pub.flutter-io.cn/fluttertoast-7.1.8/android" />
+            <option value="$PROJECT_DIR$/../../sdk/cache/hosted/pub.flutter-io.cn/image_gallery_saver-1.7.1/android" />
+            <option value="$PROJECT_DIR$/../../sdk/cache/hosted/pub.flutter-io.cn/path_provider_android-2.0.27/android" />
+            <option value="$PROJECT_DIR$/../../sdk/cache/hosted/pub.flutter-io.cn/permission_handler_android-10.2.0/android" />
+            <option value="$PROJECT_DIR$/../../sdk/cache/hosted/pub.flutter-io.cn/shared_preferences_android-2.1.4/android" />
+            <option value="$PROJECT_DIR$/../../sdk/cache/hosted/pub.flutter-io.cn/sqflite-2.2.8+1/android" />
+            <option value="$PROJECT_DIR$/../../sdk/cache/hosted/pub.flutter-io.cn/url_launcher_android-6.0.31/android" />
+            <option value="$PROJECT_DIR$/../../sdk/cache/hosted/pub.flutter-io.cn/video_player_android-2.4.7/android" />
+            <option value="$PROJECT_DIR$/../../sdk/cache/hosted/pub.flutter-io.cn/webview_flutter_android-2.10.4/android" />
+            <option value="$PROJECT_DIR$/../flutter_work" />
+            <option value="$PROJECT_DIR$/../flutter_work/.android/Flutter" />
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/camera" />
+            <option value="$PROJECT_DIR$/googlemap_library" />
+            <option value="$PROJECT_DIR$/libsvideocall" />
+            <option value="$PROJECT_DIR$/mapadapter" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+    </option>
+  </component>
+</project>

@@ -1,0 +1,61 @@
+package com.xiaoxun.xun.networkv2.beans;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+
+public class RewardInfo implements Serializable {
+    private static final long serialVersionUID = 4571623237937905784L;
+    int imporlv;//重要等级
+    int difflv;//困难等级
+    String[] attr;//属性奖励  //STR力量，INT智力，STA耐力，VIT活力，CHR创力
+    int gold;//金币奖励
+    ArrayList<PetModelInfo> model; //直接要model详情，不是id，同宠物信息里面
+
+    public RewardInfo(int imporlv, int difflv, String[] attr, int gold, ArrayList<PetModelInfo> model) {
+        this.imporlv = imporlv;
+        this.difflv = difflv;
+        this.attr = attr;
+        this.gold = gold;
+        this.model = model;
+    }
+
+    public int getImporlv() {
+        return imporlv;
+    }
+
+    public void setImporlv(int imporlv) {
+        this.imporlv = imporlv;
+    }
+
+    public int getDifflv() {
+        return difflv;
+    }
+
+    public void setDifflv(int difflv) {
+        this.difflv = difflv;
+    }
+
+    public String[] getAttr() {
+        return attr;
+    }
+
+    public void setAttr(String[] attr) {
+        this.attr = attr;
+    }
+
+    public int getGold() {
+        return gold;
+    }
+
+    public void setGold(int gold) {
+        this.gold = gold;
+    }
+
+    public ArrayList<PetModelInfo> getModel() {
+        return model;
+    }
+
+    public void setModel(ArrayList<PetModelInfo> model) {
+        this.model = model;
+    }
+}

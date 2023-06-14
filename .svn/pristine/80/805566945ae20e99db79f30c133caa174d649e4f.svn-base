@@ -1,0 +1,192 @@
+package com.xiaoxun.xun.activitys;
+
+import android.os.Bundle;
+import android.view.View;
+import android.widget.CompoundButton;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.ToggleButton;
+
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.beans.MyMsgData;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.interfaces.MsgCallback;
+import com.xiaoxun.xun.securityarea.WaitingDialog;
+import com.xiaoxun.xun.utils.CloudBridgeUtil;
+import com.xiaoxun.xun.utils.LogUtil;
+import com.xiaoxun.xun.utils.PromptUtils;
+import com.xiaoxun.xun.utils.TimeUtil;
+import com.xiaoxun.xun.utils.ToastUtil;
+
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
+
+public class LowPowerDisableActivity extends NormalActivity implements MsgCallback {
+
+    private ToggleButton tb_switch;
+
+    private WaitingDialog pd;
+
+    String eid = "";
+    WatchData focusWatch;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_low_power_disable);
+
+        eid = getIntent().getStringExtra("watch_eid");
+        focusWatch = myApp.getCurUser().queryWatchDataByEid(eid);
+
+        ImageView title_back = findViewById(R.id.iv_title_back);
+        title_back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                finish();
+            }
+        });
+        TextView tv_title = findViewById(R.id.tv_title);
+        tv_title.setText(getString(R.string.low_power_disable_str));
+
+        TextView tv_tips = findViewById(R.id.tv_tips);
+            tv_tips.setText(getString(R.string.low_power_disable_tips1));
+
+        tb_switch = findViewById(R.id.tb_switch);
+        tb_switch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if(compoundButton.isPressed()) {
+                    if (b) {
+                        mapSetLowPowerDisable(1);
+                    } else {
+                        mapSetLowPowerDisable(0);
+                    }
+                }
+            }
+        });
+        pd = new WaitingDialog(this, R.style.Theme_DataSheet);
+        mapGetLowPowerDisable();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
+
+    /**
+     * @param onoff 0 off 1 on
+     */
+
+    private void mapSetLowPowerDisable(int onoff){
+        pd.normalShow();
+        MyMsgData mapset = new MyMsgData();
+        mapset.setCallback(this);
+        JSONObject pl = new JSONObject();
+        pl.put(CloudBridgeUtil.KEY_NAME_TEID,eid);
+        String tgid = getMyApp().getCurUser().getFocusWatch().getFamilyId();
+        pl.put(CloudBridgeUtil.KEY_NAME_TGID,tgid);
+        pl.put(CloudBridgeUtil.KEY_SET_TYPE, "true");
+        pl.put(CloudBridgeUtil.KEY_NAME_LOW_POWER_DISABLE,String.valueOf(onoff));
+        int sn = Long.valueOf(TimeUtil.getTimeStampGMT()).intValue();
+        mapset.setReqMsg(CloudBridgeUtil.CloudMapSetContent(CloudBridgeUtil.CID_MAPSET,sn,getMyApp().getToken(),pl));
+        if(getMyApp().getNetService() != null && getMyApp().getNetService().isCloudBridgeClientOk()){
+            getMyApp().getNetService().sendNetMsg(mapset);
+        }
+    }
+
+    private void mapGetLowPowerDisable(){
+        if(pd != null && !pd.isShowing()){
+            pd.normalShow();
+        }
+        MyMsgData mapget = new MyMsgData();
+        mapget.setCallback(this);
+
+        JSONArray plKeyList = new JSONArray();
+        plKeyList.add(CloudBridgeUtil.KEY_NAME_LOW_POWER_DISABLE);
+
+        JSONObject pl = new JSONObject();
+        pl.put(CloudBridgeUtil.KEY_NAME_EID, eid);
+        pl.put(CloudBridgeUtil.KEY_NAME_KEYS, plKeyList);
+        mapget.setReqMsg(getMyApp().obtainCloudMsgContent(CloudBridgeUtil.CID_MAPGET_MGET, pl));
+        if (getMyApp().getNetService() != null && getMyApp().getNetService().isCloudBridgeClientOk()) {
+            getMyApp().getNetService().sendNetMsg(mapget);
+        }
+    }
+
+    @Override
+    public void doCallBack(JSONObject reqMsg, JSONObject respMsg) {
+        int cid = (Integer) respMsg.get(CloudBridgeUtil.KEY_NAME_CID);
+        int rc = CloudBridgeUtil.getCloudMsgRC(respMsg);
+        switch (cid){
+            case CloudBridgeUtil.CID_MAPGET_MGET_RESP:
+                LogUtil.e("LowPowerDisableActivity mapGet callback : " + respMsg.toJSONString());
+                if (rc == CloudBridgeUtil.RC_SUCCESS){
+                    JSONObject pl = (JSONObject) respMsg.get(CloudBridgeUtil.KEY_NAME_PL);
+                    if(pl != null && !pl.isEmpty()){
+                        String onoff = (String)pl.get(CloudBridgeUtil.KEY_NAME_LOW_POWER_DISABLE);
+                        if(onoff.equals("1")){
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    tb_switch.setChecked(true);
+                                }
+                            });
+                        }else{
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    tb_switch.setChecked(false);
+                                }
+                            });
+                        }
+                    }
+                }
+                if(pd != null && pd.isShowing()){
+                    pd.dismiss();
+                }
+                break;
+            case CloudBridgeUtil.CID_MAPSET_RESP:
+                if(rc == CloudBridgeUtil.RC_SUCCESS){
+//                    if(tb_switch.isChecked()){
+//                        runOnUiThread(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                ToastUtil.show(LowPowerDisableActivity.this,getResources().getString(R.string.low_power_disable_set_success));
+//                            }
+//                        });
+//                    }else{
+//                        runOnUiThread(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                ToastUtil.show(LowPowerDisableActivity.this,getResources().getString(R.string.low_power_disable_set_disable_success));
+//                            }
+//                        });
+//                    }
+                    LogUtil.e("LowPowerDisableActivity set Success.");
+                }else if(rc == CloudBridgeUtil.ERROR_CODE_E2E_OFFLINE){
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            ToastUtil.show(LowPowerDisableActivity.this, PromptUtils.getOfflinePrompt4(myApp, eid, focusWatch.getNickname()));
+                        }
+                    });
+                }else {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            ToastUtil.show(LowPowerDisableActivity.this,getResources().getString(R.string.adview_net_error));
+                        }
+                    });
+                }
+                if(pd != null && pd.isShowing()){
+                    pd.dismiss();
+                }
+                break;
+        }
+    }
+}

@@ -1,0 +1,37 @@
+package com.xiaoxun.xun.networkv2.beans;
+
+public class HaviorRequestInfo {
+    String eid;
+    String AesKey;
+    String Token;
+
+    public HaviorRequestInfo(String eid, String aesKey, String token) {
+        this.eid = eid;
+        AesKey = aesKey;
+        Token = token;
+    }
+
+    public String getEid() {
+        return eid;
+    }
+
+    public void setEid(String eid) {
+        this.eid = eid;
+    }
+
+    public String getAesKey() {
+        return AesKey;
+    }
+
+    public void setAesKey(String aesKey) {
+        AesKey = aesKey;
+    }
+
+    public String getToken() {
+        return Token;
+    }
+
+    public void setToken(String token) {
+        Token = token;
+    }
+}

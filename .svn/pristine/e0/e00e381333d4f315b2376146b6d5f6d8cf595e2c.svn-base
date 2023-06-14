@@ -1,0 +1,142 @@
+package com.xiaoxun.xun.utils;
+
+import android.app.Activity;
+import android.util.DisplayMetrics;
+import android.view.Gravity;
+import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.TextView;
+
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.views.CustomerPickerView;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Created by huangyouyang on 2016/12/8.
+ */
+
+public class SelectTimeUtils {
+
+    /**
+     * 选择时间的PickerView
+     * @param context Activity  需要上下文、窗体操作
+     * @param paramHour  时
+     * @param paramMinute  分
+     * @param type  0,notype  1,starttime  2,endtime
+     * @param listenerHour  选择时的回调
+     * @param listenerMin  选择分的回调
+     */
+    public static void openSelectTimeView(Activity context, String paramHour, String paramMinute, int type,
+                                          CustomerPickerView.onSelectListener listenerHour, CustomerPickerView.onSelectListener listenerMin) {
+
+        CustomerPickerView pvHour;
+        CustomerPickerView pvMinute;
+        TextView tvHour;
+        TextView tvMinute;
+
+        View view = View.inflate(context, R.layout.select_time_view, null);
+        pvHour = view.findViewById(R.id.start_hour_pv);
+        pvHour.setMarginAlphaValue((float) 3.8, "H");
+        pvMinute = view.findViewById(R.id.start_min_pv);
+        pvMinute.setMarginAlphaValue((float) 3.8, "M");
+
+        TextView tvSettingType= view.findViewById(R.id.tv_settime_type);
+        if (type == 0) {
+            tvSettingType.setVisibility(View.GONE);
+        }
+        if (type == 1) {
+            tvSettingType.setText(context.getString(R.string.start_time));
+        } else if (type == 2) {
+            tvSettingType.setText(context.getString(R.string.end_time));
+        }
+
+        List<String> hours = new ArrayList<>();
+        final List<String> mins = new ArrayList<>();
+        for (int i = 0; i < 24; i++) {
+            hours.add(i < 10 ? "0" + i : "" + i);
+        }
+        for (int i = 0; i < 60; i++) {
+            mins.add(i < 10 ? "0" + i : "" + i);
+        }
+
+        pvHour.setData(hours);
+        pvHour.setOnSelectListener(listenerHour);
+        pvHour.setSelected(Integer.valueOf(paramHour));
+
+        pvMinute.setData(mins);
+        pvMinute.setOnSelectListener(listenerMin);
+        pvMinute.setSelected(Integer.valueOf(paramMinute));
+
+        DisplayMetrics metric = new DisplayMetrics();
+        context.getWindowManager().getDefaultDisplay().getMetrics(metric);
+        int width = metric.widthPixels;     // 屏幕宽度
+        tvHour = view.findViewById(R.id.start_hour_pv_hour);
+        //因为计算尺寸是按照1080宽度，所以这里计算padding值需要按比例求出
+        tvHour.setPadding((width - 17 * width / 1080) / 4 + 48 * width / 1080, 0, 0, 0);
+        tvHour.setTextColor(0xffdf5600);
+        tvMinute = view.findViewById(R.id.start_min_pv_min);
+        tvMinute.setPadding(width - (width - 17 * width / 1080) / 4 + 28 * width / 1080, 0, 0, 0);
+        tvMinute.setTextColor(0xffdf5600);
+
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+        params.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+        context.addContentView(view, params);
+    }
+
+    public static void openSelectTimeViewTwo(Activity context, String paramHour, String paramMinute, int type,CustomerPickerView.onSelectListener listenerHour, CustomerPickerView.onSelectListener listenerMin) {
+        CustomerPickerView pvHour;
+        CustomerPickerView pvMinute;
+        TextView tvHour;
+        TextView tvMinute;
+
+        View view = View.inflate(context, R.layout.select_time_viewtwo, null);
+        pvHour = view.findViewById(R.id.start_hour_pv);
+        pvHour.setMarginAlphaValue((float) 3.8, "H");
+        pvMinute = view.findViewById(R.id.start_min_pv);
+        pvMinute.setMarginAlphaValue((float) 3.8, "M");
+
+        TextView tvSettingType= view.findViewById(R.id.tv_settime_type);
+        if (type == 0) {
+            tvSettingType.setVisibility(View.GONE);
+        }
+        if (type == 1) {
+            tvSettingType.setText(context.getString(R.string.start_time));
+        } else if (type == 2) {
+            tvSettingType.setText(context.getString(R.string.end_time));
+        }
+
+        List<String> hours = new ArrayList<>();
+        final List<String> mins = new ArrayList<>();
+        for (int i = 0; i < 24; i++) {
+            hours.add(i < 10 ? "0" + i : "" + i);
+        }
+        for (int i = 0; i < 60; i++) {
+            mins.add(i < 10 ? "0" + i : "" + i);
+        }
+
+        pvHour.setData(hours);
+        pvHour.setOnSelectListener(listenerHour);
+        pvHour.setSelected(Integer.valueOf(paramHour));
+
+        pvMinute.setData(mins);
+        pvMinute.setOnSelectListener(listenerMin);
+        pvMinute.setSelected(Integer.valueOf(paramMinute));
+
+        DisplayMetrics metric = new DisplayMetrics();
+        context.getWindowManager().getDefaultDisplay().getMetrics(metric);
+        int width = metric.widthPixels;     // 屏幕宽度
+        tvHour = view.findViewById(R.id.start_hour_pv_hour);
+        //因为计算尺寸是按照1080宽度，所以这里计算padding值需要按比例求出
+        tvHour.setPadding((width - 17 * width / 1080) / 4 + 48 * width / 1080, 0, 0, 0);
+        tvHour.setTextColor(0xffdf5600);
+        tvMinute = view.findViewById(R.id.start_min_pv_min);
+        tvMinute.setPadding(width - (width - 17 * width / 1080) / 4 + 28 * width / 1080, 0, 0, 0);
+        tvMinute.setTextColor(0xffdf5600);
+
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+        params.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+        context.addContentView(view, params);
+    }
+}

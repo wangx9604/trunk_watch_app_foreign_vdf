@@ -1,0 +1,352 @@
+package com.xiaoxun.xun.utils;
+
+import android.app.ActivityManager;
+import android.app.Notification;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.widget.RemoteViews;
+
+import androidx.core.app.NotificationManagerCompat;
+
+import com.amap.api.maps.model.LatLng;
+import com.baidu.mapapi.utils.CoordinateConverter;
+import com.xiaoxun.xun.BuildConfig;
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.Constants;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.activitys.MainActivity;
+import com.xiaoxun.xun.activitys.ShareFamilyRanksActivity;
+import com.xiaoxun.xun.activitys.WatchManagerActivity;
+import com.xiaoxun.xun.beans.LocationData;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.db.WatchDAO;
+import com.xiaoxun.xun.services.NetService;
+
+import net.minidev.json.JSONObject;
+import net.minidev.json.JSONValue;
+
+import java.util.List;
+import java.util.Set;
+
+/**
+ * Created by huangyouyang on 2017/7/17.
+ */
+
+public class FrontServiceUtils {
+
+    public static boolean isStartFrontService(ImibabyApp mApp) {
+//        if (SystemUtils.getMIUI() == null)
+//            return mApp.getBoolValue(Const.SHARE_PREF_FIELD_APP_NOTIFY_ONOFF, true);
+//        else
+//            return mApp.getBoolValue(Const.SHARE_PREF_FIELD_APP_NOTIFY_ONOFF, false);
+        return false;
+    }
+
+    /**
+     * @param locPLMsg  位置信息
+     * @param battery 电量信息
+     */
+    public static void startFrontService(ImibabyApp mApp, NetService service, String locPLMsg, String battery) {
+
+        try {
+            WatchData watchData = mApp.getCurUser().getFocusWatch();
+            if (locPLMsg != null) {
+                JSONObject pl = (JSONObject) JSONValue.parse(locPLMsg);
+                String eid = (String) pl.get(CloudBridgeUtil.KEY_NAME_EID);
+                watchData = WatchDAO.getInstance(mApp).readWatchByEid(eid, watchData);
+                if (watchData == null)
+                    return;
+                LocationData location = watchData.getCurLocation();
+                if (location == null)
+                    location = new LocationData();
+                JSONObject result = (JSONObject) pl.get("result");
+                location.setTimestamp((String) pl.get(CloudBridgeUtil.KEY_NAME_TIMESTAMP));
+                location.setDescription((String) result.get(CloudBridgeUtil.KEY_NAME_LOCAITON_DESC));
+                location.setType(Integer.valueOf((String) result.get("type")));
+                String maptype = (String)result.get(CloudBridgeUtil.KEY_NAME_LOCATION_MAPTYPE);
+                location.setMapType((maptype == null)? "0":maptype);
+                String latlng = (String) result.get(CloudBridgeUtil.KEY_NAME_LOCAITON_LOCATION);
+                String[] latlngArray = latlng.split(",");
+                double longitude = Double.valueOf(latlngArray[0]);
+                double latitude = Double.valueOf(latlngArray[1]);
+                location.setLatitude(latitude);
+                location.setLongitude(longitude);
+                if(result.containsKey(CloudBridgeUtil.KEY_NAME_REGION)){
+                    int region = (Integer) result.get(CloudBridgeUtil.KEY_NAME_REGION);
+                    if(region == 460 || region == 461 || region == 454 || region == 455){
+                        if (location.getMapType().equals("0")) {
+                            location.setLatLng(new LatLng(latitude, longitude));
+                            CoordinateConverter converter = new CoordinateConverter();
+                            converter.from(CoordinateConverter.CoordType.COMMON);
+                            converter.coord(new com.baidu.mapapi.model.LatLng(latitude, longitude));
+                            location.setBaidulatLng(converter.convert());
+                        } else if (location.getMapType().equals("1")) {
+                            location.setBaidulatLng(new com.baidu.mapapi.model.LatLng(latitude, longitude));
+                            com.amap.api.maps.CoordinateConverter converter = new com.amap.api.maps.CoordinateConverter(mApp);
+                            converter.from(com.amap.api.maps.CoordinateConverter.CoordType.BAIDU);
+                            converter.coord(new LatLng(latitude, longitude));
+                            location.setLatLng(converter.convert());
+                        } else if (location.getMapType().equals("2")) {
+                            com.amap.api.maps.CoordinateConverter converter = new com.amap.api.maps.CoordinateConverter(mApp);
+                            converter.from(com.amap.api.maps.CoordinateConverter.CoordType.GPS);
+                            converter.coord(new LatLng(latitude, longitude));
+                            location.setLatLng(converter.convert());
+                            CoordinateConverter converter1 = new CoordinateConverter();
+                            converter1.from(CoordinateConverter.CoordType.GPS);
+                            converter1.coord(new com.baidu.mapapi.model.LatLng(latitude, longitude));
+                            location.setBaidulatLng(converter1.convert());
+                        }
+                    }else if(region == 466){
+                        if (location.getMapType().equals("0")) {
+                            location.setLatLng(new LatLng(latitude, longitude));
+                            CoordinateConverter converter = new CoordinateConverter();
+                            converter.from(CoordinateConverter.CoordType.GPS);
+                            converter.coord(new com.baidu.mapapi.model.LatLng(latitude, longitude));
+                            location.setBaidulatLng(converter.convert());
+                        } else if (location.getMapType().equals("1")) {
+                            location.setBaidulatLng(new com.baidu.mapapi.model.LatLng(latitude, longitude));
+                            com.amap.api.maps.CoordinateConverter converter = new com.amap.api.maps.CoordinateConverter(mApp);
+                            converter.from(com.amap.api.maps.CoordinateConverter.CoordType.BAIDU);
+                            converter.coord(new LatLng(latitude, longitude));
+                            location.setLatLng(converter.convert());
+                        } else if (location.getMapType().equals("2")) {
+                            com.amap.api.maps.CoordinateConverter converter = new com.amap.api.maps.CoordinateConverter(mApp);
+                            converter.from(com.amap.api.maps.CoordinateConverter.CoordType.GPS);
+                            converter.coord(new LatLng(latitude, longitude));
+                            location.setLatLng(converter.convert());
+                            CoordinateConverter converter1 = new CoordinateConverter();
+                            converter1.from(CoordinateConverter.CoordType.GPS);
+                            converter1.coord(new com.baidu.mapapi.model.LatLng(latitude, longitude));
+                            location.setBaidulatLng(converter1.convert());
+                        }
+                    }else {
+                        location.setLatLng(new LatLng(latitude, longitude));
+                        location.setBaidulatLng(new com.baidu.mapapi.model.LatLng(latitude, longitude));
+                    }
+                } else {
+                    if (location.getMapType().equals("0")) {
+                        location.setLatLng(new LatLng(latitude, longitude));
+                        CoordinateConverter converter = new CoordinateConverter();
+                        converter.from(CoordinateConverter.CoordType.COMMON);
+                        converter.coord(new com.baidu.mapapi.model.LatLng(latitude, longitude));
+                        location.setBaidulatLng(converter.convert());
+                    } else if (location.getMapType().equals("1")) {
+                        location.setBaidulatLng(new com.baidu.mapapi.model.LatLng(latitude, longitude));
+                        com.amap.api.maps.CoordinateConverter converter = new com.amap.api.maps.CoordinateConverter(mApp);
+                        converter.from(com.amap.api.maps.CoordinateConverter.CoordType.BAIDU);
+                        converter.coord(new LatLng(latitude, longitude));
+                        location.setLatLng(converter.convert());
+                    } else if (location.getMapType().equals("2")) {
+                        com.amap.api.maps.CoordinateConverter converter = new com.amap.api.maps.CoordinateConverter(mApp);
+                        converter.from(com.amap.api.maps.CoordinateConverter.CoordType.GPS);
+                        converter.coord(new LatLng(latitude, longitude));
+                        location.setLatLng(converter.convert());
+                        CoordinateConverter converter1 = new CoordinateConverter();
+                        converter1.from(CoordinateConverter.CoordType.GPS);
+                        converter1.coord(new com.baidu.mapapi.model.LatLng(latitude, longitude));
+                        location.setBaidulatLng(converter1.convert());
+                    }
+                }
+                watchData.setCurLocation(location);
+                WatchDAO.getInstance(mApp).addWatch(watchData);
+            }
+
+            if (battery != null) {
+                JSONObject batteryJs = (JSONObject) JSONValue.parse(battery);
+                String eid = (String) batteryJs.get(Const.KEY_WATCH_ID);
+                watchData = WatchDAO.getInstance(mApp).readWatchByEid(eid, watchData);
+                if (watchData == null || watchData.getCurLocation() == null)
+                    return;
+                String bl = (String) batteryJs.get(CloudBridgeUtil.BATTERY_LEVEL);
+                String[] array = bl.split("_");
+                watchData.setBattery(Integer.parseInt(array[1]));
+                WatchDAO.getInstance(mApp).addWatch(watchData);
+            }
+
+            // 这个非空判断是针对直接开启常驻通知栏的情况
+            if (watchData == null || watchData.getCurLocation() == null)
+                return;
+
+            Notification notification = new Notification.Builder(mApp)
+                    .setSmallIcon(R.drawable.ic_launcher)
+                    .setTicker(mApp.getString(R.string.app_name))
+                    .setWhen(System.currentTimeMillis())
+                    .setOngoing(true)
+                    .setContent(getRemoteView(mApp, watchData))
+                    .build();
+            service.startForeground(1, notification);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static RemoteViews getRemoteView(ImibabyApp context, WatchData watchData) {
+
+        String nickname = watchData.getNickname();
+        LocationData location = watchData.getCurLocation();
+        String locationDesc = location.getDescription();
+        String timeStamp = location.getTimestamp();
+        int battery = watchData.getBattery();
+
+        //创建RemoteViews对象（参数1：包名    参数2：布局id）
+        RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.layout_custom_notification);
+        remoteViews.setTextViewText(R.id.custom_notify_tv_name, nickname);
+        remoteViews.setTextViewText(R.id.custom_notify_tv_location, locationDesc);
+        remoteViews.setTextViewText(R.id.custom_notify_tv_timestamp, context.getString(R.string.update_time_at) + TimeUtil.getLocationTime(timeStamp));
+        remoteViews.setTextViewText(R.id.custom_notify_tv_battery, Integer.toString(battery) + "%");
+        remoteViews.setImageViewBitmap(R.id.custom_notify_iv_head,
+                ImageUtil.getMaskBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.head_0),
+                        context.getHeadDrawableByFile(context.getResources(), watchData.getHeadPath(), watchData.getEid(), R.drawable.small_default_head)));
+        remoteViews.setImageViewBitmap(R.id.custom_notify_iv_battery,toBatteryBitmap(context,battery,watchData.getEid()));
+
+        // 适配通知栏字体颜色
+        if (SystemUtils.getMIUI() != null || SystemUtils.getColorOS() != null || SystemUtils.getFlyme() != null || SystemUtils.getFuntouch() != null) {
+            remoteViews.setInt(R.id.custom_notify_tv_name, "setTextColor", NotificationUtils.isDarkNotificationTheme(context) ? Color.argb(128, 255, 255, 255) : Color.argb(128, 0, 0, 0));
+            remoteViews.setInt(R.id.custom_notify_tv_location, "setTextColor", NotificationUtils.isDarkNotificationTheme(context) ? Color.WHITE : Color.BLACK);
+            remoteViews.setInt(R.id.custom_notify_tv_timestamp, "setTextColor", NotificationUtils.isDarkNotificationTheme(context) ? Color.argb(128, 255, 255, 255) : Color.argb(128, 0, 0, 0));
+            remoteViews.setInt(R.id.custom_notify_tv_battery, "setTextColor", NotificationUtils.isDarkNotificationTheme(context) ? Color.argb(128, 255, 255, 255) : Color.argb(128, 0, 0, 0));
+        } else {
+            remoteViews.setInt(R.id.title_custom_notification, "setBackgroundColor", Color.WHITE);
+        }
+
+        if (locationDesc == null) {
+            remoteViews.setTextViewText(R.id.custom_notify_tv_location, context.getString(R.string.get_watch_location_fail));
+            remoteViews.setTextViewText(R.id.custom_notify_tv_timestamp, context.getString(R.string.get_watch_location_fail_suggest));
+        }
+
+        Intent intent = new Intent(context, MainActivity.class);
+        PendingIntent contentIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        //设置通知栏点击操作（参数1：控件id  参数2：延迟意图）
+        remoteViews.setOnClickPendingIntent(R.id.title_custom_notification, contentIntent);
+        Intent settingIntent = new Intent(context, WatchManagerActivity.class);
+        settingIntent.putExtra(Const.IF_SCROLL_TO_BOTTOM, Const.IS_SCROLL_TO_BOTTOM);
+        PendingIntent settingPedIntent = PendingIntent.getActivity(context, 0, settingIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        remoteViews.setOnClickPendingIntent(R.id.custom_notify_iv_setting, settingPedIntent);
+        return remoteViews;
+    }
+
+    private static Bitmap toBatteryBitmap(ImibabyApp mApp,int battery, String eid) {
+//        Integer chargeS = mApp.getmChargeState().get(eid);
+        Bitmap background = BitmapFactory.decodeResource(mApp.getResources(), R.drawable.noticeico_battery_bg);
+        Bitmap foreground = BitmapFactory.decodeResource(mApp.getResources(), R.drawable.noticeico_battery_full);
+        int lowBattery = mApp.getCurWatchConfigData().getValue_battery_min_level_value();
+        if (battery <= lowBattery /*&& (chargeS == null || chargeS == Const.WATCH_CHARGE_IS_OFF)*/) {
+            background = BitmapFactory.decodeResource(mApp.getResources(), R.drawable.noticeico_battery_bg);
+            foreground = BitmapFactory.decodeResource(mApp.getResources(), R.drawable.noticeico_battery_low);
+        }
+//        if (chargeS != null && chargeS == Const.WATCH_CHARGE_IS_ON) {
+//            foreground = BitmapFactory.decodeResource(mApp.getResources(), R.drawable.noticeico_battery_charging);
+//        }
+        int bgWidth = background.getWidth();
+        int bgHeight = background.getHeight();
+        //create the new blank bitmap 创建一个新的和SRC长度宽度一样的位图
+        Bitmap newbmp = Bitmap.createBitmap(bgWidth, bgHeight, Bitmap.Config.ARGB_8888);
+        Canvas cv = new Canvas(newbmp);
+        //draw bg into
+        cv.drawBitmap(background, 0, 0, null);//在 0，0坐标开始画入bg
+        if (battery > 0) {
+            Bitmap battery_bit = Bitmap.createBitmap(foreground, bgWidth - (bgWidth * battery / 100), 0, bgWidth * battery / 100, bgHeight);
+            cv.drawBitmap(battery_bit, bgWidth - battery_bit.getWidth(), 0, null);//在 0，0坐标开始画入fg ，可以从任意位置画入
+        }
+        //save all clip
+        cv.save();//保存
+        //store
+        cv.restore();
+        return newbmp;
+    }
+
+    public static void stopFrontService(NetService service) {
+        if (service != null)
+            service.stopForeground(true);  //If true, the notification previously providedto will be removed.  Otherwise it will remain until a later call removes it (or the service is destroyed).
+    }
+
+    public static boolean isNotificationListenerServiceEnabled(Context context) {
+
+        Set<String> packageNames = NotificationManagerCompat.getEnabledListenerPackages(context);
+        return packageNames.contains(context.getPackageName());
+
+//        String string = Settings.Secure.getString(getContentResolver(), "enabled_notification_listeners");
+//        return string == null || string.contains(NotificationCollectorService.class.getName());
+    }
+
+    public static void startFrontServiceAndroidO(final NetService service) {
+
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                Intent intent = new Intent(Const.ACTION_MOVE_TASK_TO_FRONT);
+                PendingIntent pendingIntent = PendingIntent.getBroadcast(service, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+                Notification.Builder builder = new Notification.Builder(service, NotificationHelper.APP_RUNNING_CHANNEL)
+                        .setSmallIcon(R.drawable.ic_launcher)
+                        .setTicker(service.getString(R.string.app_name))
+                        .setWhen(System.currentTimeMillis())
+                        .setContentTitle(service.getString(R.string.app_intelligent_guard, service.getString(R.string.app_name)))
+                        .setContentText(service.getString(R.string.xun_purpose))
+                        .setContentIntent(pendingIntent)
+                        .setAutoCancel(true);
+                Notification notification = builder.build();
+                service.startForeground(1, notification);
+                // 先不10s后关闭通知栏
+//                new Handler().postDelayed(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        service.stopForeground(true);
+//                    }
+//                }, 10000);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 将本应用置顶到最前端
+     * 1.当本应用位于后台时，则将它切换到最前端。
+     * 2.没有该App的task时，直接启动
+     */
+    public static void setAppTaskToFront(Context context, ImibabyApp mApp) {
+
+        try {
+            ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+            List<ActivityManager.RunningTaskInfo> taskInfoList = activityManager.getRunningTasks(100);
+            for (ActivityManager.RunningTaskInfo taskInfo : taskInfoList) {
+                if (taskInfo.topActivity.getPackageName().equals(context.getPackageName())) {
+                    if (!checkGoCloseNotifiPage(context, mApp)) {
+                        activityManager.moveTaskToFront(taskInfo.id, 0);
+                    }
+                    return;
+                }
+            }
+
+            PackageManager packageManager = context.getPackageManager();
+            Intent intent = packageManager.getLaunchIntentForPackage(BuildConfig.APPLICATION_ID);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static boolean checkGoCloseNotifiPage(Context context, ImibabyApp mApp) {
+
+        if (mApp.getLastLoginState() != Const.LOGIN_STATE_LOGIN)
+            return false;
+
+        String newTime = TimeUtil.getDay();
+        String lastTime = mApp.getStringValue(Constants.SHARE_PREF_SERVICE_NOTIFICATION_LASTTIME, "");
+        if (newTime.equals(lastTime))
+            return false;
+
+        mApp.setValue(Constants.SHARE_PREF_SERVICE_NOTIFICATION_LASTTIME, newTime);
+        Intent intent = mApp.getHelpCenterIntent(context, "service_notification");
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(intent);
+        return true;
+    }
+}

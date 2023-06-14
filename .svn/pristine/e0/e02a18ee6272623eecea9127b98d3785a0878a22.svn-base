@@ -1,0 +1,183 @@
+package com.xiaoxun.xun.networkv2.beans;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+
+public class BehaviorStatInfo extends BaseResponseInfo{
+
+    String[] selfAttr;
+    String[] avgAttr;
+    int finishNum;
+    int overNum;
+    String finishRate = "0";
+    String[] weekTask = new String[0];//日期，完成任务数量
+    ArrayList<TaskSimpleInfo> likeTop;
+    ArrayList<TaskSimpleInfo> overTop;
+    int city=0; //地区排名
+    String cityName;
+    int friend=0;//好友排名
+    int country=0; //全国排名
+
+    public BehaviorStatInfo(int code) {
+        super(code);
+    }
+
+    public BehaviorStatInfo(int code, String[] selfAttr, String[] avgAttr, int finishNum,
+                            int overNum, String finishRate, String[] weekTask, ArrayList<TaskSimpleInfo> likeTop,
+                            ArrayList<TaskSimpleInfo> overTop, int city, String cityName, int friend, int country) {
+        super(code);
+        this.selfAttr = selfAttr;
+        this.avgAttr = avgAttr;
+        this.finishNum = finishNum;
+        this.overNum = overNum;
+        this.finishRate = finishRate;
+        this.weekTask = weekTask;
+        this.likeTop = likeTop;
+        this.overTop = overTop;
+        this.city = city;
+        this.cityName = cityName;
+        this.friend = friend;
+        this.country = country;
+    }
+
+    public String[] getSelfAttr() {
+        return selfAttr;
+    }
+
+    public void setSelfAttr(String[] selfAttr) {
+        this.selfAttr = selfAttr;
+    }
+
+    public String[] getAvgAttr() {
+        return avgAttr;
+    }
+
+    public void setAvgAttr(String[] avgAttr) {
+        this.avgAttr = avgAttr;
+    }
+
+    public int getFinishNum() {
+        return finishNum;
+    }
+
+    public void setFinishNum(int finishNum) {
+        this.finishNum = finishNum;
+    }
+
+    public int getOverNum() {
+        return overNum;
+    }
+
+    public void setOverNum(int overNum) {
+        this.overNum = overNum;
+    }
+
+    public String getFinishRate() {
+        return finishRate;
+    }
+
+    public void setFinishRate(String finishRate) {
+        this.finishRate = finishRate;
+    }
+
+    public String[] getWeekTask() {
+        return weekTask;
+    }
+
+    public void setWeekTask(String[] weekTask) {
+        this.weekTask = weekTask;
+    }
+
+    public ArrayList<TaskSimpleInfo> getLikeTop() {
+        return likeTop;
+    }
+
+    public void setLikeTop(ArrayList<TaskSimpleInfo> likeTop) {
+        this.likeTop = likeTop;
+    }
+
+    public ArrayList<TaskSimpleInfo> getOverTop() {
+        return overTop;
+    }
+
+    public void setOverTop(ArrayList<TaskSimpleInfo> overTop) {
+        this.overTop = overTop;
+    }
+
+    public int getCity() {
+        return city;
+    }
+
+    public void setCity(int city) {
+        this.city = city;
+    }
+
+    public String getCityName() {
+        return cityName;
+    }
+
+    public void setCityName(String cityName) {
+        this.cityName = cityName;
+    }
+
+    public int getFriend() {
+        return friend;
+    }
+
+    public void setFriend(int friend) {
+        this.friend = friend;
+    }
+
+    public int getCountry() {
+        return country;
+    }
+
+    public void setCountry(int country) {
+        this.country = country;
+    }
+
+    public static class TaskSimpleInfo{
+        String id;
+        String name;
+
+        public TaskSimpleInfo(String id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "BehaviorStatInfo{" +
+                "selfAttr=" + Arrays.toString(selfAttr) +
+                ", avgAttr=" + Arrays.toString(avgAttr) +
+                ", finishNum=" + finishNum +
+                ", overNum=" + overNum +
+                ", finishRate='" + finishRate + '\'' +
+                ", weekTask=" + Arrays.toString(weekTask) +
+                ", likeTop=" + likeTop +
+                ", overTop=" + overTop +
+                ", city=" + city +
+                ", cityName='" + cityName + '\'' +
+                ", friend=" + friend +
+                ", country=" + country +
+                ", code=" + code +
+                '}';
+    }
+}

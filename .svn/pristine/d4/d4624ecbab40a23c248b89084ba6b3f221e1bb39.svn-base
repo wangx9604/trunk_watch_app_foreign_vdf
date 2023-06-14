@@ -1,0 +1,420 @@
+package com.xiaoxun.xun.gallary;
+
+import android.app.DownloadManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.media.MediaPlayer;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Environment;
+import android.util.Log;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.FrameLayout;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.MediaController;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
+import android.widget.VideoView;
+
+import com.xiaoxun.xun.FunctionUrl;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.activitys.BaseAppCompatActivity;
+import com.xiaoxun.xun.activitys.NewMainActivity;
+import com.xiaoxun.xun.gallary.dataBase.DataBaseHelper;
+import com.xiaoxun.xun.gallary.dataStruct.GalleryData;
+import com.xiaoxun.xun.gallary.downloadUtils.DownloadListener;
+import com.xiaoxun.xun.gallary.downloadUtils.GalleryDownloader;
+import com.xiaoxun.xun.gallary.downloadUtils.ListDownLoader;
+import com.xiaoxun.xun.utils.LogUtil;
+import com.xiaoxun.xun.utils.StatusBarUtil;
+import com.xiaoxun.xun.utils.SystemBarTintManager;
+import com.xiaoxun.xun.utils.ToastUtil;
+
+import net.minidev.json.JSONObject;
+import net.minidev.json.JSONValue;
+
+import java.io.File;
+import java.util.HashMap;
+
+import static com.xiaoxun.xun.gallary.downloadUtils.GalleryDownloader.DOWLOADER_WORK_TYPE_MOBILE;
+import static com.xiaoxun.xun.gallary.downloadUtils.GalleryDownloader.DOWLOADER_WORK_TYPE_WIFI;
+import static com.xiaoxun.xun.utils.ToolUtils.getSrcName;
+import static com.xiaoxun.xun.utils.ToolUtils.getTimeFromName;
+import static com.xiaoxun.xun.utils.ToolUtils.imgOrVideo;
+
+
+public class VideoPlayActivity extends BaseAppCompatActivity implements View.OnClickListener{
+    private ImibabyApp mApp;
+
+    private VideoView mVideoView;
+    private Uri mUri;
+    private GalleryData item;
+    private String name = null;
+    private String srcName = null;
+
+    private MediaController mMediaController;
+    private RelativeLayout videoPreview;
+    private ImageView preview;
+    private FrameLayout curtain;
+    private ProgressBar progressbar;
+    private ImageView sign;
+    private ImageButton back;
+
+//    private SystemBarTintManager mTintManager;
+
+    private GalleryDownloader downloader;
+    private DataBaseHelper db;
+
+    private int downloadstatus = 0; //0 normal 1 downloading
+
+    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(action)){
+                long id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1L);
+                if(item.getSrcReference() == id && item.getDownloadListener() != null){
+                    item.getDownloadListener().onFinished(String.valueOf(id));
+                }
+            }
+        }
+    };
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_vedio_play);
+        setTranslucentState();
+
+        mApp = (ImibabyApp) getApplication();
+        db = new DataBaseHelper(this);
+        downloader = new GalleryDownloader(this);
+
+        videoPreview = findViewById(R.id.videoPreview);
+        preview = findViewById(R.id.preview);
+        mVideoView = findViewById(R.id.videoV);
+        curtain = findViewById(R.id.curtain);
+        progressbar = findViewById(R.id.progressbar);
+        sign = findViewById(R.id.sign);
+        sign.setOnClickListener(this);
+        mVideoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                Log.v("xxxx","Vedio has Prepared.");
+                curtain.setVisibility(View.GONE);
+                mp.start();
+            }
+        });
+        mVideoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                Log.v("xxxx","Vedio has finished.");
+            }
+        });
+        mVideoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+            @Override
+            public boolean onError(MediaPlayer mp, int what, int extra) {
+                Log.v("xxxx","Vedio has error because Error Code =" + what + " extra = " + extra);
+                return false;
+            }
+        });
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            mMediaController = new MediaController(this);
+            mVideoView.setMediaController(mMediaController);
+        }else{
+            finish();
+        }
+
+        name = getIntent().getStringExtra("name");
+        item = db.getItem(name,mApp.getCurUser().getFocusWatch().getEid());
+        srcName = getSrcName(name);
+        if(item == null){
+            item = new GalleryData();
+            item.setEid(mApp.getCurUser().getFocusWatch().getEid());
+            item.setName(name);
+            String time = getTimeFromName(name);
+            item.setTime(Long.valueOf(time));
+            item.setType(imgOrVideo(name));
+            db.addItem(item);
+        }
+        File fpSrc = getExternalFilesDir(ImageVedioFiles.SRC_PATH + item.getEid() + "/" + srcName);
+        if(fpSrc != null && fpSrc.exists()){
+            videoPreview.setVisibility(View.INVISIBLE);
+            mVideoView.setVideoPath(fpSrc.getAbsolutePath());
+            if(item.getLocal_src_path() == null){
+                item.setLocal_src_path(fpSrc.getAbsolutePath());
+                db.upgradeItem(item);
+            }
+        }else{
+            File fp = null;
+            if(item.getLocal_pre_path() == null){
+                fp = getExternalFilesDir(ImageVedioFiles.PREVIEW_PATH +
+                        mApp.getCurUser().getFocusWatch().getEid() + "/" + name);
+            }else{
+                fp = new File(item.getLocal_pre_path());
+            }
+            if (fp.exists()) {
+                videoPreview.setVisibility(View.VISIBLE);
+                curtain.setVisibility(View.INVISIBLE);
+                Bitmap bitmap = BitmapFactory.decodeFile(fp.getAbsolutePath());
+                preview.setImageBitmap(bitmap);
+                if(item.getLocal_pre_path() == null){
+                    item.setLocal_pre_path(fp.getAbsolutePath());
+                    db.upgradeItem(item);
+                }
+            }
+            long id = item.getSrcReference();
+            if(id != -1L) {
+                HashMap<String, Integer> map = downloader.queryDownloaderMission(id);
+                int status = map.get("status");
+                if(status == DownloadManager.STATUS_RUNNING || status == DownloadManager.STATUS_PENDING){
+                    //progress bar
+                    progressbar.setVisibility(View.VISIBLE);
+                    downloadstatus = 1;
+                    DownloadListener lis = new DownloadListener() {
+                        @Override
+                        public void onStartDownload() {
+
+                        }
+
+                        @Override
+                        public void onFinished(String result) {
+                            if (Long.valueOf(result) == item.getSrcReference()){
+                                File fp = getExternalFilesDir(ImageVedioFiles.SRC_PATH + item.getEid() + "/" + name);
+                                if(fp != null && fp.exists()){
+                                    mVideoView.setVideoPath(fp.getAbsolutePath());
+                                    item.setLocal_src_path(fp.getAbsolutePath());
+                                    item.setDownloadListener(null);
+                                    db.upgradeItem(item);
+                                    progressbar.setVisibility(View.INVISIBLE);
+                                    videoPreview.setVisibility(View.INVISIBLE);
+                                    downloadstatus = 0;
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onError(String cause) {
+                            progressbar.setVisibility(View.INVISIBLE);
+                        }
+                    };
+                    item.setDownloadListener(lis);
+                    progressbar.setVisibility(View.VISIBLE);
+                }else{
+                    //Re-Download
+                }
+            }
+        }
+
+        back = findViewById(R.id.iv_title_userinfo);
+        back.setOnClickListener(this);
+
+        if(item.getVideo_share_url() == null){
+            requestShareURL();
+        }
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+        registerReceiver(mReceiver,filter);
+    }
+
+    private void setTranslucentState() {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            //状态栏透明 需要在创建SystemBarTintManager 之前调用。
+            setTranslucentStatus(true);
+        }
+
+//        mTintManager = new SystemBarTintManager(this);
+//        // 激活状态栏设置
+//        mTintManager.setStatusBarTintEnabled(true);
+//        // 设置一个颜色给系统栏
+//        mTintManager.setTintColor(getResources().getColor(R.color.bg_color_orange));
+//        mTintManager.setStatusBarDarkMode(true, this);
+        StatusBarUtil.changeStatusBarColor(this, getResources().getColor(R.color.bg_color_orange));
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+//            // 解决部分5.x系统使用状态栏透明属性后状态栏变黑色，不使用这句代码，在6.0设备上又出现半透明状态栏
+//            // 需要特殊处理
+//            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+//
+//            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+//                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+//            getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+//            getWindow().setStatusBarColor(Color.TRANSPARENT);
+//        }
+    }
+
+    private void setTranslucentStatus(boolean on) {
+        Window win = getWindow();
+        WindowManager.LayoutParams winParams = win.getAttributes();
+        final int bits = WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS;
+        if (on) {
+            winParams.flags |= bits;
+        } else {
+            winParams.flags &= ~bits;
+        }
+        win.setAttributes(winParams);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        db.close();
+        unregisterReceiver(mReceiver);
+    }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()){
+            case R.id.sign:
+                //if(!mApp.isDownloadOnlyWifi())
+                if(downloadstatus == 0)
+                {
+                    requestDownloadURL();
+                    progressbar.setVisibility(View.VISIBLE);
+                }else{
+                    ToastUtil.show(this,"视频正在后台下载中，请稍候。");
+                }
+                break;
+            case R.id.iv_title_userinfo:
+                startActivity(new Intent(VideoPlayActivity.this, NewMainActivity.class));
+                finish();
+                break;
+
+        }
+    }
+
+    private void requestShareURL(){
+        String post = "";
+        post = "EP/" + mApp.getCurUser().getFocusWatch().getEid() + "/ALBUM/SOURCE/" + srcName;
+        JSONObject obj = new JSONObject();
+        obj.put("key", post);
+        obj.put("sid", mApp.getToken());
+        ListDownLoader downLoader = new ListDownLoader(new DownloadListener() {
+            @Override
+            public void onStartDownload() {
+
+            }
+
+            @Override
+            public void onFinished(String result) {
+                if(result == null || result.equals("") || result.length() < 4){
+                    Log.e("xxxx","no result!");
+                    progressbar.setVisibility(View.INVISIBLE);
+                    return;
+                }
+                JSONObject obj = (JSONObject) JSONValue.parse(result);
+                int code = (Integer)obj.get("code");
+                if(code < 0){
+                    ToastUtil.show(VideoPlayActivity.this,"failed to get share url,plz try it later.");
+                    return;
+                }
+                String url = (String)obj.get("playUrl");
+                item.setVideo_share_url(url);
+
+            }
+
+            @Override
+            public void onError(String cause) {
+
+            }
+        });
+        downLoader.HttpsDownloadList(FunctionUrl.FDSFILE_SHARE_URL,obj.toJSONString());
+    }
+
+    private void requestDownloadURL(){
+        String post = "";
+        String postName = item.getName();
+        if(postName == null){
+            postName = name;
+        }
+        post = "EP/" + mApp.getCurUser().getFocusWatch().getEid() + "/ALBUM/SOURCE/" + postName;
+        JSONObject obj = new JSONObject();
+        obj.put("key", post);
+        obj.put("sid", mApp.getToken());
+        ListDownLoader downLoader = new ListDownLoader(new DownloadListener() {
+            @Override
+            public void onStartDownload() {
+
+            }
+
+            @Override
+            public void onFinished(String result) {
+                if(result == null || result.equals("") || result.length() < 4){
+                    Log.e("xxxx","no result!");
+                    progressbar.setVisibility(View.INVISIBLE);
+                    return;
+                }
+                downloadFile(result);
+            }
+
+            @Override
+            public void onError(String cause) {
+
+            }
+        });
+        downLoader.HttpsDownloadList(FunctionUrl.FDSFILE_DOWNLOAD_URL,obj.toJSONString());
+    }
+
+    private void downloadFile(String result){
+        JSONObject obj = (JSONObject) JSONValue.parse(result);
+        int code = (Integer)obj.get("code");
+        if(code < 0){
+            ToastUtil.show(this,"loading failed,please try again later!");
+            return;
+        }
+        String url = (String)obj.get("url");
+        item.setSrc_url(url);
+        final Context ctxt = this;
+        DownloadListener lis = new DownloadListener() {
+            @Override
+            public void onStartDownload() {
+
+            }
+
+            @Override
+            public void onFinished(String result) {
+                if(db == null){
+                    LogUtil.e("db is null.");
+                    return;
+                }
+                if (Long.valueOf(result) == item.getSrcReference()){
+                    File fp = getExternalFilesDir(ImageVedioFiles.SRC_PATH + item.getEid() + "/" + item.getName());
+                    if(fp != null && fp.exists()){
+                        mVideoView.setVideoPath(fp.getAbsolutePath());
+                        item.setLocal_src_path(fp.getAbsolutePath());
+                        db.upgradeItem(item);
+                        progressbar.setVisibility(View.INVISIBLE);
+                        videoPreview.setVisibility(View.INVISIBLE);
+                    }else{
+                        progressbar.setVisibility(View.VISIBLE);
+                        HashMap<String,Integer> map = downloader.queryDownloaderMission(Long.valueOf(result));
+                        LogUtil.e(String.valueOf(map.get("status")));
+                        ToastUtil.show(getApplicationContext(),String.valueOf(map.get("status")));
+                    }
+                    downloadstatus = 0;
+                }
+            }
+
+            @Override
+            public void onError(String cause) {
+                progressbar.setVisibility(View.INVISIBLE);
+            }
+        };
+        item.setDownloadListener(lis);
+        long id = downloader.requstDownload(this,url,DOWLOADER_WORK_TYPE_WIFI | DOWLOADER_WORK_TYPE_MOBILE,item.getEid(),
+                item.getName(),ImageVedioFiles.FILE_TYPE_SRC);
+        item.setSrcReference(id);
+        db.upgradeItem(item);
+    }
+}

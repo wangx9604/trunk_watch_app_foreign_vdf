@@ -1,0 +1,885 @@
+package com.xiaoxun.xun.activitys;
+
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.app.Dialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.content.res.AssetFileDescriptor;
+import android.content.res.AssetManager;
+import android.media.AudioManager;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
+import android.os.PowerManager;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import android.util.DisplayMetrics;
+import android.view.SurfaceView;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.beans.MyMsgData;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.interfaces.MsgCallback;
+import com.xiaoxun.xun.services.NetService;
+import com.xiaoxun.xun.utils.CloudBridgeUtil;
+import com.xiaoxun.xun.utils.DialogUtil;
+import com.xiaoxun.xun.utils.ImageUtil;
+import com.xiaoxun.xun.utils.LogUtil;
+import com.xiaoxun.xun.utils.MyMediaPlayerUtil;
+import com.xiaoxun.xun.utils.TimeUtil;
+import com.xiaoxun.xun.utils.ToastUtil;
+import com.xiaoxun.xun.utils.ToolUtils;
+
+import net.minidev.json.JSONObject;
+import net.minidev.json.JSONValue;
+
+import java.lang.ref.WeakReference;
+import java.util.Random;
+
+import io.agora.rtc.Constants;
+import io.agora.rtc.IRtcEngineEventHandler;
+import io.agora.rtc.RtcEngine;
+import io.agora.rtc.video.VideoCanvas;
+
+/**
+ * Created by huangyouyang on 2018/8/22.
+ */
+
+public class VideoCallActivity extends NormalActivity implements View.OnClickListener,MsgCallback {
+
+    private static final String TAG = "VideoCallActivity";
+
+    private View layoutCallWait;
+    private ImageView ivWatchHead;
+    private TextView tvCallState;
+
+    private View layoutCallIng;
+    private FrameLayout localVideoView;
+    private FrameLayout remoteVideoView;
+    private LinearLayout layoutAudioMute;
+    private LinearLayout layoutSwitchCamera;
+    private LinearLayout layoutEndCall;
+    private LinearLayout layoutAnswer;
+    private TextView mTimeshow;
+
+    private WatchData focusWatch;
+    private RtcEngine mRtcEngine;
+    private String appId;
+    private int uidSelf;
+    private String tokenSelf;
+    private int uidOther;
+    private String tokenOther;
+    private String channelName;
+    private String optionalInfo = "Xiaoxun Android";
+    private int callType = 0;  //0,call;1,reviceCall
+
+    private int timeOut = 30;
+    private int countSecond = 0;
+    private NetService mNetService;
+    private VideocallHandler mHandler;
+    private BroadcastReceiver mReceiver;
+    private AudioManager mAudioManager;
+
+    private final IRtcEngineEventHandler mRtcEventHandler = new IRtcEngineEventHandler() {
+
+        @Override
+        public void onJoinChannelSuccess(String channel, int uid, int elapsed) {
+            super.onJoinChannelSuccess(channel, uid, elapsed);
+            LogUtil.i(TAG + " onJoinChannelSuccess" + " channel=" + channel + " uid=" + uid + " elapsed=" + elapsed);
+            mHandler.sendEmptyMessage(VideocallHandler.LOCAL_JOINCHANNEL_SUCCESS);
+        }
+
+        @Override
+        public void onUserJoined(int uid, int elapsed) {
+            super.onUserJoined(uid, elapsed);
+            LogUtil.i(TAG + " onUserJoined" + " uid=" + uid + " elapsed=" + elapsed);
+        }
+
+        @Override
+        public void onFirstRemoteVideoDecoded(final int uid, int width, int height, int elapsed) {
+            LogUtil.i(TAG + " onFirstRemoteVideoDecoded" + " uid=" + uid + " elapsed=" + elapsed);
+            uidOther = uid;
+            mHandler.removeMessages(VideocallHandler.RECEIVE_REMOTE_DATA);
+            mHandler.sendEmptyMessage(VideocallHandler.RECEIVE_REMOTE_DATA);
+        }
+
+        @Override
+        public void onUserOffline(int uid, int reason) {
+            LogUtil.i(TAG + " onUserOffline" + " uid=" + uid + " reason=" + reason);
+            mHandler.removeMessages(VideocallHandler.RECEIVE_END_CALL);
+            mHandler.sendEmptyMessage(VideocallHandler.RECEIVE_END_CALL);
+        }
+
+        @Override
+        public void onLeaveChannel(RtcStats stats) {
+            LogUtil.i(TAG + " onLeaveChannel totalDuration=" + stats.totalDuration);
+        }
+
+        @Override
+        public void onFirstLocalVideoFrame(int width, int height, int elapsed) {
+            LogUtil.i(TAG + " onFirstLocalVideoFrame" + " width=" + width + " height=" + height + " elapsed=" + elapsed);
+        }
+
+        @Override
+        public void onUserMuteVideo(final int uid, final boolean muted) {
+            LogUtil.i(TAG + " onUserMuteVideo" + " uid=" + uid + " muted=" + muted);
+        }
+
+        @Override
+        public void onUserMuteAudio(int uid, boolean muted) {
+            LogUtil.i(TAG + " onUserMuteAudio" + " uid=" + uid + " muted=" + muted);
+        }
+
+        @Override
+        public void onConnectionLost() {
+            LogUtil.i(TAG + " onConnectionLost");
+            Message msg = Message.obtain();
+            msg.what = VideocallHandler.VIDEO_CALL_ERROR;
+            msg.obj = getString(R.string.videocall_network_error);
+            mHandler.removeMessages(VideocallHandler.VIDEO_CALL_ERROR);
+            mHandler.handleMessage(msg);
+        }
+
+        @Override
+        public void onError(int err) {
+            LogUtil.i(TAG + " onError" + " error=" + err);
+            Message msg = Message.obtain();
+            msg.what = VideocallHandler.VIDEO_CALL_ERROR;
+            msg.obj = getString(R.string.videocall_error);
+            mHandler.removeMessages(VideocallHandler.VIDEO_CALL_ERROR);
+            mHandler.handleMessage(msg);
+        }
+    };
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_videocall);
+
+        initView();
+        initListener();
+        initData(getIntent());
+        initReceiver();
+        checkPermission();
+    }
+
+    @Override
+    public void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        Window window = getWindow();
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+                | WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
+    }
+
+    private void checkPermission() {
+
+        boolean audioPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+        boolean videoPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
+        if (!audioPermission && !videoPermission) {
+            ActivityCompat.requestPermissions(VideoCallActivity.this, new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA}, PERMISSION_RESULT);
+        } else if (!audioPermission) {
+            ActivityCompat.requestPermissions(VideoCallActivity.this, new String[]{Manifest.permission.RECORD_AUDIO}, PERMISSION_RESULT);
+        } else if (!videoPermission) {
+            ActivityCompat.requestPermissions(VideoCallActivity.this, new String[]{Manifest.permission.CAMERA}, PERMISSION_RESULT);
+        } else {
+            // goon
+            checkNetWork();
+        }
+        checkBluetoothPermission();
+    }
+
+    private void checkBluetoothPermission() {
+        if (Build.VERSION.SDK_INT >= 31) {
+            boolean bluethoothPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED;
+            if (!bluethoothPermission) {
+                ActivityCompat.requestPermissions(VideoCallActivity.this, new String[]{Manifest.permission.BLUETOOTH_CONNECT}, PERMISSION_RESULT);
+            }
+        }
+    }
+
+    private static  final  int PERMISSION_RESULT = 0x11;
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSION_RESULT:
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                    Message msg = Message.obtain();
+                    msg.what = VideocallHandler.VIDEO_CALL_ERROR;
+                    msg.obj = getString(R.string.need_audio_permission);
+                    mHandler.removeMessages(VideocallHandler.VIDEO_CALL_ERROR);
+                    mHandler.handleMessage(msg);
+                } else if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                    Message msg = Message.obtain();
+                    msg.what = VideocallHandler.VIDEO_CALL_ERROR;
+                    msg.obj = getString(R.string.need_video_permission);
+                    mHandler.removeMessages(VideocallHandler.VIDEO_CALL_ERROR);
+                    mHandler.handleMessage(msg);
+                } else {
+                    checkNetWork();
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void initView() {
+        layoutCallWait = findViewById(R.id.layout_call_wait);
+        ivWatchHead = findViewById(R.id.iv_watch_head);
+        tvCallState = findViewById(R.id.tv_videocall_state);
+        layoutCallIng = findViewById(R.id.layout_call_ing);
+        localVideoView = findViewById(R.id.local_video_view);
+        remoteVideoView = findViewById(R.id.remote_video_view);
+        layoutAudioMute = findViewById(R.id.layout_audio_mute);
+        layoutSwitchCamera = findViewById(R.id.layout_switch_camera);
+        layoutEndCall = findViewById(R.id.layout_end_call);
+        layoutAnswer = findViewById(R.id.layout_answer);
+        mTimeshow = findViewById(R.id.tv_videocall_time);
+        setTintColor(getResources().getColor(R.color.transparent));
+
+        redrawLayout();
+    }
+
+    private void redrawLayout() {
+
+        WindowManager wm = (WindowManager) this.getSystemService(Context.WINDOW_SERVICE);
+        DisplayMetrics dm = new DisplayMetrics();
+        if (wm != null)
+            wm.getDefaultDisplay().getMetrics(dm);
+        int width = dm.widthPixels;
+        int height = width * 3 / 4;
+        ViewGroup.LayoutParams layoutParams = remoteVideoView.getLayoutParams();
+        layoutParams.width = width;
+        layoutParams.height = height;
+        LogUtil.i(TAG + " layoutParams.height = " + layoutParams.height);
+        remoteVideoView.setLayoutParams(layoutParams);
+    }
+
+    private void initListener() {
+
+        layoutAudioMute.setOnClickListener(this);
+        layoutSwitchCamera.setOnClickListener(this);
+        layoutEndCall.setOnClickListener(this);
+        layoutAnswer.setOnClickListener(this);
+    }
+
+    private void initData(Intent intent) {
+
+        mNetService = myApp.getNetService();
+        myApp.callState = Const.MESSAGE_CALL_WAIT_STATE;
+        mHandler = new VideocallHandler(VideoCallActivity.this, getMainLooper());
+        String eid = intent.getStringExtra(CloudBridgeUtil.KEY_NAME_EID);
+        focusWatch = myApp.getCurUser().queryWatchDataByEid(eid);
+        callType = intent.getIntExtra(Const.VIDEOCALL_TYPE, 0);
+        if (callType == 0) {
+//            mHandler.sendEmptyMessage(VideocallHandler.TO_GET_TOKEN);//调整到网络判断里面
+            updateLayoutShow(0);
+        } else if (callType == 1) {
+            JSONObject pl = (JSONObject) JSONValue.parse(intent.getStringExtra(com.xiaoxun.xun.Constants.VIDEOCALL_PARAMS));
+            appId = (String) pl.get(CloudBridgeUtil.KEY_NAME_VIDEOCALL_APPID);
+            channelName = (String) pl.get(CloudBridgeUtil.KEY_NAME_VIDEOCALL_CHANNELNAME);
+            uidSelf = (int) pl.get(CloudBridgeUtil.KEY_NAME_VIDEOCALL_UID_OTHER);
+            tokenSelf = (String) pl.get(CloudBridgeUtil.KEY_NAME_VIDEOCALL_TOKEN_OTHER);
+            //mHandler.sendEmptyMessage(VideocallHandler.GET_TOKEN_SUCCESS);
+            mHandler.sendEmptyMessageDelayed(VideocallHandler.RECEIVE_CALL_TIMEOUT, 30 * 1000);
+            updateLayoutShow(1);
+        }
+    }
+
+    private void initReceiver() {
+
+        mReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (Const.ACTION_VIDEOCALL_ENDCALL.equals(intent.getAction())) {
+                    mHandler.removeMessages(VideocallHandler.RECEIVE_END_CALL);
+                    mHandler.sendEmptyMessage(VideocallHandler.RECEIVE_END_CALL);
+                } else if (Intent.ACTION_HEADSET_PLUG.equals(intent.getAction())) {
+                    int state = intent.getIntExtra("state", 0);
+                    LogUtil.i(TAG + " headset_plug state = " + state);
+                    configAudioSetting();
+                } else if (Const.ACTION_WATCH_NET_STATE_CHANGE.equals(intent.getAction())) {
+                    updateWatchNetState();
+                } else if (Intent.ACTION_SCREEN_OFF.equals(intent.getAction())) {
+                    if (myApp.callState == Const.MESSAGE_CALL_IN_CALL_STATE || myApp.callState == Const.MESSAGE_CALL_WAIT_STATE) {
+                        mHandler.removeMessages(VideocallHandler.REQUEST_END_CALL);
+                        mHandler.sendEmptyMessage(VideocallHandler.REQUEST_END_CALL);
+                    }
+                }
+            }
+        };
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Const.ACTION_VIDEOCALL_ENDCALL);
+        filter.addAction(Intent.ACTION_HEADSET_PLUG);
+        filter.addAction(Const.ACTION_WATCH_NET_STATE_CHANGE);
+        filter.addAction(Intent.ACTION_SCREEN_OFF);
+        registerReceiver(mReceiver, filter);
+    }
+
+    private void initMediaEffect() {
+
+        MyMediaPlayerUtil.getInstance().stopMediaPlayer(myApp);
+        MyMediaPlayerUtil.getInstance().requestAudioFocus(myApp);
+        try {
+            String musicName = "music/call_in.wav";
+            if (callType == 0) {
+                musicName = "music/call_out.wav";
+            } else if (callType == 1) {
+                musicName = "music/call_in.wav";
+            }
+            AssetManager assetManager = getAssets();
+            AssetFileDescriptor afd = assetManager.openFd(musicName);
+            MyMediaPlayerUtil.getInstance().starAssetMediaPlayer(afd, this);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void configAudioSetting(){
+        if (mAudioManager == null)
+            mAudioManager = (AudioManager) VideoCallActivity.this.getSystemService(Context.AUDIO_SERVICE);
+        LogUtil.i(TAG + " mAudioManager.isWiredHeadsetOn()=" + mAudioManager.isWiredHeadsetOn());
+//        mAudioManager.setMode(AudioManager.MODE_NORMAL);
+        if (mAudioManager.isWiredHeadsetOn()) {
+            mAudioManager.setSpeakerphoneOn(false);
+        } else {
+            mAudioManager.setSpeakerphoneOn(true);
+        }
+    }
+
+    /**
+     * @param state 0,发起呼叫；1，接收呼叫；2，正在通话
+     */
+    private void updateLayoutShow(int state) {
+        switch (state) {
+            case 0: {
+                layoutCallWait.setVisibility(View.VISIBLE);
+                layoutCallIng.setVisibility(View.GONE);
+                layoutEndCall.setVisibility(View.VISIBLE);
+                layoutAnswer.setVisibility(View.GONE);
+                layoutAudioMute.setVisibility(View.GONE);
+                layoutSwitchCamera.setVisibility(View.GONE);
+                tvCallState.setText(getString(R.string.videocall_request_ing, focusWatch.getNickname()));
+                ImageUtil.setMaskImage(ivWatchHead, R.drawable.head_2,
+                        getMyApp().getHeadDrawableByFile(getResources(), focusWatch.getHeadPath(), focusWatch.getEid(), R.drawable.default_head));
+            }
+            break;
+            case 1: {
+                layoutCallWait.setVisibility(View.VISIBLE);
+                layoutCallIng.setVisibility(View.GONE);
+                layoutEndCall.setVisibility(View.VISIBLE);
+                layoutAnswer.setVisibility(View.VISIBLE);
+                layoutAudioMute.setVisibility(View.GONE);
+                layoutSwitchCamera.setVisibility(View.GONE);
+                tvCallState.setText(getString(R.string.videocall_receive_request, focusWatch.getNickname()));
+                ImageUtil.setMaskImage(ivWatchHead, R.drawable.head_2,
+                        getMyApp().getHeadDrawableByFile(getResources(), focusWatch.getHeadPath(), focusWatch.getEid(), R.drawable.default_head));
+            }
+            break;
+            case 2: {
+                layoutCallWait.setVisibility(View.GONE);
+                layoutCallIng.setVisibility(View.VISIBLE);
+                layoutEndCall.setVisibility(View.VISIBLE);
+                layoutAnswer.setVisibility(View.GONE);
+                layoutAudioMute.setVisibility(View.VISIBLE);
+                layoutSwitchCamera.setVisibility(View.VISIBLE);
+            }
+            break;
+            default:
+                break;
+        }
+    }
+
+    private void initAgoraEngineAndJoinChannel() {
+
+        try {
+            // step1 创建 RtcEngine 对象
+            mRtcEngine = RtcEngine.create(VideoCallActivity.this, appId, mRtcEventHandler);
+            // step2 模式设置(频道、音频参数、视频参数)
+            mRtcEngine.setChannelProfile(Constants.CHANNEL_PROFILE_LIVE_BROADCASTING);
+            mRtcEngine.setClientRole(Constants.CLIENT_ROLE_BROADCASTER);
+            mRtcEngine.setVideoProfile(240, 240, 10, 120);
+            // mRtcEngine.setAudioProfile(Constants.AUDIO_PROFILE_DEFAULT, Constants.AUDIO_SCENARIO_DEFAULT);
+            mRtcEngine.setAudioProfile(0, 5);
+            mRtcEngine.setParameters("{\"che.audio.specify.codec\":\"G722\"}");
+            // step3 设置本地视频视图
+            SurfaceView surfaceView = RtcEngine.CreateRendererView(getBaseContext());
+            surfaceView.setZOrderMediaOverlay(true);
+            localVideoView.addView(surfaceView);
+            mRtcEngine.setupLocalVideo(new VideoCanvas(surfaceView, VideoCanvas.RENDER_MODE_ADAPTIVE, uidSelf));
+            // 音视频开启设置
+            mRtcEngine.disableAudio();
+            if (callType == 0)
+                mRtcEngine.enableVideo();
+            mRtcEngine.muteLocalVideoStream(true);
+            // 写log
+//            mRtcEngine.setLogFile(myApp.getAgorasdkLogFile().getPath());
+            // 进行加密
+//            mRtcEngine.setEncryptionSecret("hyydev2018");
+//            mRtcEngine.setEncryptionMode("aes-128-ecb");
+            // step4 创建并加入频道
+            mRtcEngine.joinChannel(tokenSelf, channelName, optionalInfo, uidSelf);
+        } catch (Exception e) {
+            LogUtil.e(TAG + e.toString());
+            Message msg = Message.obtain();
+            msg.what = VideocallHandler.VIDEO_CALL_ERROR;
+            msg.obj = getString(R.string.videocall_error);
+            mHandler.removeMessages(VideocallHandler.VIDEO_CALL_ERROR);
+            mHandler.handleMessage(msg);
+        }
+    }
+
+    // Tutorial Step 5
+    private void setupRemoteVideo(int uid) {
+
+        LogUtil.i(TAG+" setupRemoteVideo uid = "+uid);
+        if (remoteVideoView.getChildCount() >= 1) {
+            return;
+        }
+        SurfaceView surfaceView = RtcEngine.CreateRendererView(getBaseContext());
+        remoteVideoView.addView(surfaceView);
+        // 设置远端视频视图
+        mRtcEngine.setupRemoteVideo(new VideoCanvas(surfaceView, VideoCanvas.RENDER_MODE_FIT, uid));
+        surfaceView.setTag(uid); // for mark purpose
+    }
+
+    boolean isLeaveChannle = false;  //添加一个是否离开channel的flag，避免多次leave出现异常
+    // Tutorial Step 6
+    private void leaveChannel() {
+        if (mRtcEngine != null && !isLeaveChannle) {
+            mRtcEngine.leaveChannel();
+            isLeaveChannle = true;
+        }
+    }
+
+    private void updateWatchNetState() {
+
+        String netState = myApp.getStringValue(focusWatch.getEid() + CloudBridgeUtil.KEY_NAME_WATCH_NET_STATE, "");
+        if (netState.length() > 0) {
+            netState = netState.split("_")[1].substring(1, 2);
+            // 2|3|4|9 分别表示 2G|3G|4G|WIFI
+            switch (netState) {
+                case "2":
+                case "3":
+                case "4":
+                    ToastUtil.show(VideoCallActivity.this, R.string.videocall_netstate_mobile);
+                    break;
+                case "9":
+//                    ToastUtil.show(VideoCallActivity.this, R.string.videocall_netstate_wifi);
+                    break;
+                default:
+                    ToastUtil.show(VideoCallActivity.this, R.string.videocall_netstate_mobile);
+                    break;
+            }
+        }
+    }
+
+    @Override
+    public void onClick(View v) {
+
+        switch (v.getId()) {
+
+            case R.id.layout_audio_mute: {
+                ImageView iv = findViewById(R.id.btn_audio_mute);
+                if (iv.isSelected()) {
+                    iv.setSelected(false);
+                    iv.setImageResource(R.drawable.btn_audiomute_on_selecter);
+//                    mRtcEngine.enableAudio();
+                    mRtcEngine.muteLocalAudioStream(false);
+                } else {
+                    iv.setSelected(true);
+                    iv.setImageResource(R.drawable.btn_audiomute_off_selecter);
+//                    mRtcEngine.disableAudio();
+                    mRtcEngine.muteLocalAudioStream(true);
+                }
+            }
+            break;
+
+            case R.id.layout_switch_camera: {
+                if (mRtcEngine != null)
+                    mRtcEngine.switchCamera();
+            }
+            break;
+
+            case R.id.layout_answer: {
+                mHandler.removeMessages(VideocallHandler.RECEIVE_CALL_TIMEOUT);
+                mHandler.sendEmptyMessageDelayed(VideocallHandler.RECEIVE_CALL_TIMEOUT, 10 * 1000);
+                mHandler.removeMessages(VideocallHandler.START_VIDEOCALL_STATE);
+                mHandler.sendEmptyMessage(VideocallHandler.START_VIDEOCALL_STATE);
+            }
+            break;
+
+            case R.id.layout_end_call: {
+                mHandler.removeMessages(VideocallHandler.REQUEST_END_CALL);
+                mHandler.sendEmptyMessage(VideocallHandler.REQUEST_END_CALL);
+            }
+            break;
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        PowerManager pm = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+        if (pm != null && pm.isScreenOn()) {
+            if (myApp.callState == Const.MESSAGE_CALL_IN_CALL_STATE /*|| myApp.callState == Const.MESSAGE_CALL_WAIT_STATE*/) {
+                mHandler.removeMessages(VideocallHandler.REQUEST_END_CALL);
+                mHandler.sendEmptyMessage(VideocallHandler.REQUEST_END_CALL);
+            }
+        }
+        super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        myApp.callState = Const.MESSAGE_CALL_INIT_STATE;
+        MyMediaPlayerUtil.getInstance().stopMediaPlayer(myApp);
+        RtcEngine.destroy();
+        mRtcEngine = null;
+        unregisterReceiver(mReceiver);
+        mHandler.removeCallbacksAndMessages(null);
+        super.onDestroy();
+    }
+
+    private void getTokenFromServer() {
+
+        if (!(focusWatch.isDevice710() && !focusWatch.isDevice730() && myApp.isControledByVersion(focusWatch, false, "T32")))
+            channelName = myApp.getCurUser().getEid();
+        else
+            channelName = myApp.getCurUser().getEid() + TimeUtil.getDayTimeStampLocal();
+        uidSelf = new Random().nextInt(9) + 1;
+        MyMsgData tokenMsg = new MyMsgData();
+        tokenMsg.setCallback(this);
+        JSONObject pl = new JSONObject();
+        int sn = Long.valueOf(TimeUtil.getTimeStampGMT()).intValue();
+        pl.put(CloudBridgeUtil.KEY_NAME_VIDEOCALL_UID, uidSelf);
+        pl.put(CloudBridgeUtil.KEY_NAME_VIDEOCALL_CHANNELNAME, channelName);
+        tokenMsg.setReqMsg(CloudBridgeUtil.CloudMapSetContent(CloudBridgeUtil.CID_GET_AGORA_TOKEN, sn, myApp.getToken(), pl));
+        if (myApp.getNetService() != null)
+            myApp.getNetService().sendNetMsg(tokenMsg);
+    }
+
+    private void sendVideoCallMsg() {
+
+        JSONObject pl = new JSONObject();
+        pl.put(CloudBridgeUtil.KEY_NAME_SUB_ACTION, CloudBridgeUtil.SUB_ACTION_VALUE_NAME_VIDEO_CALL);
+        pl.put(CloudBridgeUtil.KEY_NAME_SN, myApp.videoCallSn);
+        pl.put(CloudBridgeUtil.KEY_NAME_SEID, myApp.getCurUser().getEid());
+        pl.put(CloudBridgeUtil.KEY_NAME_VIDEOCALL_APPID, appId);
+        pl.put(CloudBridgeUtil.KEY_NAME_VIDEOCALL_CHANNELNAME, channelName);
+        pl.put(CloudBridgeUtil.KEY_NAME_VIDEOCALL_UID_OTHER, uidOther);
+        pl.put(CloudBridgeUtil.KEY_NAME_VIDEOCALL_TOKEN_OTHER, tokenOther);
+        pl.put(CloudBridgeUtil.KEY_NAME_VIDEOCALL_TUTKTYPE, "1");
+        MsgCallback callback = null;
+        if (timeOut == 30)
+            callback = VideoCallActivity.this;
+        if (mNetService != null)
+            mNetService.sendE2EMsg(focusWatch.getEid(), myApp.videoCallSn, pl, 30 * 1000, true, callback);
+    }
+
+    private void sendEndCallMsg() {
+        JSONObject pl = new JSONObject();
+        pl.put(CloudBridgeUtil.KEY_NAME_SUB_ACTION, CloudBridgeUtil.SUB_ACTION_VALUE_NAME_VIDEO_CALL_END);
+        pl.put(CloudBridgeUtil.KEY_NAME_SEID, myApp.getCurUser().getEid());
+        pl.put(CloudBridgeUtil.KEY_NAME_SN, myApp.videoCallSn);
+        if (mNetService != null)
+            mNetService.sendE2EMsg(focusWatch.getEid(), Long.valueOf(TimeUtil.getTimeStampGMT()).intValue(), pl, 30 * 1000, true, null);
+    }
+
+    @Override
+    public void doCallBack(JSONObject reqMsg, JSONObject respMsg) {
+
+        int cid = (Integer) respMsg.get(CloudBridgeUtil.KEY_NAME_CID);
+        int rc = CloudBridgeUtil.getCloudMsgRC(respMsg);
+        int sn = CloudBridgeUtil.getCloudMsgSN(reqMsg);
+        switch (cid) {
+            case CloudBridgeUtil.CID_E2E_DOWN: {
+                if (myApp.videoCallSn != sn)
+                    return;
+                JSONObject pl = (JSONObject) respMsg.get(CloudBridgeUtil.KEY_NAME_PL);
+                JSONObject reqPl = (JSONObject) reqMsg.get(CloudBridgeUtil.KEY_NAME_PL);
+                int sub_action = (int) reqPl.get(CloudBridgeUtil.KEY_NAME_SUB_ACTION);
+                if (sub_action == CloudBridgeUtil.SUB_ACTION_VALUE_NAME_VIDEO_CALL) {
+                    Message msg = Message.obtain();
+                    if (rc == CloudBridgeUtil.RC_SUCCESS) {
+                        int result = (int) pl.get(CloudBridgeUtil.KEY_NAME_VIDEOCALL_RESULT);
+                        msg.what = VideocallHandler.VIDEO_CALL_ERROR;
+                        if (CloudBridgeUtil.KEY_NAME_VIDEOCALL_RESPONSE_INPHONECALL == result) {
+                            msg.obj = VideoCallActivity.this.getString(R.string.videocall_phonecall_ing, focusWatch.getNickname());
+                        } else if (CloudBridgeUtil.KEY_NAME_VIDEOCALL_RESPONSE_INVIDEOCALL == result) {
+                            msg.obj = VideoCallActivity.this.getString(R.string.videocall_conversation_ing, focusWatch.getNickname());
+                        } else if (CloudBridgeUtil.KEY_NAME_VIDEOCALL_RESPONSE_MOBILE_2G == result) {
+                            msg.obj = VideoCallActivity.this.getString(R.string.videocall_in_mobile_2g, focusWatch.getNickname());
+                        } else if (CloudBridgeUtil.KEY_NAME_VIDEOCALL_RESPONSE_INSILENCE == result) {
+                            msg.obj = VideoCallActivity.this.getString(R.string.videocall_in_silence, focusWatch.getNickname());
+                        } else if (CloudBridgeUtil.KEY_NAME_VIDEOCALL_RESPONSE_INHIGHTEMPER == result) {
+                            msg.obj = VideoCallActivity.this.getString(R.string.videocall_in_high_temperature, focusWatch.getNickname());
+                        } else if (CloudBridgeUtil.KEY_NAME_VIDEOCALL_RESPONSE_INLOWMEMORY == result) {
+                            msg.obj = VideoCallActivity.this.getString(R.string.videocall_in_low_memory, focusWatch.getNickname());
+                        } else if (CloudBridgeUtil.KEY_NAME_VIDEOCALL_RESPONSE_LOWPOWER == result) {
+                            msg.obj = VideoCallActivity.this.getString(R.string.videocall_in_low_power, focusWatch.getNickname());
+                        } else if (CloudBridgeUtil.KEY_NAME_VIDEOCALL_RESPONSE_CHARGING == result) {
+                            msg.obj = VideoCallActivity.this.getString(R.string.videocall_in_charging, focusWatch.getNickname());
+                        } else {
+                            msg.obj = VideoCallActivity.this.getString(R.string.videocall_error_other, focusWatch.getNickname());
+                        }
+                    } else {
+                        msg.what = VideocallHandler.VIDEO_CALL_ERROR;
+                        if (rc == CloudBridgeUtil.RC_NETERROR) { //网络连接异常
+                            msg.obj = VideoCallActivity.this.getString(R.string.network_error_prompt);
+                        } else if (rc == CloudBridgeUtil.RC_SOCKET_NOTREADY) { //对方不在线
+                            msg.obj = VideoCallActivity.this.getString(R.string.network_error_prompt);
+                        } else if (rc == CloudBridgeUtil.ERROR_CODE_E2G_OFFLINE) { //对方不在线
+                            msg.obj = VideoCallActivity.this.getString(R.string.watch_offline);
+                        } else if (rc == CloudBridgeUtil.RC_TIMEOUT) {  //设置超时
+                            if (myApp.callState == Const.MESSAGE_CALL_WAIT_STATE && myApp.videoCallSn == sn) {
+                                msg.obj = VideoCallActivity.this.getString(R.string.videocall_request_fail, focusWatch.getNickname());
+                            } else {
+                                return;
+                            }
+                        } else if (rc < 0) { //网络不好,有时候手表关机服务器没有返回值,所以也存在手表不在线的可能
+                            msg.obj = VideoCallActivity.this.getString(R.string.watch_offline);
+                        }
+                    }
+                    mHandler.sendMessage(msg);
+                }
+            }
+            break;
+
+            case CloudBridgeUtil.CID_GET_AGORA_TOKEN_DOWN: {
+                if(rc==CloudBridgeUtil.RC_SUCCESS) {
+                    JSONObject pl = (JSONObject) respMsg.get(CloudBridgeUtil.KEY_NAME_PL);
+                    appId = (String) pl.get(CloudBridgeUtil.KEY_NAME_VIDEOCALL_APPID);
+                    tokenSelf = (String) pl.get(CloudBridgeUtil.KEY_NAME_VIDEOCALL_TOKEN);
+                    tokenOther = (String) pl.get(CloudBridgeUtil.KEY_NAME_VIDEOCALL_TOKEN_OTHER);
+                    uidOther = (int) pl.get(CloudBridgeUtil.KEY_NAME_VIDEOCALL_UID_OTHER);
+                    mHandler.sendEmptyMessage(VideocallHandler.GET_TOKEN_SUCCESS);
+                } else {
+                    Message msg = Message.obtain();
+                    msg.what = VideocallHandler.VIDEO_CALL_ERROR;
+                    msg.obj = VideoCallActivity.this.getString(R.string.network_error_prompt);
+                    mHandler.removeMessages(VideocallHandler.VIDEO_CALL_ERROR);
+                    mHandler.sendMessage(msg);
+                }
+            }
+            break;
+        }
+    }
+
+    private class VideocallHandler extends Handler{
+
+        static final int TO_GET_TOKEN = 0;
+        static final int GET_TOKEN_SUCCESS = 1;
+        static final int LOCAL_JOINCHANNEL_SUCCESS = 2;
+        static final int SEND_VIDEOCALL_MSG_AGAIN = 3;
+        static final int RECEIVE_REMOTE_DATA = 4;
+        static final int START_VIDEOCALL_STATE = 5;
+        static final int REQUEST_END_CALL = 6;
+        static final int RECEIVE_END_CALL = 7;
+        static final int UPDATE_TIME_SHOW = 8;
+        static final int VIDEO_CALL_ERROR = 10;
+        static final int RECEIVE_CALL_TIMEOUT = 11;
+
+        WeakReference<VideoCallActivity> mActivity;
+        VideocallHandler(VideoCallActivity mActivity, Looper looper) {
+            super(looper);
+            this.mActivity = new WeakReference<>(mActivity);
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            VideoCallActivity context = mActivity.get();
+            switch (msg.what) {
+                case TO_GET_TOKEN: {
+                    myApp.videoCallEid = focusWatch.getEid();
+                    getTokenFromServer();
+                }
+                break;
+
+                case GET_TOKEN_SUCCESS: {
+                    initAgoraEngineAndJoinChannel();
+                    initMediaEffect();
+                }
+                break;
+
+                case LOCAL_JOINCHANNEL_SUCCESS: {
+                    if (callType == 0) {
+                        timeOut = 30;
+                        myApp.videoCallSn = Long.valueOf(TimeUtil.getTimeStampGMT()).intValue();
+                        sendVideoCallMsg();
+                        mHandler.sendEmptyMessageDelayed(SEND_VIDEOCALL_MSG_AGAIN, 2 * 1000);
+                    }
+                }
+                break;
+
+                case SEND_VIDEOCALL_MSG_AGAIN:{
+                    if (timeOut >= 0 && myApp.callState == Const.MESSAGE_CALL_WAIT_STATE) {
+                        sendVideoCallMsg();
+                        timeOut = timeOut - 2;
+                        mHandler.sendEmptyMessageDelayed(SEND_VIDEOCALL_MSG_AGAIN, 2 * 1000);
+                    }
+                }
+                break;
+
+                case RECEIVE_REMOTE_DATA: {
+                    setupRemoteVideo(uidOther);
+                    if (callType == 0) {
+                        removeMessages(START_VIDEOCALL_STATE);
+                        sendEmptyMessage(START_VIDEOCALL_STATE);
+                    } else if (callType == 1) {
+                        removeMessages(VideocallHandler.RECEIVE_CALL_TIMEOUT);
+                    }
+                }
+                break;
+
+                case START_VIDEOCALL_STATE: {
+                    myApp.callState = Const.MESSAGE_CALL_IN_CALL_STATE;
+                    countSecond = 0;
+                    updateTimeShow();
+                    mHandler.sendEmptyMessageDelayed(UPDATE_TIME_SHOW, 1000);
+
+                    MyMediaPlayerUtil.getInstance().stopMediaPlayer(myApp);
+                    mRtcEngine.enableAudio();
+                    mRtcEngine.enableVideo();
+                    mRtcEngine.muteLocalVideoStream(false);
+                    configAudioSetting();
+                    updateLayoutShow(2);
+                    updateWatchNetState();
+                }
+                break;
+
+                case REQUEST_END_CALL: {
+                    myApp.callState = Const.MESSAGE_CALL_INIT_STATE;
+                    ToastUtil.show(context, context.getString(R.string.videocall_end));
+                    sendEndCallMsg();
+                    leaveChannel();
+                    VideoCallActivity.this.finish();
+                }
+                break;
+
+                case RECEIVE_END_CALL: {
+                    myApp.callState = Const.MESSAGE_CALL_INIT_STATE;
+                    ToastUtil.show(context, context.getString(R.string.videocall_end_by_other));
+                    leaveChannel();
+                    VideoCallActivity.this.finish();
+                }
+                break;
+
+                case UPDATE_TIME_SHOW: {
+                   countSecond++;
+                   updateTimeShow();
+                   mHandler.sendEmptyMessageDelayed(UPDATE_TIME_SHOW, 1000);
+                }
+                break;
+
+                case VIDEO_CALL_ERROR: {
+                    myApp.callState = Const.MESSAGE_CALL_INIT_STATE;
+                    String error = (String) msg.obj;
+                    ToastUtil.show(context, error);
+                    if (mRtcEngine != null)
+                        leaveChannel();
+                    sendEndCallMsg();
+                    mHandler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            VideoCallActivity.this.finish();
+                        }
+                    }, 4 * 1000);
+                }
+                break;
+
+                case RECEIVE_CALL_TIMEOUT: {
+                    Message timeoutMsg = Message.obtain();
+                    timeoutMsg.what = VideocallHandler.VIDEO_CALL_ERROR;
+                    timeoutMsg.obj = getString(R.string.videocall_end);
+                    removeMessages(VideocallHandler.VIDEO_CALL_ERROR);
+                    handleMessage(timeoutMsg);
+                }
+                break;
+            }
+        }
+    }
+
+    @SuppressLint("SetTextI18n")
+    private void updateTimeShow() {
+        long min = countSecond % (60 * 60) / 60;
+        long second = countSecond % 60;
+        String timeShow = (String.valueOf(min).length() > 1 ? String.valueOf(min) : "0" + min)
+                + ":" + (String.valueOf(second).length() > 1 ? String.valueOf(second) : "0" + second);
+        mTimeshow.setVisibility(View.VISIBLE);
+        mTimeshow.setText(timeShow);
+
+        if (countSecond == 4 * 60 + 50) {
+            ToastUtil.show(this, getString(R.string.videocall_timeout_prompt));
+        } else if (countSecond == 5 * 60) {
+//            mHandler.removeMessages(VideocallHandler.REQUEST_END_CALL);
+//            mHandler.sendEmptyMessage(VideocallHandler.REQUEST_END_CALL);
+        }
+    }
+
+    private void checkNetWork() {
+
+        switch (ToolUtils.getConnectionType(VideoCallActivity.this)) {
+            case ToolUtils.NETWORKTYPE_INVALID:
+                Message msg = Message.obtain();
+                msg.what = VideocallHandler.VIDEO_CALL_ERROR;
+                msg.obj = getString(R.string.network_error_prompt);
+                mHandler.removeMessages(VideocallHandler.VIDEO_CALL_ERROR);
+                mHandler.handleMessage(msg);
+                break;
+            case ToolUtils.NETWORKTYPE_MOBILE:
+                openSelectVideoCallDialog();
+                break;
+            case ToolUtils.NETWORKTYPE_WIFI:
+            default:
+                if (callType == 0) {
+                    mHandler.removeMessages(VideocallHandler.TO_GET_TOKEN);
+                    mHandler.sendEmptyMessage(VideocallHandler.TO_GET_TOKEN);
+                }
+                break;
+        }
+    }
+
+    private void openSelectVideoCallDialog() {
+
+        Dialog dlg = DialogUtil.CustomNormalDialog(VideoCallActivity.this,
+                getString(R.string.prompt),
+                getString(R.string.videocall_request_in_mobile),
+                new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        VideoCallActivity.this.finish();
+                    }
+                }, getString(R.string.cancel),
+                new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (callType == 0) {
+                            mHandler.removeMessages(VideocallHandler.TO_GET_TOKEN);
+                            mHandler.sendEmptyMessage(VideocallHandler.TO_GET_TOKEN);
+                        }
+                    }
+                }, getString(R.string.confirm));
+        dlg.show();
+    }
+}

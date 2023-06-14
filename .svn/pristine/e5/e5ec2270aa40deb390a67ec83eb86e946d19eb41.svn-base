@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="76.8dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/white"
+    android:orientation="vertical">
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guide_line"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.5"/>
+
+    <ImageView
+        android:id="@+id/add_schedule_time"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:src="@drawable/schedule_time_add_1"
+        android:layout_marginEnd="24dp"
+        android:scaleType="center"
+        android:background="@color/xiaomi_bg_grey"
+        app:layout_constraintRight_toRightOf="@+id/guide_line"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+    <ImageView
+        android:id="@+id/delete_schedule_time"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:src="@drawable/schedule_time_delete_1"
+        android:layout_marginStart="24dp"
+        android:scaleType="center"
+        android:background="@color/xiaomi_bg_grey"
+        app:layout_constraintLeft_toRightOf="@+id/guide_line"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        />
+
+</android.support.constraint.ConstraintLayout>

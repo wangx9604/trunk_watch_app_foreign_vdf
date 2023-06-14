@@ -1,0 +1,366 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    <include
+        android:id="@+id/title"
+        layout="@layout/activity_title" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <RelativeLayout
+                android:id="@+id/rank_family_layer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/rank_sport">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="180dp"
+                    android:layout_centerHorizontal="true"
+                    android:gravity="center">
+                    <TextView
+                        android:id="@+id/nickname_no1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/wechat_notice_bind_nickname"
+                        android:textSize="@dimen/xiaomiMyTextSize1"
+                        android:textColor="@color/white"/>
+
+                    <TextView
+                        android:id="@+id/rank_steps_no1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/steps_no_data_default"
+                        android:textSize="@dimen/xiaomiMyTextSize4"
+                        android:textColor="@color/white" />
+                </LinearLayout>
+                <RelativeLayout
+                    android:layout_marginTop="213dp"
+                    android:layout_marginLeft="70dp"
+                    android:layout_width="73dp"
+                    android:layout_height="98dp">
+                    <ImageView
+                        android:id="@+id/head_imge_no2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/rank_other_head"
+                        android:layout_centerHorizontal="true"/>
+                    <ImageView
+                        android:id="@+id/rank_two_no"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/rank_no_2"
+                        android:layout_alignParentRight="true"/>
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_below="@+id/head_imge_no2"
+                        android:layout_centerHorizontal="true"
+                        android:gravity="center">
+                        <TextView
+                            android:id="@+id/nickname_no2"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/default_relation_text"
+                            android:maxLines="1"
+                            android:ellipsize="end"
+                            android:textSize="@dimen/xiaomiMyTextSize5"
+                            android:textColor="@color/white"/>
+
+                        <TextView
+                            android:id="@+id/rank_steps_no2"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/steps_no_data_default"
+                            android:textSize="@dimen/xiaomiMyTextSize5"
+                            android:textColor="@color/white"/>
+                    </LinearLayout>
+                </RelativeLayout>
+                <RelativeLayout
+                    android:layout_marginTop="213dp"
+                    android:layout_marginLeft="221dp"
+                    android:layout_width="73dp"
+                    android:layout_height="98dp">
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_below="@+id/head_imge_no3"
+                        android:layout_centerHorizontal="true"
+                        android:gravity="center">
+                        <TextView
+                            android:id="@+id/nickname_no3"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/default_relation_text"
+                            android:maxLines="1"
+                            android:ellipsize="end"
+                            android:textSize="@dimen/xiaomiMyTextSize5"
+                            android:textColor="@color/white"/>
+
+                        <TextView
+                            android:id="@+id/rank_steps_no3"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/steps_no_data_default"
+                            android:textSize="@dimen/xiaomiMyTextSize5"
+                            android:textColor="@color/white" />
+                    </LinearLayout>
+
+                    <ImageView
+                        android:id="@+id/head_imge_no3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/rank_other_head"
+                        android:layout_alignParentTop="true"
+                        android:layout_centerHorizontal="true" />
+                    <ImageView
+                        android:id="@+id/rank_three_no"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/rank_no_3"
+                        android:layout_alignParentRight="true"/>
+                </RelativeLayout>
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/rank_head_mask"
+                    android:layout_marginTop="43dp"
+                    android:layout_centerHorizontal="true"
+                    android:id="@+id/head_imge_no1"
+                    android:layout_alignParentTop="true"/>
+            </RelativeLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="1px"
+                    android:paddingLeft="@dimen/divideleftandright"
+                    android:paddingRight="@dimen/divideleftandright"
+                    android:src="@color/line_grey"/>
+
+                <RelativeLayout
+                    android:id="@+id/rank_cursteps_layer"
+                    android:layout_width="match_parent"
+                    android:layout_height="33dp"
+                    android:paddingLeft="@dimen/divideleftandright"
+                    android:paddingRight="@dimen/divideleftandright"
+                    android:background="@drawable/setting_item_selector">
+
+                    <ImageView
+                        android:layout_width="7dp"
+                        android:layout_height="14dp"
+                        android:layout_alignParentRight="true"
+                        android:layout_centerVertical="true"
+                        android:src="@drawable/btn_next_selector" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/baby_day_steps"
+                        android:textColor="@color/title_grey"
+                        android:textSize="@dimen/xiaomiMyTextSize4"
+                        android:layout_centerVertical="true"
+                        android:layout_alignParentStart="true" />
+                </RelativeLayout>
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="1px"
+                    android:paddingLeft="@dimen/divideleftandright"
+                    android:paddingRight="@dimen/divideleftandright"
+                    android:src="@color/line_grey"/>
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:paddingLeft="@dimen/divideleftandright"
+                    android:paddingRight="@dimen/divideleftandright">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/ranks_steps"
+                        android:layout_centerVertical="true"
+                        android:textColor="@color/black"
+                        android:textSize="@dimen/xiaomiMyTextSize1" />
+
+                    <TextView
+                        android:id="@+id/baby_rank_step"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text=""
+                        android:textColor="@color/title_grey"
+                        android:layout_centerVertical="true"
+                        android:layout_alignParentEnd="true" />
+                </RelativeLayout>
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="1px"
+                    android:paddingLeft="@dimen/divideleftandright"
+                    android:paddingRight="@dimen/divideleftandright"
+                    android:src="@color/line_grey"/>
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:paddingLeft="@dimen/divideleftandright"
+                    android:paddingRight="@dimen/divideleftandright">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/ranks_kilo"
+                        android:layout_centerVertical="true"
+                        android:textColor="@color/black"
+                        android:textSize="@dimen/xiaomiMyTextSize1" />
+                    <TextView
+                        android:id="@+id/baby_rank_kilo"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/title_grey"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:text="" />
+                </RelativeLayout>
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="1px"
+                    android:paddingLeft="@dimen/divideleftandright"
+                    android:paddingRight="@dimen/divideleftandright"
+                    android:src="@color/line_grey"/>
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:paddingLeft="@dimen/divideleftandright"
+                    android:paddingRight="@dimen/divideleftandright">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/steps_consume"
+                        android:layout_centerVertical="true"
+                        android:textColor="@color/black"
+                        android:textSize="@dimen/xiaomiMyTextSize1" />
+                    <TextView
+                        android:id="@+id/baby_rank_calo"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentRight="true"
+                        android:textColor="@color/title_grey"
+                        android:layout_centerVertical="true"
+                        android:text="" />
+                </RelativeLayout>
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="1px"
+                    android:paddingLeft="@dimen/divideleftandright"
+                    android:paddingRight="@dimen/divideleftandright"
+                    android:src="@color/line_grey"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <RelativeLayout
+                    android:id="@+id/rank_hissteps_layer"
+                    android:layout_width="match_parent"
+                    android:layout_height="33dp"
+                    android:paddingLeft="@dimen/divideleftandright"
+                    android:paddingRight="@dimen/divideleftandright"
+                    android:background="@drawable/setting_item_selector">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/baby_count_ranks"
+                        android:layout_centerVertical="true"
+                        android:textColor="@color/title_grey"
+                        android:textSize="@dimen/xiaomiMyTextSize4" />
+                    <ImageView
+                        android:layout_width="7dp"
+                        android:layout_height="14dp"
+                        android:layout_alignParentRight="true"
+                        android:layout_centerVertical="true"
+                        android:src="@drawable/btn_next_selector" />
+                </RelativeLayout>
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="1px"
+                    android:paddingLeft="@dimen/divideleftandright"
+                    android:paddingRight="@dimen/divideleftandright"
+                    android:src="@color/line_grey"/>
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:paddingLeft="@dimen/divideleftandright"
+                    android:paddingRight="@dimen/divideleftandright">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/ranks_country"
+                        android:layout_centerVertical="true"
+                        android:textColor="@color/title_grey"
+                        android:textSize="@dimen/xiaomiMyTextSize1" />
+
+                    <TextView
+                        android:id="@+id/rank_country"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/steps_get_no_ranks"
+                        android:layout_centerVertical="true"
+                        android:layout_alignParentEnd="true" />
+                </RelativeLayout>
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="1px"
+                    android:paddingLeft="@dimen/divideleftandright"
+                    android:paddingRight="@dimen/divideleftandright"
+                    android:src="@color/line_grey"/>
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:paddingLeft="@dimen/divideleftandright"
+                    android:paddingRight="@dimen/divideleftandright">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/ranks_area"
+                        android:layout_centerVertical="true"
+                        android:textColor="@color/title_grey"
+                        android:textSize="@dimen/xiaomiMyTextSize1" />
+                    <TextView
+                        android:id="@+id/rank_area"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentRight="true"
+                        android:layout_centerVertical="true"
+                        android:text="@string/steps_get_no_ranks" />
+                </RelativeLayout>
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="1px"
+                    android:paddingLeft="@dimen/divideleftandright"
+                    android:paddingRight="@dimen/divideleftandright"
+                    android:src="@color/line_grey"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+
+</LinearLayout>

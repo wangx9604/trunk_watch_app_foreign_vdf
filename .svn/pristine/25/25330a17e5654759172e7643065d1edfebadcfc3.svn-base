@@ -1,0 +1,111 @@
+package com.xiaoxun.xun;
+
+import static com.xiaoxun.xun.Const.ACTION_HEAD;
+
+public class Constants {
+
+    public static final String SHARE_PREF_NAVIGATINO_AUTHORITY = "navi_authority";
+    public static final int KEY_WEB_TYPE_DISCLAIMER = 8;
+    public static final int KEY_WEB_TYPE_PRIVACY_POLICY = 9;
+    public static final int KEY_WEB_TYPE_AGREEMENT = 10;
+    public static final String APP_DISCLAIMER_URL = "https://app.xunkids.com/navigation/disclaimer.html ";
+    public static final String APP_PRIVACY_POLICY_URL = "https://app.xunkids.com/uagreement";
+    public static final String ACTION_GROUP_SEND_MESSAGE_NOTIFY = ACTION_HEAD + "action.group.send.message.notify";
+    public static final String ACTION_PRIVATE_SEND_MESSAGE_NOTIFY = ACTION_HEAD + "action.private.send.message.notify";
+    public static final String ACTION_RECEIVE_GROUP_MESSAGE_NOTIFY = ACTION_HEAD + "action.receive.group.message.notify";
+    public static final String ACTION_RECEIVE_PRIVATE_MESSAGE_NOTIFY = ACTION_HEAD + "action.receive.private.message.notify";
+    public static final String ACTION_UPDATE_NEW_MESSAGE_NOTICE = ACTION_HEAD + "action.update.new.message.notice";
+
+    public static final boolean CONTROL_IS_OPEN_AD = false;
+
+    public static final String SZ_FIELD_BDLNG = "bdLng";
+    public static final String SZ_FIELD_RADIUS = "Radius";
+    public static final String SZ_FIELD_DESC = "Desc";
+    public static final String SZ_FIELD_WGS84 = "wgs84";
+    public static final String SZ_FIELD_LNG = "Lng";
+    public static final String SZ_FIELD_CT = "coordinateType";
+    public static final String SZ_FIELD_LAT = "Lat";
+    public static final String SZ_FIELD_BDLAT = "bdLat";
+    public static final String SZ_FIELD_NAME = "Name";
+    public static final String SZ_FIELD_EFID = "Efid";
+    public static final String SZ_FIELD_ONOFF = "onoff";
+
+    //计步2.0版本的信息
+    public static final String SPORT_CHALL_NAME = "name";
+    public static final String SPORT_CHALL_COPYTEXT = "copytext";
+    public static final String SPORT_CHALL_BRIGHTICON = "brighticon";
+    public static final String SPORT_CHALL_GLOOMYICON = "gloomyicon";
+    public static final String SPORT_CHALL_ISACTIVED = "isactived";
+    public static final String SPORT_CHALL_ACTIVETIME = "activetime";
+    public static final String SPORT_CHALL_ACTIVERATIO = "activeratio";
+    public static final String SPORT_CHALL_BIGDETAILSICON = "detailsicon";
+    public static final String SPORT_CHALL_MEDALTYPE = "medaltype";
+    public static final String SPORT_CHALL_MEDALVALUE = "medalvalue";
+
+
+    public static final String SPORT_LAST_RANK_0 = "rank_0";
+    public static final String SPORT_LAST_RANK_1 = "rank_1";
+    public static final String SPORT_LAST_RUNNING_STIME = "stime";
+    public static final String SPORT_LAST_RUNNING_ETIME = "etime";
+    public static final String SPORT_LAST_RUNNING_STEPS = "steps";
+    public static final String SPORT_LAST_RUNNING_DISTANCE = "distance";
+    public static final String SPORT_LAST_MEDAL_NAME = "name";
+    public static final String SPORT_LAST_RANK = "latestrank";
+    public static final String SPORT_RUNNING_TYPE = "type";
+    public static final String SPORT_RUNNING_COUNT = "count";
+
+    public static final String SPORT_DAYS_DATA_KEY = "k";
+    public static final String SPORT_DAYS_DATA_VALUE = "v";
+    public static final String SPORT_DAYS_DATA_TRUE_KEY = "k_t";
+    public static final String SPORT_TOTAL_CALOR = "totalkilocalorie";
+    public static final String SPORT_TOTAL_METER = "totalkilometer";
+
+    public static final String SPORT_RANK_SELFSTEPS = "selfSteps";
+    public static final String SPORT_RANK_LAMINATION = "lamination";
+    public static final String SPORT_RANK_AVERAGESTEPS = "averageSteps";
+    public static final String SPORT_RANK_RANK = "rank";
+    public static final String SPORT_RANK_RANGERANK = "rangerank";
+    public static final String SPORT_RANK_WEIGHT = "weight";
+    public static final String SPORT_RANK_TYPE = "type";
+    public static final String SPORT_RANK_HEIGHT = "height";
+    public static final String WATCH_EID_DATA = "watchEid";
+
+    public static final String VIDEOCALL_PARAMS = "videocall_params";
+    public static final String VIDEOCALL_CMD_JOINVOIPROOM = "joinVoipRoom";
+    public static final String VIDEOCALL_CMD_EXITVOIPROOM = "exitVoipRoom";
+
+    //课程表
+    public static final String SCHEDULE_CARD_INFO = "schedule_card_info";
+    public static final String SCHEDULE_SETTING_FIRST = "schedule_setting_first";
+    public static final String SCHEDULE_NOTICE_INFO = "schedule_notice_info";
+    public static final String SHARE_PREF_FIELD_SCHEDULE_CARD_INFO = "schedule_card_info";
+
+    // 表情
+    public static final String EMOJI_CRY = "cry";
+    public static final String EMOJI_NOSE = "nose";
+    public static final String EMOJI_BASKETBALL = "basketball";
+    public static final String EMOJI_SNOT = "snot";
+    public static final String EMOJI_NAUGHTY = "naughty";
+    public static final String EMOJI_SMILE = "smile";
+    public static final String EMOJI_FLOWER = "flower";
+    public static final String EMOJI_LAUGH = "laugh";
+    public static final String EMOJI_MOON = "moon";
+    public static final String EMOJI_RABBIT_ANGER = "Rabbit_anger";
+    public static final String EMOJI_RABBIT_AWKWARD = "Rabbit_awkward";
+    public static final String EMOJI_RABBIT_BAD_LAUGH = "Rabbit_bad_laugh";
+    public static final String EMOJI_RABBIT_CRY = "Rabbit_cry";
+    public static final String EMOJI_RABBIT_CUTE = "Rabbit_cute";
+    public static final String EMOJI_RABBIT_DESPISE = "Rabbit_despise";
+    public static final String EMOJI_RABBIT_HAPPY = "Rabbit_happy";
+    public static final String EMOJI_RABBIT_LOVE = "Rabbit_love";
+    public static final String EMOJI_RABBIT_SHY = "Rabbit_shy";
+    public static final String EMOJI_RABBIT_SMILE = "Rabbit_smile";
+    public static final String EMOJI_RABBIT_SURPRISED = "Rabbit_surprised";
+    public static final String EMOJI_RABBIT_ZIBI = "Rabbit_zibi";
+
+    public static final String SHARE_PREF_FIELD_ICON_NAME_TABLE_UPDATE = "icon_name_table_update";
+    public static final String SHARE_PREF_FIELD_PACKAGE_ICON_TABLE = "package_icon_table";
+    public static final String SHARE_PREF_FIELD_ICON_NAME_TABLE_UPDATE_TIME = "icon_name_table_update_time";
+    public static final String SHARE_PREF_FIELD_ICON_NAME_TABLE_LANG = "icon_name_table_lang";
+
+}

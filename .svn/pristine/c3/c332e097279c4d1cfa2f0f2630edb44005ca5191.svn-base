@@ -1,0 +1,238 @@
+package com.xiaoxun.xun.ScheduleCard.activitys;
+
+import android.content.Intent;
+import android.os.Bundle;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.Toast;
+
+import com.xiaoxun.xun.Constants;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.ScheduleCard.adapters.ScheduleClassAdapter;
+import com.xiaoxun.xun.ScheduleCard.beans.ScheduleCardBean;
+import com.xiaoxun.xun.ScheduleCard.beans.ScheduleClassBean;
+import com.xiaoxun.xun.activitys.NormalActivity;
+import com.xiaoxun.xun.interfaces.MsgCallback;
+import com.xiaoxun.xun.interfaces.OnItemClickListener;
+import com.xiaoxun.xun.utils.CustomSelectDialogUtil;
+import com.xiaoxun.xun.utils.DialogUtil;
+import com.xiaoxun.xun.utils.LogUtil;
+import com.xiaoxun.xun.utils.ToastUtil;
+
+import java.util.ArrayList;
+
+public class ScheduleClassSetActivity extends NormalActivity implements View.OnClickListener {
+    private static final String TAG = ScheduleClassSetActivity.class.getSimpleName();
+
+    private String mScheduleInfo;
+    private ImageView mBackImageView;
+    private ImageView mAddImageView;
+    private ImageView mMenuImageView;
+    private RecyclerView mClassShowRecycler;
+    private ScheduleClassAdapter mClassAdapter;
+
+    private ScheduleCardBean cardBean;
+
+    private ArrayList<ScheduleClassBean> mClassArray = new ArrayList<>();//= {"语文","数学","英语","美术","体育","音乐"};
+    private ArrayList<String> mCustomList = new ArrayList<>();
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_schedule_class_set);
+
+        initActManage();
+        initView();
+        initData();
+        initAdapter();
+        updateEditModeView();
+        updateAddBtnState();
+    }
+
+    private void initData() {
+        mCustomList.clear();
+        mClassArray.clear();
+        if(cardBean.getCustomlist() != null) {
+            mCustomList.addAll(cardBean.getCustomlist());
+        }
+        mClassArray.addAll(ScheduleCardUtils.genClassArrayByLocalDefault(this));
+        mClassArray.addAll(ScheduleCardUtils.genClassArrayByCustomList(mCustomList));
+    }
+
+    private void initAdapter() {
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
+        mClassShowRecycler.setLayoutManager(linearLayoutManager);
+        mClassAdapter = new ScheduleClassAdapter(this, mClassArray);
+        mClassShowRecycler.setAdapter(mClassAdapter);
+
+        mClassAdapter.setmDelectListener(new OnItemClickListener() {
+            @Override
+            public void onItemClick(View view, final int position) {
+
+                if(position < mClassArray.size()) {
+                    ScheduleClassBean itemBean = mClassArray.get(position);
+                    mClassArray.remove(position);
+                    mClassAdapter.notifyDataSetChanged();
+                    mCustomList.remove(itemBean.getmClassName());
+                }
+
+                updateAddBtnState();
+                //删除操作
+//                ScheduleCardUtils.onLongClickDeleteDialog(ScheduleClassSetActivity.this,
+//                        getString(R.string.delete_class_name),
+//                        new DialogUtil.OnCustomDialogListener() {
+//                            @Override
+//                            public void onClick(View v) {
+//                                if(position < mClassArray.size()) {
+//                                    ScheduleClassBean itemBean = mClassArray.get(position);
+//                                    mClassArray.remove(position);
+//                                    mClassAdapter.notifyDataSetChanged();
+//                                    mCustomList.remove(itemBean.getmClassName());
+//                                }
+//                            }
+//                        });
+            }
+
+            @Override
+            public void onItemLongClick(View view, int position) {
+
+            }
+        });
+
+    }
+
+    private void updateAddBtnState(){
+        if(mClassArray.size() >= ScheduleCardUtils.FIELD_CLASS_LIMIT_NUM){
+            mAddImageView.setBackgroundResource(R.drawable.schedule_time_add_0);
+        }else{
+            mAddImageView.setBackgroundResource(R.drawable.schedule_time_add_1);
+        }
+    }
+
+    private void initView() {
+        mMenuImageView= findViewById(R.id.iv_menu);
+        mAddImageView = findViewById(R.id.iv_add);
+        mBackImageView= findViewById(R.id.iv_back);
+        mClassShowRecycler = findViewById(R.id.class_show_view);
+
+        mBackImageView.setOnClickListener(this);
+        mAddImageView.setOnClickListener(this);
+        mMenuImageView.setOnClickListener(this);
+    }
+
+    private void initActManage() {
+        mScheduleInfo = getIntent().getStringExtra(Constants.SCHEDULE_CARD_INFO);
+        cardBean = ScheduleCardUtils.transCardBeanByScheInfo(mScheduleInfo);
+    }
+
+    private void updateEditModeView(){
+        mClassAdapter.setEditMode(true);
+        mClassAdapter.notifyDataSetChanged();
+        mClassShowRecycler.scrollToPosition(mClassArray.size()-1);
+    }
+
+    private void onBackAction(){
+        if(ScheduleCardUtils.onCheckClassArrayForChange(cardBean.getCustomlist(), mCustomList)){
+            DialogUtil.ShowCustomSystemDialog(getApplicationContext(),
+                    getString(R.string.prompt),
+                    getString(R.string.schedule_edit_exit),
+                    new DialogUtil.OnCustomDialogListener() {
+                        @Override
+                        public void onClick(View v) {
+                            v.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    finish();
+
+                                }
+                            }, 500);
+
+                        }
+                    },
+                    getText(R.string.schedule_edit_exit_yes).toString(),
+                    new DialogUtil.OnCustomDialogListener() {
+                        @Override
+                        public void onClick(View v) {
+                        }
+                    },
+                    getText(R.string.schedule_edit_exit_no).toString());
+        }else {
+            finish();
+        }
+
+    }
+
+    @Override
+    public void onBackPressed() {
+        onBackAction();
+    }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()){
+            case R.id.iv_back:
+                onBackAction();
+                break;
+            case R.id.iv_menu:
+                //1:执行提交信息
+                cardBean.setCustomlist(mCustomList);
+                cardBean.setOptype(1);
+                mScheduleInfo = ScheduleCardUtils.transScheInfoByCardBean(cardBean);
+
+                ScheduleCardUtils.updateScheduleCardInfo(getMyApp(), mScheduleInfo, new MsgCallback() {
+                    @Override
+                    public void doCallBack(net.minidev.json.JSONObject reqMsg, net.minidev.json.JSONObject respMsg) {
+                        LogUtil.e(TAG + "respMsg"+":"+respMsg.toJSONString());
+                        ToastUtil.showMyToast(ScheduleClassSetActivity.this,getString(R.string.phone_set_success).toString(), Toast.LENGTH_SHORT);
+                    }
+                });
+
+                //2：保存数据
+                Intent intent = new Intent();
+                intent.putExtra(Constants.SCHEDULE_CARD_INFO, mScheduleInfo);
+                setResult(1, intent);
+                finish();
+
+                break;
+            case R.id.iv_add:
+                //1:判断是否大于20个自定义课程
+                if(mClassArray.size() >= ScheduleCardUtils.FIELD_CLASS_LIMIT_NUM){
+                    return;
+                }
+
+                //2:添加课程对话框
+                ScheduleCardUtils.onOpenEditDialog(ScheduleClassSetActivity.this,
+                        getText(R.string.schedule_class_name).toString(),
+                        getText(R.string.schedule_class_name_limit_0).toString(),
+                        new CustomSelectDialogUtil.CustomDialogListener() {
+                            @Override
+                            public void onClick(View v, String text) {
+                                if (text.length() > 12 || text.length() < 1) {
+                                    ToastUtil.showMyToast(ScheduleClassSetActivity.this, getText(R.string.schedule_class_name_limit_0).toString(), Toast.LENGTH_SHORT);
+                                } else {
+                                    if(ScheduleCardUtils.checkClassNameIsSame(mClassArray,text)){
+                                        ToastUtil.showMyToast(ScheduleClassSetActivity.this,
+                                                getString(R.string.schedule_class_name_limit_1), Toast.LENGTH_SHORT);
+                                        return ;
+                                    }
+                                    mCustomList.add(text);
+                                    ScheduleClassBean itemBean = new ScheduleClassBean(text,true,1);
+                                    mClassArray.add(itemBean);
+                                    mClassAdapter.notifyDataSetChanged();
+                                    mClassShowRecycler.scrollToPosition(mClassArray.size()-1);
+                                    if(mClassArray.size() >= ScheduleCardUtils.FIELD_CLASS_LIMIT_NUM){
+                                        mAddImageView.setBackgroundResource(R.drawable.schedule_time_add_0);
+                                    }else{
+                                        mAddImageView.setBackgroundResource(R.drawable.schedule_time_add_1);
+                                    }
+                                }
+                            }
+                        }
+                );
+                break;
+        }
+    }
+
+}

@@ -1,0 +1,146 @@
+package com.xiaoxun.xun.ScheduleCard.Views;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Rect;
+import android.graphics.drawable.AnimationDrawable;
+import android.graphics.drawable.ColorDrawable;
+import android.os.Handler;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.PopupWindow;
+import android.widget.TextView;
+import android.widget.ViewFlipper;
+
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.ScheduleCard.adapters.ScheduleClassAdapter;
+import com.xiaoxun.xun.ScheduleCard.adapters.ScheduleSchoolSelectAdapter;
+import com.xiaoxun.xun.activitys.OperationMode;
+import com.xiaoxun.xun.activitys.ToWhereActivity;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.netdisk.xiaomi.bean.ImageData;
+import com.xiaoxun.xun.utils.ToastUtil;
+
+import java.util.ArrayList;
+import java.util.List;
+
+
+/**
+ * Created by huangyouyang on 2017/5/31.
+ */
+
+public class InfoSelectPopUp extends PopupWindow {
+
+    private View mMenuView;
+    private ViewFlipper flipper;
+    private ListView mSelectList;
+    private ScheduleSchoolSelectAdapter mAdapter;
+    private String[] datas;
+    private Handler myHandler;
+
+    public InfoSelectPopUp(final Activity context, View anchor, final AdapterView.OnItemClickListener itemsOnClick,
+                           final Handler handler, String[] mData) {
+        super(context);
+
+        LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        mMenuView = inflater.inflate(R.layout.class_item_list, null);
+        flipper =  mMenuView.findViewById(R.id.flipper);
+        mSelectList = mMenuView.findViewById(R.id.item_list);
+        datas = mData;
+        myHandler = handler;
+
+        //列表数据初始化
+        mAdapter = new ScheduleSchoolSelectAdapter(context, mData,0);
+        mSelectList.setAdapter(mAdapter);
+        mSelectList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                dismissPopWindow();
+                itemsOnClick.onItemClick(parent,view,position,id);
+            }
+        });
+
+        flipper.setDisplayedChild(1);
+        flipper.showNext();
+
+        int maxHeigth;
+//        if(mSelectList.getHeight() > 600)
+//            maxHeigth = 600;
+//        else
+//            maxHeigth = mSelectList.getHeight();
+        mSelectList.getMeasuredHeight();
+
+        this.setContentView(mMenuView);//设置PopupWindow的View
+        this.setWidth(anchor.getWidth());//设置PopupWindow弹出窗体的宽
+        this.setHeight(600);//设置PopupWindow弹出窗体的高
+        this.setTouchable(true);//设置PopupWindow弹出窗体可点击，默认true
+        this.setFocusable(true);// 设置PopupWindow具备获取焦点能力，默认false
+        //this.setOutsideTouchable(true);// 设置外部点击有效
+        ColorDrawable dw = new ColorDrawable(0x100f0f00);//实例化一个ColorDrawable颜色为透明
+        this.setBackgroundDrawable(dw);//设置ChatPopupWindow弹出窗体的背景
+
+        //mMenuView添加OnTouchListener监听判断获取触屏位置如果在选择框外面则销毁弹出框
+        mMenuView.setOnTouchListener(new View.OnTouchListener() {
+
+            public boolean onTouch(View v, MotionEvent event) {
+
+                int height_top = mMenuView.findViewById(R.id.item_list).getTop();
+                int height_bottom = mMenuView.findViewById(R.id.item_list).getBottom();
+                int width_left = mMenuView.findViewById(R.id.item_list).getLeft();
+                int width_right = mMenuView.findViewById(R.id.item_list).getRight();
+                int y = (int) event.getY();
+                int x = (int) event.getX();
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+                    if (y < height_top || y > height_bottom || x < width_left || x > width_right) {
+                        dismissPopWindow();
+                    }
+                }
+                return true;
+            }
+        });
+
+        this.setOnDismissListener(new OnDismissListener() {
+            @Override
+            public void onDismiss() {
+                flipper.showPrevious();
+            }
+        });
+    }
+
+    public void SetNotifyDataSetChanged(String[] mData){
+        mAdapter.notifyDataSetChanged();
+    }
+
+    private void dismissPopWindow() {
+
+        flipper.showPrevious();
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                dismiss();
+            }
+        }, 10);
+    }
+
+    // showAsDropDown重写
+    @Override
+    public void showAsDropDown(View anchor) {
+//        if (Build.VERSION.SDK_INT == 24) {
+//            Rect rect = new Rect();
+//            anchor.getGlobalVisibleRect(rect);
+//            int h = anchor.getResources().getDisplayMetrics().heightPixels - rect.bottom;
+//            setHeight(h);
+//        }
+        super.showAsDropDown(anchor);
+    }
+
+}

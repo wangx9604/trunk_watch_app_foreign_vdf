@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="MyTextSize1">22.0sp</dimen>
+    <dimen name="MyTextSize2">20.0sp</dimen>  
+    <dimen name="MyTextSize3">14.0sp</dimen>
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="localview_width">120dp</dimen>
+
+    <dimen name="dimen11">11dp</dimen>
+    <dimen name="dimen13">13sp</dimen>
+    <dimen name="dimen16">16dp</dimen>
+    <dimen name="dimen17">17dp</dimen>
+    <dimen name="dimen20">20dp</dimen>
+    <dimen name="dimen23">23dp</dimen>
+    <dimen name="dimen34">40dp</dimen>
+    <dimen name="dimen46">46.77dp</dimen>
+    <dimen name="dimen51">51dp</dimen>
+    <dimen name="fragment_title_height">45.3dp</dimen>
+    <dimen name="imageview_width">165dp</dimen>
+    <dimen name="imageview_height">100dp</dimen>
+    <dimen name="textsize12">12.0sp</dimen>
+    <dimen name="textsize14">14.0sp</dimen>
+
+    <!-- app_store -->
+    <dimen name="app_item_height">70dp</dimen>
+    <dimen name="app_icon_side_length">52dp</dimen>
+    <dimen name="app_item_margin_start">14dp</dimen>
+
+    <dimen name="TitleItemHeight">36dp</dimen>
+    <dimen name="SingleItemHeight">50dp</dimen>
+    <dimen name="DoubleLineItemHeight">64dp</dimen>
+    <dimen name="divideleftandright">23.33dp</dimen>
+    <dimen name="warningItemtop">12dp</dimen>
+    <dimen name="warningItembottom">12dp</dimen>
+
+    <!-- 26px -->
+    <!-- 121px -->
+    <!-- 135px -->
+
+    <dimen name="xiaomiMyTextBigTitle">16sp</dimen>    <!-- 50px -->
+    <dimen name="xiaomiMyTextSizeTimeCount">62.6sp</dimen>    <!-- 188px -->
+    <!-- 120px -->
+    <!-- 72px -->
+    <dimen name="xiaomiMyTextSize0">20sp</dimen>    <!-- 60px -->
+    <dimen name="xiaomiMyTextSize1">14sp</dimen>    <!-- 42px -->
+    <dimen name="xiaomiMyTextSize2">12.66sp</dimen>  <!-- 38px -->
+    <dimen name="xiaomiMyTextSize3">12sp</dimen>     <!-- 36px -->
+    <dimen name="xiaomiMyTextSize4">11.33sp</dimen>  <!-- 34px -->
+    <dimen name="xiaomiMyTextSize5">10.66sp</dimen>  <!-- 32px -->
+    <dimen name="xiaomiMyTextSize6">7.33sp</dimen>   <!-- 22px -->
+    <dimen name="xiaomiMyTextSize7">10sp</dimen>     <!-- 30px -->
+    <dimen name="xiaomiMyTextSize8">9.33sp</dimen>   <!-- 28px -->
+    <dimen name="xiaomiMyTextSize9">13.33sp</dimen>   <!-- 40px -->
+    <dimen name="xiaomiMyTextSize10">17.33sp</dimen>   <!-- 52px -->
+    <dimen name="xiaomiMyTextSize11">8.33sp</dimen>   <!-- 26px -->
+    <dimen name="xiaomiMyTextSize12">15sp</dimen>     <!-- 45px -->
+    <dimen name="xiaomiMyTextSize13">12sp</dimen>     <!-- 36px -->
+    <dimen name="xiaomiMyTextNickname">16sp</dimen>    <!-- 48px -->
+
+    <dimen name="dimen5">5dp</dimen>
+
+    <!-- 45px -->
+    <dimen name="watchSettingState">13.3dp</dimen>
+</resources>

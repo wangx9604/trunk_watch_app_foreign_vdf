@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white">
+
+    <include
+        android:id="@+id/security_title"
+        layout="@layout/activity_title" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/security_title">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:layout_below="@+id/amap"
+            android:background="@color/color_9" />
+
+        <fragment
+            android:id="@+id/amap"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_above="@+id/buttomtitle"
+            android:name="com.google.android.gms.maps.SupportMapFragment"/>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/amap"
+            android:layout_marginBottom="15dp">
+            <ImageButton
+                android:id="@+id/security_phone_location"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:background="@drawable/btn_add_my_location_selector" />
+            <ImageButton
+                android:id="@+id/security_watch_location"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="12.33dp"
+                android:background="@drawable/btn_location_selector" />
+            <RelativeLayout
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:background="@drawable/pull_box">
+
+                <TextView
+                    android:id="@+id/radius_title_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginEnd="13.3dp"
+                    android:text="300M"
+                    android:textColor="@color/bg_color_orange"
+                    android:textSize="@dimen/xiaomiMyTextSize3" />
+
+                <SeekBar
+                    android:id="@+id/seek_radius_level"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginLeft="13.3dp"
+                    android:layout_marginRight="13.3dp"
+                    android:layout_toStartOf="@+id/radius_title_text"
+                    android:max="4"
+                    android:maxHeight="1dp"
+                    android:minHeight="1dp"
+                    android:progress="1"
+                    android:paddingLeft="10dp"
+                    android:paddingRight="10dp"
+                    android:progressDrawable="@drawable/security_zone_setting_seekbar_style"
+                    android:thumb="@drawable/seekbar_thumb_selector" />
+            </RelativeLayout>
+        </RelativeLayout>
+
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="13dp"
+            android:layout_marginTop="120dp"
+            android:orientation="vertical">
+
+            <ImageButton
+                android:id="@+id/zoomout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/btn_zoomout_selector" />
+
+            <ImageButton
+                android:id="@+id/zoomin"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/btn_zoomin_selector" />
+        </LinearLayout>
+
+        <RelativeLayout
+            android:id="@+id/buttomtitle"
+            android:layout_width="match_parent"
+            android:layout_height="51.3dp"
+            android:layout_alignParentBottom="true"
+            android:background="@drawable/bottom_navigation_bar">
+
+            <TextView
+                android:id="@+id/tv_loc_detail"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_above="@+id/security_zone_next"
+                android:visibility="gone"/>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1px"
+                android:layout_above="@+id/security_zone_next"
+                android:background="@color/color_9" />
+
+            <Button
+                android:id="@+id/security_zone_next"
+                android:layout_width="match_parent"
+                android:layout_height="41dp"
+                android:layout_centerInParent="true"
+                android:layout_gravity="center"
+                android:layout_marginLeft="23.33dp"
+                android:layout_marginRight="23.33dp"
+                android:background="@drawable/btn_security_next_selector"
+                android:text="@string/security_zone_next"
+                android:textSize="@dimen/xiaomiMyTextSize2"
+                android:textColor="@color/black"/>
+
+        </RelativeLayout>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/layer_loading"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerInParent="true"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <ProgressBar
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_centerInParent="true"
+            android:indeterminateDrawable="@drawable/normal_load"
+            android:indeterminateDuration="800" />
+    </RelativeLayout>
+</RelativeLayout>

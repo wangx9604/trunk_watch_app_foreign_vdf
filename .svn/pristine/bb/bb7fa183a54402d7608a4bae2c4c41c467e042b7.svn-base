@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/xiaomi_bg_grey">
+
+    <include
+        android:id="@+id/operation_mode_title"
+        layout="@layout/activity_title" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/alarm_time_recyclerview"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/operation_mode_title" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:layout_below="@+id/alarm_time_recyclerview"
+        android:layout_marginLeft="23.33dp"
+        android:layout_marginRight="23.33dp"
+        android:background="@color/divider_color"
+        android:visibility="gone"/>
+
+    <RelativeLayout
+        android:id="@+id/next_view"
+        android:layout_width="match_parent"
+        android:layout_height="86.66dp"
+        android:layout_alignParentBottom="true">
+
+        <Button
+            android:id="@+id/btn_next_step"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_centerInParent="true"
+            android:layout_marginBottom="21.3dp"
+            android:background="@drawable/btn_dialgo_one_button"
+            android:enabled="true"
+            android:text="@string/security_zone_next"
+            android:textColor="@color/black"
+            android:textSize="@dimen/xiaomiMyTextSize1" />
+    </RelativeLayout>
+</RelativeLayout>

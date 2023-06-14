@@ -1,0 +1,686 @@
+package com.xiaoxun.xun.ScheduleCard.activitys;
+
+import android.app.Dialog;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import android.text.Editable;
+import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.util.Base64;
+import android.util.Log;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.amap.api.maps.MapsInitializer;
+import com.amap.api.services.core.PoiItem;
+import com.amap.api.services.district.DistrictItem;
+import com.amap.api.services.district.DistrictResult;
+import com.amap.api.services.geocoder.RegeocodeAddress;
+import com.amap.api.services.poisearch.PoiResult;
+import com.google.gson.JsonObject;
+import com.xiaoxun.xun.Constants;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.ScheduleCard.Views.InfoSelectPopUp;
+import com.xiaoxun.xun.ScheduleCard.adapters.ScheduleSchoolSelectAdapter;
+import com.xiaoxun.xun.ScheduleCard.beans.ScheduleCardBean;
+import com.xiaoxun.xun.activitys.NormalActivity;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.interfaces.MsgCallback;
+import com.xiaoxun.xun.utils.AESUtil;
+import com.xiaoxun.xun.utils.CloudBridgeUtil;
+import com.xiaoxun.xun.utils.DialogUtil;
+import com.xiaoxun.xun.utils.LogUtil;
+import com.xiaoxun.xun.utils.StatusBarUtil;
+import com.xiaoxun.xun.utils.ToastUtil;
+import com.xiaoxun.xun.utils.alipayLoginUtil.NetworkRequestUtils;
+
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
+import net.minidev.json.JSONValue;
+
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+
+public class ScheduleSchoolSetActivity extends NormalActivity implements View.OnClickListener {
+
+    private final String TAG = ScheduleSchoolSetActivity.class.getSimpleName();
+
+    private ImageView mBackImageView;
+    private ImageView mMenuImageView;
+    private TextView mProvinceSpinner;
+    private TextView mCitySpinner;
+    private TextView mZoneSpinner;
+    private EditText mSchoolSpinner;
+    private ListView mSchoolPoiSearch;
+    private TextView mGradeSpinner;
+    private TextView mClassSpinner;
+    private TextView mNextStepTextView;
+    private ConstraintLayout mLayoutAll;
+
+    private String mSchoolOnProVince;
+    private String mSchoolOnCity;
+    private String mSchoolOnZone;
+    private String mSchoolName;
+    private String mSchoolGradeNo;
+    private String mSchoolClassNo;
+    private String mSchoolLocation="";
+    private ScheduleSchoolSelectAdapter mPoiAdapter;
+
+    private WatchData mCurWatch;
+    private String mScheduleInfo;
+    private Boolean isFirstSet = false;
+    private ScheduleCardBean cardBean;
+
+    private ArrayList<DistrictItem> mProvityList;
+    private ArrayList<DistrictItem> mCityList;
+    private ArrayList<DistrictItem> mZoneList;
+    private ArrayList<PoiItem> mPoiList;
+    private ScheduleSchoolSetHandler myHandler;
+    private String[] mArrGrade;
+    private String[] mArrClass;
+
+    private AdapterView.OnItemClickListener mProvinceItemClick;
+    private AdapterView.OnItemClickListener mCityItemClick;
+    private AdapterView.OnItemClickListener mZoneItemClick;
+    private AdapterView.OnItemClickListener mGradeItemClick;
+    private AdapterView.OnItemClickListener mClassItemClick;
+    private AdapterView.OnItemClickListener mSchoolItemClick;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        StatusBarUtil.changeStatusBarColor(this, getResources().getColor(R.color.white));
+        setContentView(R.layout.activity_schedule_school_set);
+        //使用高德的搜索，需要同意高德的隐私合规
+        MapsInitializer.updatePrivacyShow(this,true,true);
+        MapsInitializer.updatePrivacyAgree(this,true);
+
+        initActManage();
+        initData();
+        initView();
+        initScheduleEventListener();
+    }
+
+    private void initInfoPopUpWindow(View view, String[] mDatas,AdapterView.OnItemClickListener listener){
+        InfoSelectPopUp mInfoSelect = new InfoSelectPopUp(this,view,listener,
+                myHandler, mDatas);
+        mInfoSelect.showAsDropDown(view);
+    }
+
+    private void initScheduleEventListener() {
+        mSchoolSpinner.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (TextUtils.isEmpty(mSchoolSpinner.getText())) {
+                    mSchoolName = "";
+                    return;
+                }
+                String mSearchInfo = mSchoolSpinner.getText().toString();
+                ScheduleCardUtils.getPoiSearchInfo(ScheduleSchoolSetActivity.this,
+                        mSearchInfo, mSchoolOnZone, myHandler);
+                isShowPoiListView(true);
+                mSchoolName = mSearchInfo;
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+
+        mProvinceItemClick = new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if(mProvityList.size() >= 1) {
+                    String province = mProvityList.get(position).getName();
+                    mSchoolOnProVince = province;
+                    mSchoolOnCity = ScheduleCardUtils.formatSpecialCityName(province,"","");
+                    mSchoolOnZone = ScheduleCardUtils.formatSpecialZoneName(mSchoolOnCity,"");
+                    updateScheduleInfoView();
+                    mCityList.clear();
+                    mZoneList.clear();
+                    if(ScheduleCardUtils.checkIsDistrictSearchInfo(province)) {
+                        ScheduleCardUtils.getDistrictSearchInfo(ScheduleSchoolSetActivity.this, province
+                                , myHandler, ScheduleCardUtils.GET_DISTRICT_CITY_INFO);
+                    }else{
+                        ScheduleCardUtils.getDistrictSearchInfo(ScheduleSchoolSetActivity.this, mSchoolOnCity
+                                , myHandler, ScheduleCardUtils.GET_DISTRICT_ZONE_INFO);
+                    }
+                }
+            }
+        };
+        mCityItemClick = new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if(mCityList.size() >= 1) {
+                    String mCity = mCityList.get(position).getName();
+                    mSchoolOnCity = mCity;
+                    mSchoolOnZone = "";
+                    mZoneList.clear();
+                    updateScheduleInfoView();
+                    ScheduleCardUtils.getDistrictSearchInfo(ScheduleSchoolSetActivity.this, mCity
+                            , myHandler, ScheduleCardUtils.GET_DISTRICT_ZONE_INFO);
+                }
+            }
+        };
+        mZoneItemClick = new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if(mZoneList.size() >= 1) {
+                    String mZone = mZoneList.get(position).getName();
+                    mSchoolOnZone = mZone;
+                    updateScheduleInfoView();
+                }
+            }
+        };
+
+        mGradeItemClick = new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String mGrade = mArrGrade[position];
+                mSchoolGradeNo = mGrade;
+                updateScheduleInfoView();
+            }
+        };
+
+        mClassItemClick = new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String mClass = mArrClass[position];
+                mSchoolClassNo = mClass;
+                updateScheduleInfoView();
+            }
+        };
+
+        mSchoolItemClick = new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String mSchool = mPoiList.get(position).getTitle();
+                mSchoolLocation = mPoiList.get(position).getLatLonPoint().toString();
+                mSchoolName = mSchool;
+                mSchoolSpinner.setText(mSchoolName);
+                isShowPoiListView(false);
+            }
+        };
+        //使用时调用
+        mSchoolPoiSearch.setOnItemClickListener(mSchoolItemClick);
+    }
+
+    private void initData() {
+        mProvityList = new ArrayList<>();
+        mCityList = new ArrayList<>();
+        mZoneList = new ArrayList<>();
+        mPoiList = new ArrayList<>();
+
+        int classSum = 32;
+        mArrClass = new String[classSum];
+        for (int i = 0; i < classSum; i++) {
+            mArrClass[i] = getString(R.string.schedule_class_set,i+1);
+        }
+
+        mArrGrade = new String[]{getString(R.string.schedule_grade_1),getString(R.string.schedule_grade_2),
+                getString(R.string.schedule_grade_3),getString(R.string.schedule_grade_4),
+                getString(R.string.schedule_grade_5),getString(R.string.schedule_grade_6),
+                getString(R.string.schedule_grade_7),getString(R.string.schedule_grade_8),
+                getString(R.string.schedule_grade_9)};
+
+        myHandler = new ScheduleSchoolSetHandler(this);
+        if(isFirstSet) {
+            //获取到默认的学校信息 -- 省、市、区
+            ScheduleCardUtils.getDefaultForSchoolInfo(getMyApp(), mCurWatch, myHandler);
+            cardBean = ScheduleCardUtils.transCardBeanByScheInfo("{}");
+
+            mSchoolGradeNo = "";
+            mSchoolClassNo = "";
+        } else {
+            cardBean = ScheduleCardUtils.transCardBeanByScheInfo(mScheduleInfo);
+            mSchoolOnProVince = cardBean.getProvince();
+            mSchoolOnCity = cardBean.getCity();
+            mSchoolOnZone = cardBean.getDistrict();
+            mSchoolGradeNo = mArrGrade[ScheduleCardUtils.getGradeOrClassNo(cardBean.getGrade(), mArrGrade.length)];
+            mSchoolName = cardBean.getSchool();
+            mSchoolClassNo = mArrClass[ScheduleCardUtils.getGradeOrClassNo(cardBean.getMclass(), mArrClass.length)];
+            mSchoolLocation = cardBean.getLocation();
+        }
+
+        ScheduleCardUtils.getDistrictSearchInfo(ScheduleSchoolSetActivity.this, "中国"
+                                                , myHandler , ScheduleCardUtils.GET_DISTRICT_PROVINCE_INFO);
+
+    }
+
+    private void initView() {
+        mBackImageView = findViewById(R.id.iv_back);
+        mMenuImageView = findViewById(R.id.iv_menu);
+        mProvinceSpinner = findViewById(R.id.sp_school_province);
+        mCitySpinner = findViewById(R.id.sp_school_city);
+        mZoneSpinner = findViewById(R.id.sp_school_zone);
+        mClassSpinner = findViewById(R.id.sp_school_class);
+        mGradeSpinner = findViewById(R.id.sp_school_grade);
+        mSchoolSpinner = findViewById(R.id.sp_school_name);
+        mSchoolPoiSearch = findViewById(R.id.lv_poi_search);
+        mLayoutAll = findViewById(R.id.layout_schedule_school);
+        mNextStepTextView = findViewById(R.id.iv_save_info);
+
+        mBackImageView.setOnClickListener(this);
+        mMenuImageView.setOnClickListener(this);
+        mClassSpinner.setOnClickListener(this);
+        mProvinceSpinner.setOnClickListener(this);
+        mCitySpinner.setOnClickListener(this);
+        mZoneSpinner.setOnClickListener(this);
+        mGradeSpinner.setOnClickListener(this);
+        mLayoutAll.setOnClickListener(this);
+        mNextStepTextView.setOnClickListener(this);
+
+        mPoiAdapter = new ScheduleSchoolSelectAdapter(this, mPoiList,1);
+        mSchoolPoiSearch.setAdapter(mPoiAdapter);
+
+        //初次设置
+        if(isFirstSet) {
+            mNextStepTextView.setText(R.string.security_zone_next);
+            mNextStepTextView.setVisibility(View.VISIBLE);
+            mMenuImageView.setVisibility(View.GONE);
+        }else{
+            updateScheduleInfoView();
+            mSchoolSpinner.setText(mSchoolName);
+            mNextStepTextView.setVisibility(View.GONE);
+            mMenuImageView.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void initActManage() {
+        mScheduleInfo = getIntent().getStringExtra(Constants.SCHEDULE_CARD_INFO);
+        isFirstSet = getIntent().getBooleanExtra(Constants.SCHEDULE_SETTING_FIRST,false);
+        String mWatchData = getIntent().getStringExtra(Constants.WATCH_EID_DATA);
+        mCurWatch = getMyApp().getCurUser().queryWatchDataByEid(mWatchData);
+        if(mCurWatch == null){
+            mCurWatch = getMyApp().getCurUser().getFocusWatch();
+        }
+    }
+
+    private void updateListAdapter(TextView mSpinner,ArrayList arrayList,
+                                   AdapterView.OnItemClickListener listener){
+        String[] mList = new String[arrayList.size()];
+        for (int i = 0; i < arrayList.size(); i++) {
+            DistrictItem item = (DistrictItem)arrayList.get(i);
+            mList[i] = item.getName();
+        }
+        initInfoPopUpWindow(mSpinner, mList, listener);
+    }
+
+    private void updateScheduleInfoView(){
+        mProvinceSpinner.setText(mSchoolOnProVince);
+        mCitySpinner.setText(mSchoolOnCity);
+        mZoneSpinner.setText(mSchoolOnZone);
+        mGradeSpinner.setText(mSchoolGradeNo);
+        mClassSpinner.setText(mSchoolClassNo);
+    }
+
+    private void isShowPoiListView(boolean isShow){
+        if(isShow)
+            mSchoolPoiSearch.setVisibility(View.VISIBLE);
+        else {
+            mSchoolPoiSearch.setVisibility(View.GONE);
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(mSchoolSpinner.getWindowToken(), 0);
+            if(!checkSChoolIsMatching()){
+                ToastUtil.showMyToast(this, getString(R.string.schedule_nopatch_school_0), Toast.LENGTH_SHORT);
+            }
+        }
+    }
+
+    private boolean checkSChoolIsMatching() {
+        if (TextUtils.isEmpty(mSchoolName) || mPoiList.size() == 0) {
+            return false;
+        }
+        for (PoiItem poiItem : mPoiList) {
+            if(mSchoolName.equals(poiItem.getTitle())){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public void onBackPressed() {
+        onBackAction();
+    }
+
+    private void onBackAction() {
+        if(!isFirstSet) {
+            Intent intent = new Intent();
+            intent.putExtra(Constants.SCHEDULE_CARD_INFO, mScheduleInfo);
+            setResult(1, intent);
+        }
+        finish();
+    }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()){
+            case R.id.iv_back:
+                onBackAction();
+                break;
+            case R.id.sp_school_province:
+                isShowPoiListView(false);
+                updateListAdapter(mProvinceSpinner,mProvityList,mProvinceItemClick);
+                break;
+            case R.id.sp_school_city:
+                isShowPoiListView(false);
+                if(mSchoolOnProVince == null || "".equals(mSchoolOnProVince) || mCityList.size() == 0){
+                    ToastUtil.showMyToast(ScheduleSchoolSetActivity.this,
+                            getString(R.string.schedule_select_error_0).toString(),Toast.LENGTH_SHORT);
+                    return ;
+                }
+                updateListAdapter(mCitySpinner,mCityList,mCityItemClick);
+                break;
+            case R.id.sp_school_zone:
+
+                if(mSchoolOnProVince == null || "".equals(mSchoolOnProVince) || mZoneList.size() == 0){
+                    ToastUtil.showMyToast(ScheduleSchoolSetActivity.this,
+                            getString(R.string.schedule_select_error_0).toString(),Toast.LENGTH_SHORT);
+                    return ;
+                }
+
+                if(mSchoolOnCity == null || "".equals(mSchoolOnCity)){
+                    ToastUtil.showMyToast(ScheduleSchoolSetActivity.this,
+                            getString(R.string.schedule_select_error_0).toString(),Toast.LENGTH_SHORT);
+                    return ;
+                }
+                isShowPoiListView(false);
+                updateListAdapter(mZoneSpinner,mZoneList,mZoneItemClick);
+                break;
+            case R.id.sp_school_grade:
+                initInfoPopUpWindow(mGradeSpinner,mArrGrade,mGradeItemClick);
+                break;
+            case R.id.sp_school_class:
+                initInfoPopUpWindow(mClassSpinner, mArrClass,mClassItemClick);
+                break;
+            case R.id.layout_schedule_school:
+                isShowPoiListView(false);
+                break;
+            case R.id.iv_menu:
+            case R.id.iv_save_info:
+                //搜索课表接口解析
+                if(mSchoolOnProVince == null || "".equals(mSchoolOnProVince)){
+                    ToastUtil.showMyToast(ScheduleSchoolSetActivity.this,
+                            getString(R.string.schedule_select_error_0).toString(),Toast.LENGTH_SHORT);
+                    return ;
+                }
+
+                if(mSchoolOnCity == null || "".equals(mSchoolOnCity)){
+                    ToastUtil.showMyToast(ScheduleSchoolSetActivity.this,
+                            getString(R.string.schedule_select_error_0).toString(),Toast.LENGTH_SHORT);
+                    return ;
+                }
+                if( mSchoolOnZone == null || "".equals(mSchoolOnZone)){
+                    ToastUtil.showMyToast(ScheduleSchoolSetActivity.this,
+                            getString(R.string.schedule_select_error_0).toString(),Toast.LENGTH_SHORT);
+                    return ;
+                }
+                LogUtil.e("data:"+mSchoolName);
+                if( mSchoolName == null || "".equals(mSchoolName)){
+                    ToastUtil.showMyToast(ScheduleSchoolSetActivity.this,
+                            getString(R.string.schedule_select_error_1).toString(),Toast.LENGTH_SHORT);
+                    return ;
+                }
+                if(!checkSChoolIsMatching()){
+                    DialogUtil.CustomNormalDialog(ScheduleSchoolSetActivity.this, getString(R.string.prompt),
+                            getString(R.string.schedule_nopatch_school_1),
+                            new DialogUtil.OnCustomDialogListener() {
+                                @Override
+                                public void onClick(View v) {
+
+                                }
+                            }, getText(R.string.cancel).toString(),
+                            new DialogUtil.OnCustomDialogListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    onSaveScheduleInfoToServer();
+                                }
+                            },getText(R.string.confirm).toString()).show();
+                }else{
+                    onSaveScheduleInfoToServer();
+                }
+
+
+                break;
+
+        }
+    }
+
+    private void onSaveScheduleInfoToServer(){
+        if(isFirstSet){
+            ScheduleCardUtils.GenNewScheduleCardInfo(cardBean,mSchoolOnProVince,mSchoolOnCity,mSchoolOnZone,
+                    mSchoolName,
+                    ScheduleCardUtils.getGradeNoByName(mSchoolGradeNo,mArrGrade),
+                    ScheduleCardUtils.getClassNoByName(mSchoolClassNo,mArrClass)
+                    ,mSchoolLocation, mCurWatch.getEid(),
+                    mCurWatch.getFamilyId());
+
+
+            ScheduleCardUtils.getScheduleSearchData(ScheduleSchoolSetActivity.this, getMyApp(),
+                    mSchoolOnProVince,mSchoolOnCity,mSchoolOnZone,
+                    mSchoolName,
+                    ScheduleCardUtils.getGradeNoByName(mSchoolGradeNo,mArrGrade),
+                    mSchoolLocation,
+                    ScheduleCardUtils.getClassNoByName(mSchoolClassNo,mArrClass),
+                    new NetworkRequestUtils.OperationCallback(){
+
+                        @Override
+                        public void onSuccess(String result) {
+                            if(result != null){
+                                String AES_KEY = getMyApp().getNetService().AES_KEY;
+                                byte[] decBase64 = Base64.decode(result, Base64.NO_WRAP);
+                                byte[] decMessage = AESUtil.decryptAESCBC(decBase64, AES_KEY, AES_KEY);
+                                if (decMessage != null && decMessage.length > 0) {
+                                    String decMesString = new String(decMessage);
+                                    Log.i(TAG, "decMesString=" + decMesString);
+                                    try {
+                                        JSONObject obj = (JSONObject) JSONValue.parse(decMesString);
+                                        int code = (int)obj.get("code");
+                                        if(code == 0){
+                                            JSONObject query = (JSONObject) obj.get("course");
+
+                                            final JSONArray mTimeList = (JSONArray) query.get("timelist");
+                                            final JSONArray mWeekList = (JSONArray) query.get("weeklist");
+
+                                            if(mTimeList == null || mTimeList.isEmpty()){
+                                                //进入到下一步
+                                                onNextStep();
+                                            }else{
+                                                //执行选表操作
+                                                runOnUiThread(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        Dialog dlg = DialogUtil.CustomNormalDialog(ScheduleSchoolSetActivity.this,
+                                                                getText(R.string.schedule_search_hint_0).toString(),
+                                                                getText(R.string.schedule_search_hint_1).toString(),
+                                                                new DialogUtil.OnCustomDialogListener() {
+                                                                    @Override
+                                                                    public void onClick(View v) {
+                                                                        mScheduleInfo = ScheduleCardUtils.transScheInfoByCardBean(cardBean);
+                                                                        Intent intent = new Intent(ScheduleSchoolSetActivity.this,
+                                                                                ScheduleTimeSetActivity.class);
+                                                                        intent.putExtra(Constants.SCHEDULE_CARD_INFO, mScheduleInfo);
+                                                                        intent.putExtra(Constants.SCHEDULE_SETTING_FIRST, true);
+                                                                        startActivity(intent);
+                                                                    }
+                                                                },
+                                                                getText(R.string.schedule_search_hint_2).toString(),
+                                                                new DialogUtil.OnCustomDialogListener() {
+                                                                    @Override
+                                                                    public void onClick(View v) {
+                                                                        cardBean.setTimelist(ScheduleCardUtils.moveJsonArrayToArraylist(mTimeList));
+                                                                        cardBean.setWeeklist(ScheduleCardUtils.moveJsonArrayToArraylist(mWeekList));
+                                                                        mScheduleInfo = ScheduleCardUtils.transScheInfoByCardBean(cardBean);
+                                                                        Intent intent = new Intent(ScheduleSchoolSetActivity.this,
+                                                                                ScheduleCardActivity.class);
+                                                                        intent.putExtra(Constants.SCHEDULE_CARD_INFO, mScheduleInfo);
+                                                                        intent.putExtra(Constants.SCHEDULE_SETTING_FIRST, true);
+                                                                        startActivity(intent);
+                                                                    }
+                                                                },
+                                                                getText(R.string.schedule_use_scan_info).toString());
+                                                        dlg.show();
+                                                    }
+                                                });
+                                            }
+                                        }else{
+                                            //异常处理操作
+                                            onNextStep();
+                                        }
+
+                                    }catch (Exception e){
+                                        e.printStackTrace();
+                                        onNextStep();
+                                    }
+                                }else{
+                                    onNextStep();
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onFail(String error) {
+                            ToastUtil.showMyToast(ScheduleSchoolSetActivity.this,
+                                    getString(R.string.net_check_alert), Toast.LENGTH_SHORT);
+                        }
+                    });
+        }else{
+            //保存数据操作
+            cardBean.setOptype(1);
+            cardBean.setProvince(mSchoolOnProVince);
+            cardBean.setCity(mSchoolOnCity);
+            cardBean.setDistrict(mSchoolOnZone);
+            cardBean.setSchool(mSchoolName);
+            cardBean.setGrade(ScheduleCardUtils.getGradeNoByName(mSchoolGradeNo,mArrGrade));
+            cardBean.setMclass(ScheduleCardUtils.getClassNoByName(mSchoolClassNo,mArrClass));
+            cardBean.setLocation(mSchoolLocation);
+            mScheduleInfo = ScheduleCardUtils.transScheInfoByCardBean(cardBean);
+            //2:执行提交信息
+            ScheduleCardUtils.updateScheduleCardInfo(getMyApp(), mScheduleInfo, new MsgCallback() {
+                @Override
+                public void doCallBack(net.minidev.json.JSONObject reqMsg, net.minidev.json.JSONObject respMsg) {
+                    LogUtil.e(TAG + "respMsg"+":"+respMsg.toJSONString());
+                    ToastUtil.showMyToast(ScheduleSchoolSetActivity.this,
+                            getString(R.string.phone_set_success).toString(), Toast.LENGTH_SHORT);
+                    if(getMyApp().getCurUser().getFocusWatch() != null) {
+                        ScheduleCardUtils.SaveScheduleInfoToLocal(getMyApp(), getMyApp().getCurUser().getFocusWatch().getEid(), mScheduleInfo);
+                    }
+                    onBackAction();
+                }
+            });
+        }
+    }
+
+    private void onNextStep(){
+        mScheduleInfo = ScheduleCardUtils.transScheInfoByCardBean(cardBean);
+        Intent intent = new Intent(ScheduleSchoolSetActivity.this,
+                ScheduleTimeSetActivity.class);
+        intent.putExtra(Constants.SCHEDULE_CARD_INFO, mScheduleInfo);
+        intent.putExtra(Constants.SCHEDULE_SETTING_FIRST, true);
+        startActivity(intent);
+    }
+
+    private static class ScheduleSchoolSetHandler extends Handler{
+        private WeakReference<ScheduleSchoolSetActivity> context;
+
+        public ScheduleSchoolSetHandler(ScheduleSchoolSetActivity context){
+            this.context = new WeakReference<>(context);
+        }
+
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            super.handleMessage(msg);
+            ScheduleSchoolSetActivity activity = context.get();
+            if(activity != null){
+                switch (msg.what){
+                    case ScheduleCardUtils.GET_GEO_CODE_INFO:
+                        RegeocodeAddress mAddress = (RegeocodeAddress) msg.obj;
+                        if(mAddress == null)
+                            return ;
+                        activity.mSchoolOnProVince = mAddress.getProvince();
+                        activity.mSchoolOnCity = ScheduleCardUtils.formatSpecialCityName(mAddress.getProvince(),
+                                mAddress.getCity(), mAddress.getDistrict());
+                        activity.mSchoolOnZone = ScheduleCardUtils.formatSpecialZoneName(activity.mSchoolOnCity,
+                                mAddress.getDistrict());
+                        //刷新课程信息
+                        activity.updateScheduleInfoView();
+                        //更新下城市和区域的列表信息
+                        if(ScheduleCardUtils.checkIsDistrictSearchInfo(activity.mSchoolOnProVince))
+                            ScheduleCardUtils.getDistrictSearchInfo(activity,  activity.mSchoolOnProVince
+                                    , this , ScheduleCardUtils.GET_DISTRICT_CITY_INFO);
+
+                        ScheduleCardUtils.getDistrictSearchInfo(activity,  activity.mSchoolOnCity
+                                , this , ScheduleCardUtils.GET_DISTRICT_ZONE_INFO);
+                        break;
+                    case ScheduleCardUtils.GET_DISTRICT_PROVINCE_INFO:
+                        //获取中国境内的省信息
+                        DistrictResult myDisResOnPro = (DistrictResult) msg.obj;
+                        if(myDisResOnPro == null)
+                            return;
+                        activity.mProvityList.clear();
+                        activity.mProvityList.addAll(myDisResOnPro.getDistrict().get(0).getSubDistrict());
+
+                        break;
+
+                    case ScheduleCardUtils.GET_DISTRICT_CITY_INFO:
+                        //获取中国省内的市信息
+                        DistrictResult myDisResOnCity = (DistrictResult) msg.obj;
+                        if(myDisResOnCity == null)
+                            return ;
+                        try {
+                            activity.mCityList.clear();
+                            activity.mCityList.addAll(myDisResOnCity.getDistrict().get(0).getSubDistrict());
+                        }catch(Exception e) {
+                            e.printStackTrace();
+                        }
+                        break;
+
+                    case ScheduleCardUtils.GET_DISTRICT_ZONE_INFO:
+                        //获取中国市内的区域信息
+                        DistrictResult myDisResOnZone = (DistrictResult) msg.obj;
+                        if(myDisResOnZone == null)
+                            return ;
+                        try {
+                            activity.mZoneList.clear();
+                            if (!"city".equals(myDisResOnZone.getDistrict().get(0).getSubDistrict().get(0).getLevel())) {
+                                activity.mZoneList.addAll(myDisResOnZone.getDistrict().get(0).getSubDistrict());
+                            } else {
+                                activity.mZoneList.addAll(myDisResOnZone.getDistrict().get(0)
+                                        .getSubDistrict().get(0).getSubDistrict());
+                            }
+                        }catch(Exception e){
+                            e.printStackTrace();
+                        }
+                        break;
+                    case ScheduleCardUtils.GET_SCHOOL_POI_INFO:
+                        PoiResult poiResult = (PoiResult) msg.obj;
+                        if(poiResult == null){
+                            return ;
+                        }
+                        activity.mPoiList.clear();
+                        activity.mPoiList.addAll(poiResult.getPois());
+                        activity.mPoiAdapter.notifyDataSetChanged();
+                        break;
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,221 @@
+package com.xiaoxun.xun.gallary.adapter;
+
+import android.content.Context;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.gallary.ImageVedioFiles;
+import com.xiaoxun.xun.gallary.dataStruct.GalleryData;
+import com.xiaoxun.xun.gallary.dataStruct.Section;
+import com.xiaoxun.xun.gallary.interfaces.DataChangeListener;
+import com.xiaoxun.xun.gallary.interfaces.itemOnClickListeners;
+import com.xiaoxun.xun.utils.TimeUtil;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+
+/**
+ * Created by xilvkang on 2017/8/24.
+ */
+
+public abstract class BaseGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+    protected ArrayList<Section> data;
+    Context ctxt;
+    ImibabyApp mApp;
+    DataChangeListener lis;
+    itemOnClickListeners itemListener;
+    Comparator<GalleryData> comparator = new Comparator<GalleryData>() {
+        public int compare(GalleryData s1, GalleryData s2) {
+            if (s1.getTime() > s2.getTime()) {
+                return -1;
+            } else if (s1.getTime() < s2.getTime()) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    };
+
+    Comparator<Section> comparatorS = new Comparator<Section>() {
+        @Override
+        public int compare(Section o1, Section o2) {
+            long s1 = Long.valueOf(o1.title);
+            long s2 = Long.valueOf(o2.title);
+            if (s1 > s2) {
+                return 1;
+            } else if (s1 < s2) {
+                return -1;
+            } else {
+                return 0;
+            }
+        }
+    };
+
+    public boolean canNotify = true;
+
+    public BaseGridAdapter(Context context, ArrayList<GalleryData> src, ImibabyApp mapp , DataChangeListener listener){
+        ctxt = context;
+        mApp = mapp;
+        this.lis = listener;
+        Collections.sort(src, comparator);
+        initData(src);
+    }
+    abstract void initData(ArrayList<GalleryData> datas);
+    abstract public void requestDeleteFiles();
+
+    /**
+     * 勾选状态变化设置，如果日期内的全勾选，日期亦要设置成勾选状态
+     *
+     * @param position 勾选位置
+     * @param isSelect 勾选状态
+     */
+    public void changeDatasSelect(int position, boolean isSelect) {
+        data.get(position).isSelected = isSelect;
+        int titleIndex = -1;
+        boolean isUnSelectFile = true;
+        for (int i = position - 1; i >= 0; i--) {
+            Section bean = data.get(i);
+            if (bean.type == 0) {
+                titleIndex = i;
+                break;
+            } else if (bean.isSelected != isSelect) {
+                isUnSelectFile = false;
+            }
+        }
+        if (titleIndex != -1) {
+            if (isUnSelectFile) {
+                for (int i = position + 1; i < data.size() && data.get(i).type == 1; i++) {
+                    Section bean = data.get(i);
+                    if (bean.isSelected != isSelect) {
+                        isUnSelectFile = false;
+                        break;
+                    }
+                }
+            }
+            if (isUnSelectFile) {
+                data.get(titleIndex).isSelected = isSelect;
+            }
+        }
+    }
+
+    public void deleteselectedItem() {
+        for (int i = 0; i < data.size(); i++) {
+            if (data.get(i).isSelected) {
+                if (data.get(i).type == 1) {
+                    for (int j = 0; j < ImageVedioFiles.ImagevideoFiles_local.size(); j++) {
+                        if (ImageVedioFiles.ImagevideoFiles_local.get(j).getName().equals(data.get(i).item.getName())) {
+                            ImageVedioFiles.ImagevideoFiles_local.remove(j);
+                            break;
+                        }
+                    }
+                    File fp_pre = new File(data.get(i).item.getLocal_pre_path());
+                    if (fp_pre.exists()) {
+                        fp_pre.delete();
+                    }
+                    if (data.get(i).item.getLocal_src_path() != null) {
+                        File fp_src = new File(data.get(i).item.getLocal_src_path());
+                        if (fp_src.exists()) {
+                            fp_src.delete();
+                        }
+                    }
+                }
+                data.remove(i);
+                i--;
+            }
+        }
+        AllChooseItemCancel();
+        notifyDataSetChanged();
+        lis.DataChanged(DataChangeListener.RESULT_OK);
+    }
+
+    public void setitemOnClickListeners(itemOnClickListeners lis) {
+        this.itemListener = lis;
+    }
+    public boolean isSelected(int position) {
+        return data.get(position).isSelected;
+    }
+
+    public void selectRange(int start, int end, boolean isSelected) {
+        for (int i = start; i <= end; i++) {
+            if (data.get(i).type == 1) {
+                changeDatasSelect(i, isSelected);
+            }
+        }
+        notifyItemRangeChanged(start, end - start + 1);
+    }
+    public void AllChooseItemCancel() {
+        for (int i = 0; i < data.size(); i++) {
+            data.get(i).isSelected = false;
+        }
+    }
+
+    public void clearData() {
+        if(data != null) {
+            data.clear();
+        }
+        data = null;
+    }
+
+    public void refreshItems(ArrayList<GalleryData> datas){
+        clearData();
+        Collections.sort(datas, comparator);
+        initData(datas);
+        notifyDataSetChanged();
+    }
+
+    public void addMoreItems(ArrayList<GalleryData> list) {
+        //Collections.sort(list, comparator);
+        for (int i = 0; i < list.size(); i++) {
+            boolean hasAdd = false;
+            Calendar cal_time = Calendar.getInstance();
+            cal_time.setTime(TimeUtil.getTimeStampGMTFromFmt(list.get(i).getTime(),0));
+            Date date = cal_time.getTime();
+            boolean firstHeadTitle = true;
+            for (int j = 1; j < data.size(); j++) {
+                if (data.get(j).type == 0) {
+                    cal_time.setTime((TimeUtil.getTimeStampGMTFromFmt(Long.valueOf(data.get(j).title),0)));
+                    Date dateT = cal_time.getTime();
+                    if (firstHeadTitle) {
+                        firstHeadTitle = false;
+                        if (date.after(dateT) && !TimeUtil.isTheSameDay(date, dateT)) {
+                            break;
+                        }
+                    }
+                    if (TimeUtil.isTheSameDay(date, dateT)) {
+                        Section item = new Section(1, String.valueOf(list.get(i).getTime()), list.get(i));
+                        data.add(j + 1, item);
+                        hasAdd = true;
+                        break;
+                    }
+                }
+            }
+            if (!hasAdd) {
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(TimeUtil.getTimeStampGMTFromFmt(list.get(i).getTime(),0));
+                cal.set(Calendar.HOUR_OF_DAY, 23);
+                cal.set(Calendar.MINUTE, 59);
+                cal.set(Calendar.MILLISECOND, 59);
+                Section title = new Section(0, TimeUtil.getTimeStringFromDate(cal.getTime()), null);
+                data.add(title);
+                Section img = new Section(1, String.valueOf(list.get(i).getTime()), list.get(i));
+                data.add(img);
+            }
+        }
+        Collections.sort(data.subList(1,data.size()-1), comparatorS);
+        notifyDataSetChanged();
+    }
+
+    public int selectListSize(){
+        int size = 0;
+        for (int i = 0; i < data.size(); i++) {
+            if(data.get(i).isSelected){
+                size++;
+            }
+        }
+        return size;
+    }
+}

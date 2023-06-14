@@ -1,0 +1,116 @@
+package com.xiaoxun.xun.utils;
+
+import android.app.Activity;
+import android.app.Application;
+import android.content.Intent;
+import android.os.Bundle;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import com.xiaoxun.xun.ImibabyApp;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class ActivityLifecycleUtils {
+
+    private static final String TAG = "ActivityLifecycleUtils";
+
+    private static int foregroundActivityCount;
+    private static boolean isBackToFore;
+
+    private static List<String> activityList = new ArrayList<>();
+
+    public static void observeActivityLifeCycle(final ImibabyApp mApp){
+
+        mApp.registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
+            @Override
+            public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {
+                activityList.add(activity.getLocalClassName());
+            }
+
+            @Override
+            public void onActivityStarted(@NonNull Activity activity) {
+                LogUtil.i(TAG + " onActivityStarted foregroundActivityCount:" + foregroundActivityCount + "  " + activity.getLocalClassName());
+                if(foregroundActivityCount == 0
+                        && !activity.getLocalClassName().contains("XunAdSplashActivity")
+                        && !activity.getLocalClassName().contains("WelcomeActivity")) {
+                    isBackToFore = true;
+//                    BaiDuStatCollect.onBaiDuStatHandlerById(activity, 110);
+                }
+                // 后台转前台、且Activity栈中无白名单页面
+//                if (foregroundActivityCount == 0 && !isInWhiteList())
+//                    executeBackToFore(mApp, activity);
+                foregroundActivityCount++;
+            }
+
+            @Override
+            public void onActivityResumed(@NonNull Activity activity) {
+                LogUtil.i(TAG + " onActivityResumed isBackToFore:" + isBackToFore + "  " + activity.getLocalClassName());
+                // 后台转前台、且Activity栈中无白名单页面，第一次执行onResume
+                // (因为存在同时打开多个Activity且仅仅最后一个Activity在白名单页面列表中的场景，所以将该判断从onActivityStarted移到onActivityResumed中)
+                if (isBackToFore && !isInWhiteList()) {
+//                    BaiDuStatCollect.onBaiDuStatHandlerById(activity, 111);
+//                    executeBackToFore(mApp, activity);
+                }
+                isBackToFore = false;
+            }
+
+            @Override
+            public void onActivityPaused(@NonNull Activity activity) {
+                LogUtil.i(TAG + " onActivityPaused :" + activity.getLocalClassName());
+            }
+
+            @Override
+            public void onActivityStopped(@NonNull Activity activity) {
+                LogUtil.i(TAG + " onActivityStopped foregroundActivityCount:" + foregroundActivityCount + "  " + activity.getLocalClassName());
+                foregroundActivityCount--;
+            }
+
+            @Override
+            public void onActivitySaveInstanceState(@NonNull Activity activity, @NonNull Bundle outState) {
+
+            }
+
+            @Override
+            public void onActivityDestroyed(@NonNull Activity activity) {
+                try {
+                    if (activityList != null)
+                        activityList.remove(activity.getLocalClassName());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    // 特殊页面：登录、视频通话、SOS、群聊、私聊、动态
+    // 商城页面、计步排名页面，也会从push消息点击进入，加入特殊页面中
+    private static String[] whiteList = new String[]{"XunAdSplashActivity", "VideoCallActivity", "VideoCallActivity2",
+            "WelcomeActivity", "LoginPasswordActivity", "LoginActivity", "SosStartActivity",
+            "GroupMessageActivity", "PrivateMessageActivity", "NoticeTypeActivity", "SystemMessageActivity",
+            "MultFunWebViewActivity", "stepsRankActivity"};
+
+    /**
+     * activity栈中，是否包含报名单页面
+     */
+    private static boolean isInWhiteList(){
+
+        for (String taskActivity : activityList) {
+            LogUtil.i(TAG + " isInWhiteList " + taskActivity);
+            for (String whitActivity : whiteList) {
+                if (taskActivity.contains(whitActivity)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean allowReqXunAd(){
+
+        return false;
+    }
+
+}

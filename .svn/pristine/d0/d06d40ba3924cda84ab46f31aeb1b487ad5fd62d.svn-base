@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:background="@color/white">
+
+    <include
+        android:id="@+id/security_title"
+        layout="@layout/activity_title" />
+
+    <RelativeLayout
+        android:id="@+id/layer_map"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/security_title">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:layout_below="@+id/amap"
+            android:background="@color/color_9" />
+
+        <com.amap.api.maps.MapView
+            android:id="@+id/amap"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_above="@+id/buttomtitle"/>
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/amap"
+            android:layout_marginBottom="15dp">
+            <ImageButton
+                android:id="@+id/security_phone_location"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="12dp"
+                android:background="@drawable/btn_location_selector" />
+            <ImageButton
+                android:id="@+id/security_watch_location"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="12.33dp"
+                android:background="@drawable/btn_watch_location" />
+            <RelativeLayout
+                android:layout_width="250dp"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:background="@drawable/pull_box">
+
+                <TextView
+                    android:id="@+id/radius_title_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginEnd="13.3dp"
+                    android:text="300M"
+                    android:textColor="@color/bg_color_orange"
+                    android:textSize="@dimen/xiaomiMyTextSize3" />
+
+                <SeekBar
+                    android:id="@+id/seek_radius_level"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginLeft="13.3dp"
+                    android:layout_marginRight="9.3dp"
+                    android:layout_toStartOf="@+id/radius_title_text"
+                    android:max="4"
+                    android:maxHeight="2dp"
+                    android:minHeight="2dp"
+                    android:progress="1"
+                    android:paddingLeft="10dp"
+                    android:paddingRight="10dp"
+                    android:progressDrawable="@drawable/security_zone_setting_seekbar_style"
+                    android:thumb="@drawable/seekbar_thumb_selector_1" />
+            </RelativeLayout>
+        </RelativeLayout>
+
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="13dp"
+            android:layout_marginTop="120dp"
+            android:orientation="vertical">
+
+            <include
+                android:id="@+id/layout_zoom"
+                layout="@layout/layout_map_zoom" />
+        </LinearLayout>
+
+        <RelativeLayout
+            android:id="@+id/buttomtitle"
+            android:layout_width="match_parent"
+            android:layout_height="241.3dp"
+            android:layout_alignParentBottom="true"
+            android:background="@drawable/bottom_navigation_bar">
+
+            <ListView
+                android:id="@+id/location_nearby_listview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_above="@+id/security_zone_next"
+                android:divider="@color/divider_color"
+                android:dividerHeight="1px"/>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1px"
+                android:layout_above="@+id/security_zone_next"
+                android:background="@color/color_9" />
+
+            <Button
+                android:id="@+id/security_zone_next"
+                android:layout_width="match_parent"
+                android:layout_height="41dp"
+                android:layout_alignParentBottom="true"
+                android:layout_gravity="center"
+                android:layout_marginBottom="13.3dp"
+                android:layout_marginLeft="23.33dp"
+                android:layout_marginRight="23.33dp"
+                android:layout_marginTop="13.3dp"
+                android:background="@drawable/btn_security_next_selector"
+                android:text="@string/security_zone_next"
+                android:textSize="@dimen/xiaomiMyTextSize2" />
+
+        </RelativeLayout>
+    </RelativeLayout>
+
+
+    <RelativeLayout
+        android:id="@+id/search_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/security_title"
+        android:layout_marginLeft="13.3dp"
+        android:layout_marginRight="13.3dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/input_box"
+        android:focusable="true"
+        android:focusableInTouchMode="true">
+
+
+        <ImageView
+            android:id="@+id/iv_search"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="10dp"
+            android:background="@drawable/search_4" />
+
+        <EditText
+            android:id="@+id/et_search_bar_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="10dip"
+            android:layout_marginEnd="10dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:gravity="center_vertical"
+            android:layout_toEndOf="@+id/iv_search"
+            android:background="@color/transparent"
+            android:hint="@string/click_modify"
+            android:textColorHint="@color/bg_color_orange"
+            android:imeOptions="actionDone"
+            android:inputType="text|textAutoComplete"
+            android:maxLength="20"
+            android:singleLine="true"
+            android:textColor="@color/bg_color_orange"
+            android:textSize="@dimen/xiaomiMyTextSize3" />
+
+        <ImageButton
+            android:id="@+id/delete_keyword"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="10dp"
+            android:visibility="invisible"
+            android:background="@drawable/delete_keyword" />
+
+    </RelativeLayout>
+
+    <LinearLayout
+        android:visibility="gone"
+        android:id="@+id/layout_security_below_200"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/search_bar"
+        android:layout_marginLeft="13.3dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginRight="13.3dp"
+        android:background="@drawable/bg_corner_state"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp">
+
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_marginLeft="24dp"
+            android:layout_marginRight="24dp"
+            android:gravity="center"
+            android:text="@string/security_zone_setting_distance_tip"
+            android:textColor="@color/white"
+            android:textSize="@dimen/xiaomiMyTextSize1" />
+
+
+    </LinearLayout>
+
+    <ListView
+        android:id="@+id/address_list_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/search_bar"
+        android:layout_marginTop="10dp"
+        android:background="@color/white"
+        android:divider="@drawable/list_item_divider"
+        android:dividerHeight="1px"
+        android:visibility="gone" />
+
+    <RelativeLayout
+        android:id="@+id/layer_loading"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerInParent="true"
+        android:orientation="vertical"
+        android:visibility="gone">
+        <ProgressBar
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_centerInParent="true"
+            android:indeterminateDrawable="@drawable/normal_load"
+            android:indeterminateDuration="800" />
+    </RelativeLayout>
+</RelativeLayout>

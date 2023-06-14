@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white">
+
+    <include
+        android:id="@+id/layout_title"
+        layout="@layout/activity_title" />
+
+    <RelativeLayout
+        android:id="@+id/layout_add_friend_num"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/layout_title"
+        android:background="@color/welcome_bg_color"
+        android:paddingStart="@dimen/divideleftandright"
+        android:paddingEnd="@dimen/divideleftandright"
+        android:paddingBottom="10dp">
+
+        <EditText
+            android:id="@+id/edit_number"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/add_friend_text_selector"
+            android:hint="@string/add_watch_friend_by_pnonenum"
+            android:inputType="numberDecimal"
+            android:maxLength="18"
+            android:maxLines="1"
+            android:paddingStart="5dp"
+            android:textColor="@color/white"
+            android:textColorHint="@color/white"
+            android:textCursorDrawable="@null"
+            android:textSize="@dimen/xiaomiMyTextNickname" />
+        <TextView
+            android:id="@+id/btn_add_friend"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignEnd="@id/edit_number"
+            android:layout_alignTop="@id/edit_number"
+            android:layout_alignBottom="@id/edit_number"
+            android:gravity="center"
+            android:paddingEnd="18dp"
+            android:text="@string/search"
+            android:textColor="@color/color_3"
+            android:textSize="@dimen/xiaomiMyTextNickname" />
+    </RelativeLayout>
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recyclerview_watch_list"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/layout_add_friend_num"/>
+
+    <RelativeLayout
+        android:id="@+id/layout_no_watch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true">
+        <ImageView
+            android:id="@+id/iv_no_watch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:background="@drawable/add_friend_phonenum"/>
+        <TextView
+            android:id="@+id/tv_no_watch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/iv_no_watch"
+            android:layout_marginTop="10dp"
+            android:textColor="@color/dark_grey"
+            android:textSize="@dimen/MyTextSize3"
+            android:text="@string/search_watch_ing" />
+    </RelativeLayout>
+
+</RelativeLayout>

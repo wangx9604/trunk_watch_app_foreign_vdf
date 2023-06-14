@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:id="@+id/send_time"
+        android:layout_width="311.33dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="18.66dp"
+        android:layout_marginBottom="10.33dp">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:layout_centerVertical="true"
+            android:layout_toLeftOf="@+id/chat_send_time"
+            android:background="@color/chat_item_text" />
+
+        <TextView
+            android:id="@+id/chat_send_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_marginLeft="11dp"
+            android:layout_marginRight="11dp"
+            android:text="nihao"
+            android:textColor="@color/m_a_spliter_line"
+            android:textSize="@dimen/xiaomiMyTextSize7" />
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:layout_centerVertical="true"
+            android:layout_toRightOf="@+id/chat_send_time"
+            android:background="@color/chat_item_text" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="70dp"
+        android:layout_marginTop="9.33dp">
+
+        <ImageView
+            android:id="@+id/right_head"
+            android:layout_width="38.66dp"
+            android:layout_height="38.66dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="16.66dp"
+            android:src="@drawable/head_1" />
+
+        <com.xiaoxun.xun.views.HttpTextView
+            android:id="@+id/tv_right_chat_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="8.66dp"
+            android:layout_toLeftOf="@+id/right_head"
+            android:autoLink="all"
+            android:background="@drawable/dialog_box2_0"
+            android:gravity="left|center_vertical"
+            android:padding="10dp"
+            android:text=""
+            android:textColor="@color/color_7"
+            android:textSize="@dimen/xiaomiMyTextSize1" />
+
+        <ImageView
+            android:id="@+id/right_retry"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="8dp"
+            android:layout_toLeftOf="@+id/tv_right_chat_content"
+            android:background="@drawable/chat_send_progessbar" />
+
+        <ProgressBar
+            android:id="@+id/right_waiting"
+            android:layout_width="16.6dp"
+            android:layout_height="16.6dp"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="8dp"
+            android:layout_toLeftOf="@+id/tv_right_chat_content"
+            android:indeterminateDrawable="@drawable/chat_send_progessbar"
+            android:indeterminateDuration="1000"
+            android:visibility="visible" />
+
+    </RelativeLayout>
+
+    <ImageView
+        android:id="@+id/interval_view"
+        android:layout_width="match_parent"
+        android:layout_height="10dp" />
+</LinearLayout>

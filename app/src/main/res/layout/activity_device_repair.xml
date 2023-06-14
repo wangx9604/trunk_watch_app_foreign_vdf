@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom_setting="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:fitsSystemWindows="true">
+    <include
+        android:id="@+id/title"
+        layout="@layout/activity_title" />
+    <com.xiaoxun.xun.views.CustomSettingView
+        android:id="@+id/layout_track_commit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        custom_setting:iv_icon="@drawable/repair_commit"
+        custom_setting:tv_title="@string/repair_track_commit" />
+    <com.xiaoxun.xun.views.CustomSettingView
+        android:id="@+id/layout_track_query"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        custom_setting:iv_icon="@drawable/repair_query"
+        custom_setting:tv_title="@string/repair_track_query" />
+    <com.xiaoxun.xun.views.CustomSettingView
+        android:id="@+id/layout_track_policy"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        custom_setting:iv_icon="@drawable/repair_policy"
+        custom_setting:tv_title="@string/repair_track_policy" />
+    <com.xiaoxun.xun.views.CustomSettingView
+        android:id="@+id/layout_repair_shop"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        custom_setting:iv_icon="@drawable/repair_shop"
+        custom_setting:tv_title="@string/repair_track_shop" />
+</LinearLayout>

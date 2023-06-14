@@ -1,0 +1,262 @@
+package com.xiaoxun.xun.ScheduleCard.adapters;
+
+import android.content.Context;
+import android.os.Handler;
+import android.support.annotation.NonNull;
+import android.support.v7.widget.CardView;
+import android.support.v7.widget.RecyclerView;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.ScheduleCard.activitys.ScheduleCardUtils;
+import com.xiaoxun.xun.ScheduleCard.beans.ScheduleCardItemBean;
+import com.xiaoxun.xun.interfaces.OnItemClickListener;
+
+import java.util.ArrayList;
+
+public class ScheduleCardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+
+    private Context mContext;
+    private ArrayList<ScheduleCardItemBean> mData;
+    private ArrayList<String> mCustomList = new ArrayList<>();
+
+    private OnItemClickListener mOnClearListener;
+    private OnItemClickListener mOnAddItemListener;
+    private OnItemClickListener mOnEditItemListener;
+    private OnItemClickListener mOnCardItemListener;
+    private Handler myHandler;
+
+    public ScheduleCardAdapter(Context context, ArrayList<ScheduleCardItemBean> datas, Handler handler){
+        mContext = context;
+        mData = datas;
+        myHandler = handler;
+    }
+
+    public void setmOnRemoveClearListener(OnItemClickListener listener){
+        mOnClearListener = listener;
+    }
+
+    public void setmOnAddClassListener(OnItemClickListener listener){
+        mOnAddItemListener = listener;
+    }
+
+    public void setmOnEditItemListener(OnItemClickListener listener){
+        mOnEditItemListener = listener;
+    }
+
+    public void setmOnCardItemListener(OnItemClickListener listener){
+        mOnCardItemListener = listener;
+    }
+
+    public void AddCustomList(ArrayList<String> mlist){
+        if(mlist  != null) {
+            mCustomList.clear();
+            mCustomList.addAll(mlist);
+        }
+    }
+
+    @NonNull
+    @Override
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
+        View view ;
+        switch(viewType){
+            case 1:
+                view= LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.item_schedule_card_0, viewGroup, false);
+                return new ScheduleTitleViewHolder(view);
+            case 2:
+            case 3:
+            case 4:
+            case 5:
+            default:
+                view= LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.item_schedule_card_1, viewGroup, false);
+                return new ScheduleContentViewHolder(view);
+        }
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder viewHolder, final int i) {
+        ScheduleCardItemBean mScheduleClassName = mData.get(i);
+        if(mScheduleClassName.getmItemType() == 1){
+            ((ScheduleTitleViewHolder)viewHolder).mTitle0.setText(mScheduleClassName.getmScheduleName());
+            ((ScheduleTitleViewHolder)viewHolder).mTitle1.setText(mScheduleClassName.getmScheduleDesc());
+        }else if(mScheduleClassName.getmItemType() == 2){
+
+            ((ScheduleContentViewHolder) viewHolder).mBlankView.setVisibility(View.GONE);
+            ((ScheduleContentViewHolder) viewHolder).mUnderLineView.setVisibility(View.VISIBLE);
+            ((ScheduleContentViewHolder) viewHolder).mUnderLineView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+            ((ScheduleContentViewHolder) viewHolder).mTitle0.setVisibility(View.VISIBLE);
+            ((ScheduleContentViewHolder) viewHolder).mIconImageView.setVisibility(View.GONE);
+            ((ScheduleContentViewHolder) viewHolder).mSelectState.setVisibility(View.GONE);
+            if(mScheduleClassName.isEditMode()) {
+                if("N/A".equals(mScheduleClassName.getmScheduleName())){
+                    ((ScheduleContentViewHolder) viewHolder).mCardView.setCardBackgroundColor(
+                            mContext.getResources().getColor(android.R.color.transparent));
+                    ((ScheduleContentViewHolder) viewHolder).mTitle0.setVisibility(View.GONE);
+                    ((ScheduleContentViewHolder) viewHolder).mIconImageView.setVisibility(View.VISIBLE);
+                    ((ScheduleContentViewHolder) viewHolder).mIconImageView.setBackgroundResource(R.drawable.schedule_no_class);
+                }else if(mScheduleClassName.isEditOperate()) {
+                    ((ScheduleContentViewHolder) viewHolder).mCardView.setCardBackgroundColor(
+                            mContext.getResources().getColor(R.color.schedule_edit_oper_yes));
+                    ((ScheduleContentViewHolder) viewHolder).mTitle0.setTextColor(
+                            mContext.getResources().getColor(R.color.white)
+                    );
+                    ((ScheduleContentViewHolder) viewHolder).mTitle0.setText(mScheduleClassName.getmScheduleName());
+                }else{
+                    ((ScheduleContentViewHolder) viewHolder).mCardView.setCardBackgroundColor(
+                            mContext.getResources().getColor(R.color.schedule_edit_oper_no));
+                    ((ScheduleContentViewHolder) viewHolder).mTitle0.setTextColor(
+                            mContext.getResources().getColor(R.color.schedule_edit_select)
+                    );
+                    ((ScheduleContentViewHolder) viewHolder).mTitle0.setText(mScheduleClassName.getmScheduleName());
+                }
+            }else{
+                ((ScheduleContentViewHolder) viewHolder).mTitle0.setTextColor(
+                        mContext.getResources().getColor(R.color.white)
+                );
+                if("N/A".equals(mScheduleClassName.getmScheduleName())){
+                    ((ScheduleContentViewHolder) viewHolder).mTitle0.setText("");
+                    ((ScheduleContentViewHolder) viewHolder).mCardView.setCardBackgroundColor(
+                            mContext.getResources().getColor(R.color.schedule_no_class));
+                }else {
+                    ((ScheduleContentViewHolder) viewHolder).mTitle0.setText(mScheduleClassName.getmScheduleName());
+                    ((ScheduleContentViewHolder) viewHolder).mCardView.setCardBackgroundColor(
+                            ScheduleCardUtils.getColorValueByClassName(mContext, mCustomList,mScheduleClassName.getmScheduleName()));
+                }
+            }
+
+
+            ((ScheduleContentViewHolder) viewHolder).mCardView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if(mOnCardItemListener != null)
+                        mOnCardItemListener.onItemClick(v, i);
+                }
+            });
+        }else if(mScheduleClassName.getmItemType() == 3){
+            ((ScheduleContentViewHolder) viewHolder).mBlankView.setVisibility(View.VISIBLE);
+            ((ScheduleContentViewHolder) viewHolder).mUnderLineView.setVisibility(View.GONE);
+
+            if(mScheduleClassName.isSelect()){
+                ((ScheduleContentViewHolder) viewHolder).mCardView.setCardBackgroundColor(
+                        mContext.getResources().getColor(R.color.white));
+                ((ScheduleContentViewHolder) viewHolder).mSelectState.setVisibility(View.VISIBLE);
+            }else {
+                ((ScheduleContentViewHolder) viewHolder).mCardView.setCardBackgroundColor(
+                        mContext.getResources().getColor(R.color.schedule_edit_no_select));
+                ((ScheduleContentViewHolder) viewHolder).mSelectState.setVisibility(View.GONE);
+            }
+            ((ScheduleContentViewHolder)viewHolder).mTitle0.setText(mScheduleClassName.getmScheduleName());
+            ((ScheduleContentViewHolder) viewHolder).mTitle0.setTextColor(
+                    mContext.getResources().getColor(R.color.schedule_time_text_color)
+            );
+
+            ((ScheduleContentViewHolder) viewHolder).mCardView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if(mOnEditItemListener != null)
+                        mOnEditItemListener.onItemClick(v, i);
+                }
+            });
+            ((ScheduleContentViewHolder) viewHolder).mCardView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    if(mOnEditItemListener != null)
+                        mOnEditItemListener.onItemLongClick(v, i);
+                    return true;
+                }
+            });
+
+        }else if(mScheduleClassName.getmItemType() == 4){
+            ((ScheduleContentViewHolder) viewHolder).mBlankView.setVisibility(View.VISIBLE);
+            ((ScheduleContentViewHolder) viewHolder).mUnderLineView.setVisibility(View.GONE);
+            if(mScheduleClassName.isSelect()){
+                ((ScheduleContentViewHolder) viewHolder).mCardView.setCardBackgroundColor(
+                        mContext.getResources().getColor(R.color.white));
+                ((ScheduleContentViewHolder) viewHolder).mSelectState.setVisibility(View.VISIBLE);
+            }else {
+                ((ScheduleContentViewHolder) viewHolder).mCardView.setCardBackgroundColor(
+                        mContext.getResources().getColor(R.color.schedule_edit_no_select));
+                ((ScheduleContentViewHolder) viewHolder).mSelectState.setVisibility(View.GONE);
+            }
+            ((ScheduleContentViewHolder) viewHolder).mTitle0.setVisibility(View.GONE);
+            ((ScheduleContentViewHolder) viewHolder).mIconImageView.setVisibility(View.VISIBLE);
+            ((ScheduleContentViewHolder) viewHolder).mIconImageView.setBackgroundResource(R.drawable.schedule_remove);
+
+            ((ScheduleContentViewHolder) viewHolder).mCardView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if(mOnClearListener != null)
+                        mOnClearListener.onItemClick(v, i);
+                }
+            });
+        }else if(mScheduleClassName.getmItemType() == 5){
+            ((ScheduleContentViewHolder) viewHolder).mBlankView.setVisibility(View.VISIBLE);
+            ((ScheduleContentViewHolder) viewHolder).mUnderLineView.setVisibility(View.GONE);
+            ((ScheduleContentViewHolder) viewHolder).mCardView.setCardBackgroundColor(
+                    mContext.getResources().getColor(R.color.schedule_edit_no_select));
+            ((ScheduleContentViewHolder) viewHolder).mTitle0.setVisibility(View.GONE);
+            ((ScheduleContentViewHolder) viewHolder).mIconImageView.setVisibility(View.VISIBLE);
+            ((ScheduleContentViewHolder) viewHolder).mIconImageView.setBackgroundResource(R.drawable.schedule_add);
+            ((ScheduleContentViewHolder) viewHolder).mCardView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if(mOnAddItemListener != null)
+                        mOnAddItemListener.onItemClick(v, i);
+                }
+            });
+        }else{
+            ((ScheduleContentViewHolder)viewHolder).mTitle0.setText(mScheduleClassName.getmScheduleName());
+        }
+    }
+
+    @Override
+    public int getItemCount() {
+        if(mData == null) return 0;
+        else return mData.size();
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        return mData.get(position).getmItemType();
+    }
+
+    class ScheduleTitleViewHolder extends RecyclerView.ViewHolder {
+
+        private CardView mCardView;
+        private TextView mTitle0;
+        private TextView mTitle1;
+        private View mUnderLineView;
+
+        public ScheduleTitleViewHolder(@NonNull View itemView) {
+            super(itemView);
+            mCardView = itemView.findViewById(R.id.CardView);
+            mTitle0 = itemView.findViewById(R.id.tv_title_0);
+            mTitle1 = itemView.findViewById(R.id.tv_title_1);
+            mUnderLineView = itemView.findViewById(R.id.under_line_view);
+        }
+    }
+
+    class ScheduleContentViewHolder extends RecyclerView.ViewHolder {
+
+        private CardView mCardView;
+        private TextView mTitle0;
+        private ImageView mIconImageView;
+        private ImageView mSelectState;
+        private View mBlankView;
+        private View mUnderLineView;
+
+        public ScheduleContentViewHolder(@NonNull View itemView) {
+            super(itemView);
+            mCardView = itemView.findViewById(R.id.CardView);
+            mTitle0 = itemView.findViewById(R.id.tv_title_0);
+            mIconImageView = itemView.findViewById(R.id.iv_fun_buttion);
+            mSelectState = itemView.findViewById(R.id.iv_select_state);
+            mBlankView = itemView.findViewById(R.id.blank_view);
+            mUnderLineView = itemView.findViewById(R.id.under_line_view);
+        }
+    }
+}

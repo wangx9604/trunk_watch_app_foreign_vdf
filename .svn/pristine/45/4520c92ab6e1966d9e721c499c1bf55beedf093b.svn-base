@@ -1,0 +1,256 @@
+package com.xiaoxun.xun.activitys;
+
+import android.content.Context;
+import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.RecyclerView.ViewHolder;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.xiaoxun.xun.Constants;
+import com.xiaoxun.xun.FunctionUrl;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.beans.SportRunBean;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.interfaces.InterfacesUtil;
+import com.xiaoxun.xun.utils.LogUtil;
+import com.xiaoxun.xun.utils.MyHandler;
+import com.xiaoxun.xun.utils.Sport2Utils;
+import com.xiaoxun.xun.utils.TimeUtil;
+import com.xiaoxun.xun.utils.alipayLoginUtil.NetworkRequestUtils;
+
+import net.minidev.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class SportRunningActivity extends NormalActivity {
+
+    private RecyclerView recyclerView;
+    private TextView tv_head_hint;
+    private SportRunAdapter mSportRunAdapter;
+    private List<SportRunBean> mRunDatas;
+    private List<SportRunBean> mAllTypeRunDatas;
+
+    private String pageKey="";
+    private MyHandler myHandler;
+    private WatchData mCurWatch;
+    private String mBabyName;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_sport_running);
+
+        initAppManage();
+        initData();
+        initView();
+        initListener();
+        getSportRunningData(mCurWatch.getEid(), pageKey);
+    }
+
+    private void initAppManage() {
+        String mWatchData = getIntent().getStringExtra(Constants.WATCH_EID_DATA);
+        mCurWatch = myApp.getCurUser().queryWatchDataByEid(mWatchData);
+        myHandler = new MyHandler(this, new InterfacesUtil.UpdateView() {
+            @Override
+            public void UpdateView(int position) {
+                updateViewByResult();
+            }
+        });
+        mBabyName = mCurWatch.getNickname();
+    }
+
+    private void getSportRunningData(String watchEid,String pageKey) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("eid", watchEid);
+        jsonObject.put("size",10);
+        jsonObject.put("pageKey",pageKey);
+        jsonObject.put("type",1);
+        String data = jsonObject.toJSONString();
+        NetworkRequestUtils.getInstance(this).getNetWorkRequest(data,
+                myApp.getNetService().getAESKEY(), myApp.getToken(),
+                FunctionUrl.SPORT_STEPS_RUNNING, new NetworkRequestUtils.OperationCallback() {
+                    @Override
+                    public void onSuccess(String result) {
+                        LogUtil.e("result:"+result);
+//                        result = "{\"msg\":\"success\",\"datajs\":{\"20190805182829101\":{\"etime\":\"20190805182829101\",\"stime\":\"20190805182827090\",\"steps\":0},\"20190806154533387\":{\"etime\":\"20190806154533387\",\"stime\":\"20190806154528346\",\"steps\":25},\"20190802191111552\":{\"etime\":\"20190802191111552\",\"stime\":\"20190802190040728\",\"steps\":525},\"20190805153827543\":{\"etime\":\"20190805153827543\",\"stime\":\"20190805153821476\",\"steps\":4},\"20190806190018478\":{\"etime\":\"20190806190018478\",\"stime\":\"20190806182903383\",\"steps\":2330},\"20190803154657290\":{\"etime\":\"20190803154657290\",\"stime\":\"20190803154642864\",\"steps\":35}},\"code\":0}";
+                        //1:数据解析
+                        int pageSize = parseDataByResult(result);
+
+                        //2:数据绑定视图
+                        if(pageSize > 0)
+                        myHandler.sendEmptyMessage(MyHandler.CHANGE_VIEW_FLAG);
+                    }
+
+                    @Override
+                    public void onFail(String error) {
+                        LogUtil.e("result:"+error);
+                    }
+                });
+    }
+
+    private void updateViewByResult() {
+        mSportRunAdapter.notifyDataSetChanged();
+    }
+
+    private int parseDataByResult(String result) {
+        int retPageSize = 0;
+        if(Sport2Utils.getIntFromResult(result,"code") == 0){
+            List<SportRunBean> pageData = Sport2Utils.parseSportRunningByResult(myApp,this,result);
+            mRunDatas.addAll(pageData);
+            Sport2Utils.TranSportRunToAllTypeRun(this,mRunDatas,mAllTypeRunDatas);
+            pageKey = mRunDatas.get(mRunDatas.size() - 1).mRunTimeStamp;
+            retPageSize = pageData.size();
+        }
+        return retPageSize;
+    }
+
+    private void initData() {
+        mRunDatas = new ArrayList<>();
+        mAllTypeRunDatas = new ArrayList<>();
+    }
+
+    private void initListener() {
+        ((TextView)findViewById(R.id.tv_title)).setText(R.string.sport_record_title);
+        findViewById(R.id.iv_title_back).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                finish();
+            }
+        });
+
+        mSportRunAdapter.setOnRefreshItemListener(new InterfacesUtil.OnRefreshItemListener() {
+            @Override
+            public void onRefreshItem(int page) {
+                getSportRunningData(mCurWatch.getEid(), pageKey);
+            }
+        });
+    }
+
+    private void initView() {
+        recyclerView = findViewById(R.id.layout_recycler);
+        tv_head_hint = findViewById(R.id.tv_head_title);
+
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this, RecyclerView.VERTICAL,false);
+        recyclerView.setLayoutManager(layoutManager);
+        mSportRunAdapter = new SportRunAdapter(this, mAllTypeRunDatas);
+        recyclerView.setAdapter(mSportRunAdapter);
+
+        tv_head_hint.setText(getString(R.string.sport_running_record, mBabyName));
+    }
+
+    class SportRunAdapter extends RecyclerView.Adapter<ViewHolder>{
+
+        List<SportRunBean> mData;
+        Context ctxt;
+
+        private InterfacesUtil.OnRefreshItemListener onRefreshItemListener;
+
+        public SportRunAdapter(Context context,List<SportRunBean> datas){
+            ctxt = context;
+            mData = datas;
+        }
+
+        @NonNull
+        @Override
+        public ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+            if(i == 0){
+                View view = LayoutInflater.from(ctxt).inflate(R.layout.sport_run_title, viewGroup, false);
+                return new HeadTitle(view);
+            }else if(i == 1){
+                View view = LayoutInflater.from(ctxt).inflate(R.layout.sport_run_item, viewGroup, false);
+                return new ContentInfo(view);
+            }else if(i == 2){
+                View view = LayoutInflater.from(ctxt).inflate(R.layout.sport_run_decoration, viewGroup, false);
+                return new ItemDecoration(view);
+            }else{
+                View view = LayoutInflater.from(ctxt).inflate(R.layout.sport_run_decoration, viewGroup, false);
+                return new ItemDecoration(view);
+            }
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ViewHolder viewHolder, int i) {
+            SportRunBean bean = mData.get(i);
+            if(viewHolder instanceof HeadTitle){
+                ((HeadTitle) viewHolder).tv_head_title.setText(TimeUtil.getRecentlyDay(getApplication(),bean.mRunDate));
+            }else if(viewHolder instanceof ContentInfo){
+                ((ContentInfo) viewHolder).tv_start_time.setText(TimeUtil.getTimeHHMM(bean.mRunST));
+                ((ContentInfo) viewHolder).tv_sport_data.setText(bean.mRunKilo);
+                ((ContentInfo) viewHolder).tv_sport_dura.setText(bean.mRunDura);
+                ((ContentInfo) viewHolder).tv_sport_type.setText(
+                        Sport2Utils.getRunningTypeInfo(ctxt, bean.mRunType));
+                ((ContentInfo) viewHolder).iv_sport_icon.setBackgroundResource(Sport2Utils.getRunningTypeRid(bean.mRunType));
+            }else if(viewHolder instanceof ItemDecoration){
+
+            }
+
+            if(i == getItemCount() - 1){
+                this.onRefreshItemListener.onRefreshItem(1);
+            }
+        }
+
+        @Override
+        public int getItemCount() {
+            if(mData != null){
+                return mData.size();
+            }else{
+                return 0;
+            }
+        }
+
+        @Override
+        public int getItemViewType(int position) {
+            if(mData.size() == 0)
+                return super.getItemViewType(position);
+            else
+                return mData.get(position).mLayoutType;
+        }
+
+        public void setOnRefreshItemListener(InterfacesUtil.OnRefreshItemListener onItemListener){
+            this.onRefreshItemListener = onItemListener;
+        }
+
+        class HeadTitle extends RecyclerView.ViewHolder{
+
+            TextView tv_head_title;
+
+            public HeadTitle(@NonNull View itemView) {
+                super(itemView);
+                tv_head_title = itemView.findViewById(R.id.sport_text);
+            }
+        }
+
+        class ContentInfo extends RecyclerView.ViewHolder{
+
+            TextView tv_start_time;
+            TextView tv_sport_data;
+            TextView tv_sport_dura;
+            TextView tv_sport_type;
+            ImageView iv_sport_icon;
+
+            public ContentInfo(@NonNull View itemView) {
+                super(itemView);
+                tv_start_time = itemView.findViewById(R.id.sport_time);
+                tv_sport_data = itemView.findViewById(R.id.tv_sport_data);
+                tv_sport_dura = itemView.findViewById(R.id.tv_sport_dura);
+                tv_sport_type = itemView.findViewById(R.id.sport_text);
+                iv_sport_icon = itemView.findViewById(R.id.setting_icon);
+            }
+        }
+
+        class ItemDecoration extends RecyclerView.ViewHolder{
+
+            public ItemDecoration(@NonNull View itemView) {
+                super(itemView);
+            }
+        }
+    }
+
+}

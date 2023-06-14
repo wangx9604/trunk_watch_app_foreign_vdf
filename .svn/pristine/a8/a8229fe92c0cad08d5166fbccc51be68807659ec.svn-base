@@ -1,0 +1,414 @@
+package com.xiaoxun.xun.activitys;
+
+import android.app.Dialog;
+import android.content.Intent;
+import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.View;
+import android.widget.ImageButton;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.beans.SleepTime;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.interfaces.MsgCallback;
+import com.xiaoxun.xun.services.NetService;
+import com.xiaoxun.xun.utils.CloudBridgeUtil;
+import com.xiaoxun.xun.utils.CustomSelectDialogUtil;
+import com.xiaoxun.xun.utils.TimeUtil;
+import com.xiaoxun.xun.utils.ToastUtil;
+import com.xiaoxun.xun.views.CustomSettingView;
+import com.xiaoxun.xun.views.SharedPreferencesFinalKeyUtil;
+
+import net.minidev.json.JSONObject;
+import net.minidev.json.JSONValue;
+
+import java.util.ArrayList;
+
+/**
+ * Created by huangyouyang on 2018/7/12.
+ */
+
+public class PowersaveSettingActivity extends NormalActivity implements MsgCallback {
+    private View btnBack;
+    private CustomSettingView mLayoutDeviceOffline;
+    private CustomSettingView mLayoutSleepmode;
+    private CustomSettingView mLayoutAppUsedInfo;
+    private int iItemSelectMode = Const.DEFAULT_OFFLINEMODE_VALUE;
+    private int iItemModifyMode;
+    private WatchData focusWatch;
+    private NetService mNetService;
+    private RelativeLayout mLayoutintelligent;
+    private ImageButton mBtnIntelligentPowersaving;
+    SleepTime sleepTime;
+    private CustomSettingView mLayoutOperationmode;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_powersave_setting);
+        ((TextView) findViewById(R.id.tv_title)).setText(getText(R.string.power_saving_setting2));
+
+        initData();
+        //getListItemFromCloudBridge();
+        initView();
+        initListener();
+        updateSettingState();
+        getDataFromCloudBridge();
+    }
+
+    private void initView() {
+        btnBack = findViewById(R.id.iv_title_back);
+        mLayoutDeviceOffline = findViewById(R.id.layout_device_offline);
+        mLayoutDeviceOffline.setVisibility(View.GONE);
+        mLayoutAppUsedInfo = findViewById(R.id.layout_app_useInfo);
+        //休眠时段
+        mLayoutSleepmode = findViewById(R.id.layout_devices_sleepmode);
+        //智能省电
+        mLayoutintelligent = findViewById(R.id.setting_watch_intelligent_powersaving);
+        mBtnIntelligentPowersaving = findViewById(R.id.btn_watch_intelligent_powersaving);
+        mLayoutintelligent.setVisibility(View.VISIBLE);
+        mLayoutOperationmode = findViewById(R.id.layout_device_operationmode);
+    }
+
+    private void initData() {
+        focusWatch = ((ImibabyApp) getApplication()).getCurUser().getFocusWatch();
+        mNetService = myApp.getNetService();
+        myApp.setValue(SharedPreferencesFinalKeyUtil.SHARE_INTELLIGENT_POWER_SAVING, true); //设置省电优化小红点消失
+    }
+
+    private void updateSettingState() {
+        //移动数据设置
+        iItemSelectMode = myApp.getIntValue(focusWatch.getEid() + CloudBridgeUtil.OFFLINE_MODE_VALUE, Const.DEFAULT_OFFLINEMODE_VALUE);
+        switch (iItemSelectMode) {
+            case 0:
+                mLayoutDeviceOffline.setState(getString(R.string.offline_mode_on));
+                break;
+            case 1:
+                mLayoutDeviceOffline.setState(getString(R.string.offline_mode_battery2));
+                break;
+            case 2:
+                mLayoutDeviceOffline.setState(getString(R.string.close));
+                break;
+            default:
+                mLayoutDeviceOffline.setState(getString(R.string.offline_mode_battery));
+        }
+        //智能省电 705 710 730 707_H01 709_H01默认开启智能省电 其他关闭
+        if (focusWatch.isDevice705() || focusWatch.isDevice710() || focusWatch.isDevice706_A02() || focusWatch.isDevice900_A03() || focusWatch.isDevice707_H01() || focusWatch.isDevice709_H01()){
+            if (myApp.getStringValue(myApp.getCurUser().getFocusWatch().getEid() + Const.SHARE_PREF_FIELD_INTELLIGENT_POWERSAVING_ONOFF, "1").equals("0")) {
+                mBtnIntelligentPowersaving.setImageResource(R.drawable.switch_off);
+                mapSetMsg(CloudBridgeUtil.KEY_NAME_PWR_SAVING, "0");
+            } else {
+                mBtnIntelligentPowersaving.setImageResource(R.drawable.switch_on);
+                mapSetMsg(CloudBridgeUtil.KEY_NAME_PWR_SAVING, "1");
+            }
+        } else {
+            if (myApp.getStringValue(myApp.getCurUser().getFocusWatch().getEid() + Const.SHARE_PREF_FIELD_INTELLIGENT_POWERSAVING_ONOFF, "0").equals("0")) {
+                mBtnIntelligentPowersaving.setImageResource(R.drawable.switch_off);
+                mapSetMsg(CloudBridgeUtil.KEY_NAME_PWR_SAVING, "0");
+            } else {
+                mBtnIntelligentPowersaving.setImageResource(R.drawable.switch_on);
+                mapSetMsg(CloudBridgeUtil.KEY_NAME_PWR_SAVING, "1");
+            }
+        }
+
+        if (sleepTime != null && sleepTime.onoff.equals("1")) {
+            if (sleepTime != null && !TextUtils.isEmpty(sleepTime.type)) {
+                if (sleepTime.type.equals("1")) {
+                    mLayoutSleepmode.setState(getString(R.string.shutdown_when_dormancy));
+                } else if (sleepTime.type.equals("0")) {
+                    mLayoutSleepmode.setState(getString(R.string.flight_mode_when_dormancy));
+                }
+            }
+        } else {
+            mLayoutSleepmode.setState(getString(R.string.close));
+        }
+        if (focusWatch.isDevice705() || focusWatch.isDevice710() || focusWatch.isDevice703()
+                || focusWatch.isDevice730() || focusWatch.isDevice707_A05()) {
+            if(focusWatch.isDevice707_A05()){
+                mLayoutAppUsedInfo.setVisibility(View.VISIBLE);
+                mLayoutintelligent.setVisibility(View.GONE);
+            }else {
+                mLayoutAppUsedInfo.setVisibility(View.VISIBLE);
+                mLayoutintelligent.setVisibility(View.VISIBLE);
+            }
+        } else {
+            mLayoutAppUsedInfo.setVisibility(View.GONE);
+            mLayoutintelligent.setVisibility(View.GONE);
+        }
+
+        //手机模式
+        int operationModeSelect = myApp.getIntValue(focusWatch.getEid() + CloudBridgeUtil.OPERATION_MODE_VALUE, Const.DEFAULT_OPERATIONMODE_VALUE);
+        switch (operationModeSelect) {
+            case 1:
+            case 4:
+                mLayoutOperationmode.setState(getString(R.string.powerSaving_mode_setting));
+                break;
+            case 2:
+                mLayoutOperationmode.setState(getString(R.string.normal_mode_setting));
+                break;
+            case 5:
+                mLayoutOperationmode.setState(getString(R.string.fast_mode_setting));
+                break;
+            case 3:
+            default:
+                mLayoutOperationmode.setState(getString(R.string.performance_mode_setting));
+        }
+
+    }
+
+    private void initListener() {
+        btnBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                PowersaveSettingActivity.this.finish();
+            }
+        });
+        mLayoutDeviceOffline.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openOfflineSettingDialog();
+            }
+        });
+        mBtnIntelligentPowersaving.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (myApp.getStringValue(focusWatch.getEid() + Const.SHARE_PREF_FIELD_INTELLIGENT_POWERSAVING_ONOFF, "1").equals("0")) {
+                    mapSetMsg(CloudBridgeUtil.KEY_NAME_PWR_SAVING, "1");
+                } else {
+                    mapSetMsg(CloudBridgeUtil.KEY_NAME_PWR_SAVING, "0");
+                }
+            }
+        });
+        mLayoutSleepmode.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                final Intent intent = new Intent(PowersaveSettingActivity.this, SleepTimeActivity.class);
+                if (sleepTime != null) {
+                    intent.putExtra(Const.KEY_MAP_SLEEPOBJECT, sleepTime);
+                    Log.i("--------cui:", "sleepTime.onoff" + sleepTime.onoff + "sleepTime.type" + sleepTime.type);
+                }
+                startActivity(intent);
+            }
+        });
+
+        mLayoutAppUsedInfo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                startActivity(new Intent(PowersaveSettingActivity.this, AppUsageActivity.class));
+                /*if (focusWatch.isDevice703() || focusWatch.isDevice705() || focusWatch.isDevice710()
+                        || (focusWatch.isDevice730() && myApp.isControledByVersion(focusWatch, false, "T28"))) {
+                    startActivity(new Intent(PowersaveSettingActivity.this, AppUsageActivity.class));
+                } else {
+                    if (focusWatch.isDevice730())
+                        ToastUtil.showNewVerToast(PowersaveSettingActivity.this, focusWatch, "T28");
+                    else if (focusWatch.isDevice710())
+                        ToastUtil.showNewVerToast(PowersaveSettingActivity.this, focusWatch, "T30");
+                }*/
+            }
+        });
+
+        mLayoutOperationmode.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(PowersaveSettingActivity.this, OperationMode.class));
+            }
+        });
+    }
+
+    private void openOfflineSettingDialog() {
+
+        ArrayList<String> itemList = new ArrayList<>();
+        itemList.add(getText(R.string.offline_mode_on).toString());
+        itemList.add(getText(R.string.offline_mode_battery_desc).toString());
+        itemList.add(getText(R.string.offline_mode_off_desc).toString());
+        Dialog dlg = CustomSelectDialogUtil.CustomItemSelectDialogWithTitle(PowersaveSettingActivity.this, getText(R.string.offline_mode_setting).toString(),
+                getString(R.string.offline_mode_setting_desc), itemList,
+                new CustomSelectDialogUtil.AdapterItemClickListener() {
+                    @Override
+                    public void onClick(View v, int position) {
+                        iItemModifyMode = position - 1;
+                    }
+                },
+                iItemSelectMode + 1,
+                new CustomSelectDialogUtil.CustomDialogListener() {
+                    @Override
+                    public void onClick(View v, String text) {
+                    }
+                }, getText(R.string.cancel).toString(),
+                new CustomSelectDialogUtil.CustomDialogListener() {
+                    @Override
+                    public void onClick(View v, String text) {
+                        if (myApp.isInDelayedTime("offline_mode")) {
+                            ToastUtil.show(PowersaveSettingActivity.this, getString(R.string.operation_try_again));
+                        } else {
+                            myApp.putDelayedTime("offline_mode");
+                            if (iItemModifyMode != iItemSelectMode) {
+                                mapSetModeValue(iItemModifyMode);
+                            }
+                        }
+                    }
+                }, getText(R.string.confirm).toString(),
+                true);
+        dlg.show();
+    }
+
+    private void getDataFromCloudBridge() {
+        String[] keys = new String[2];
+        keys[0] = CloudBridgeUtil.OFFLINE_MODE_VALUE;
+        keys[1] = CloudBridgeUtil.KEY_NAME_PWR_SAVING;
+        if (mNetService != null) {
+            mNetService.sendMapMGetMsg(focusWatch.getEid(), keys, PowersaveSettingActivity.this);
+        }
+    }
+
+    private void mapSetModeValue(int mode) {
+        JSONObject offlineMode = new JSONObject();
+        offlineMode.put(CloudBridgeUtil.MODE_VALUE, Integer.toString(mode));
+        if (mNetService != null) {
+            mNetService.sendMapSetMsg(focusWatch.getEid(), focusWatch.getFamilyId(), CloudBridgeUtil.OFFLINE_MODE_VALUE, offlineMode.toJSONString(), PowersaveSettingActivity.this);
+        }
+    }
+
+    @Override
+    public void doCallBack(JSONObject reqMsg, JSONObject respMsg) {
+        int cid = (Integer) respMsg.get(CloudBridgeUtil.KEY_NAME_CID);
+        switch (cid) {
+            case CloudBridgeUtil.CID_MAPSET_RESP:
+                int rc = CloudBridgeUtil.getCloudMsgRC(respMsg);
+                if (rc > 0) {
+                    JSONObject magsetPl = (JSONObject) reqMsg.get(CloudBridgeUtil.KEY_NAME_PL);
+                    String offlineMode = (String) magsetPl.get(CloudBridgeUtil.OFFLINE_MODE_VALUE);
+                    if (offlineMode != null && offlineMode.length() > 0) {
+                        JSONObject offlineModeJson = (JSONObject) JSONValue.parse(offlineMode);
+                        iItemSelectMode = Integer.parseInt((String) offlineModeJson.get(CloudBridgeUtil.MODE_VALUE));
+                        myApp.setValue(focusWatch.getEid() + CloudBridgeUtil.OFFLINE_MODE_VALUE, iItemSelectMode);
+                        updateSettingState();
+                    }
+                } else if (rc == CloudBridgeUtil.RC_TIMEOUT) {
+                    ToastUtil.showMyToast(this, getString(R.string.phone_set_timeout), Toast.LENGTH_SHORT);
+                } else if (rc == CloudBridgeUtil.RC_NETERROR || rc == CloudBridgeUtil.RC_SOCKET_NOTREADY) {
+                    ToastUtil.showMyToast(this, getString(R.string.network_error_prompt), Toast.LENGTH_SHORT);
+                } else if (rc == CloudBridgeUtil.ERROR_CODE_COMMOM_GENERAL_EXCEPTION) {
+                    ToastUtil.showMyToast(this, getString(R.string.set_error), Toast.LENGTH_SHORT);
+                }
+
+                if (rc == 1) {
+                    //智能省电
+                    JSONObject magsetPl = (JSONObject) reqMsg.get(CloudBridgeUtil.KEY_NAME_PL);
+                    String powersavingState = (String) magsetPl.get(CloudBridgeUtil.KEY_NAME_PWR_SAVING);
+                    Log.i("cui", "powersavingState=" + powersavingState);
+                    if (powersavingState != null) {
+                        myApp.setValue(myApp.getCurUser().getFocusWatch().getEid() + Const.SHARE_PREF_FIELD_INTELLIGENT_POWERSAVING_ONOFF, powersavingState);
+                        if (powersavingState.equals("0")) {
+                            mBtnIntelligentPowersaving.setImageResource(R.drawable.switch_off);
+                        } else if (powersavingState.equals("1")) {
+                            mBtnIntelligentPowersaving.setImageResource(R.drawable.switch_on);
+                        }
+                    }
+                }
+                break;
+
+            case CloudBridgeUtil.CID_MAPGET_MGET_RESP:
+                int mapRc = CloudBridgeUtil.getCloudMsgRC(respMsg);
+                if (mapRc == CloudBridgeUtil.RC_SUCCESS) {
+                    JSONObject maggetPl = (JSONObject) respMsg.get(CloudBridgeUtil.KEY_NAME_PL);
+
+                    if (maggetPl.containsKey(CloudBridgeUtil.OFFLINE_MODE_VALUE)) {
+                        String offlineMode = (String) maggetPl.get(CloudBridgeUtil.OFFLINE_MODE_VALUE);
+                        if (offlineMode != null && offlineMode.length() > 0) {
+                            JSONObject offlineModeJson = (JSONObject) JSONValue.parse(offlineMode);
+                            iItemSelectMode = Integer.parseInt((String) offlineModeJson.get(CloudBridgeUtil.MODE_VALUE));
+                            myApp.setValue(focusWatch.getEid() + CloudBridgeUtil.OFFLINE_MODE_VALUE, iItemSelectMode);
+                            updateSettingState();
+                        }
+                    }
+                    //智能省电
+                    if (maggetPl.containsKey(CloudBridgeUtil.KEY_NAME_PWR_SAVING)) {
+                        String powersavingState = (String) maggetPl.get(CloudBridgeUtil.KEY_NAME_PWR_SAVING);
+                        Log.i("cui", "map get powersavingState=" + powersavingState);
+                        if (powersavingState != null && powersavingState.length() > 0) {
+                            myApp.setValue(focusWatch.getEid() + Const.SHARE_PREF_FIELD_INTELLIGENT_POWERSAVING_ONOFF, powersavingState);
+                        }
+                    }
+                } else {
+                    ToastUtil.showMyToast(this, getString(R.string.network_error_prompt), Toast.LENGTH_SHORT);
+                }
+                break;
+
+            case CloudBridgeUtil.CID_MAPGET_RESP:
+                JSONObject pl = (JSONObject) respMsg.get(CloudBridgeUtil.KEY_NAME_PL);
+                int rcMapGet = CloudBridgeUtil.getCloudMsgRC(respMsg);
+                if (rcMapGet == CloudBridgeUtil.RC_SUCCESS) {
+                    String sTmp = (String) pl.get(CloudBridgeUtil.SLEEP_LIST);
+                    if (sTmp != null && !sTmp.equals("[]")) {
+                        Object obj = JSONValue.parse(sTmp);
+                        JSONObject jsonObj = (JSONObject) obj;
+                        sleepTime = new SleepTime();
+                        sleepTime = SleepTime.toBeSleepTimeBean(sleepTime, jsonObj);
+                        updateSettingState();
+                    } else {
+                        saveListItemToLocalFirstTime();
+                    }
+                } else if (rcMapGet == CloudBridgeUtil.ERROR_CODE_COMMOM_GENERAL_EXCEPTION) {
+                    saveListItemToLocalFirstTime();
+                } else if (rcMapGet == CloudBridgeUtil.RC_SOCKET_NOTREADY) {
+                    ToastUtil.showMyToast(this, getString(R.string.set_error8), Toast.LENGTH_SHORT);
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void saveListItemToLocalFirstTime() {
+        String starthour = "00";
+        String endhour = "07";
+        String type = "1";
+        if (focusWatch.isDevice102() || focusWatch.isDevice105()) {
+            starthour = "00";
+        } else if (focusWatch.isDevice302() || focusWatch.isDevice501() || focusWatch.isDevice708_A06() || focusWatch.isDevice709_A03()
+                || focusWatch.isDevice708_A07() || focusWatch.isDevice709_A05()|| focusWatch.isDevice707_H01() || focusWatch.isDevice709_H01()) {
+            if(focusWatch.isDevice707_A05()){
+                starthour = "21";
+            }else {
+                starthour = "22";
+            }
+        } else if (focusWatch.isDevice502() || focusWatch.isDevice303() || focusWatch.isDevice303_A02()
+                || focusWatch.isDevice305() || focusWatch.isDevice701() || focusWatch.isDevice710() || focusWatch.isDevice705() || focusWatch.isDevice307()) {
+            starthour = "21";
+        }
+        if(focusWatch.isDevice701()|| focusWatch.isDevice709_H01()){
+            sleepTime = new SleepTime(starthour, "00", endhour, "00", "1", "0", TimeUtil.getTimeStampLocal());
+        }else {
+            sleepTime = new SleepTime(starthour, "00", endhour, "00", "1", type, TimeUtil.getTimeStampLocal());
+        }
+        updateSettingState();
+    }
+
+    private void mapSetMsg(String key, String value) {
+        String eid = myApp.getCurUser().getFocusWatch().getEid();
+        String familyid = myApp.getCurUser().getFocusWatch().getFamilyId();
+        if (mNetService != null) {
+            mNetService.sendMapSetMsg(eid, familyid, key, value, PowersaveSettingActivity.this);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        getListItemFromCloudBridge();
+    }
+
+    private void getListItemFromCloudBridge() {
+        if (mNetService != null)
+            mNetService.sendMapGetMsg(focusWatch.getEid(), CloudBridgeUtil.SLEEP_LIST, PowersaveSettingActivity.this);////CID_MAPGET_RESP
+    }
+}

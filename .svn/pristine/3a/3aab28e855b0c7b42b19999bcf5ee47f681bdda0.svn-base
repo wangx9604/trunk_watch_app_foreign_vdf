@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/color_6"
+    android:orientation="vertical">
+
+    <include
+        android:id="@+id/title"
+        layout="@layout/activity_title" />
+
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/title"
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:id="@+id/line_head"
+            android:layout_width="match_parent"
+            android:layout_height="187dp"
+            android:background="@color/bg_color_orange"
+            android:orientation="vertical">
+
+            <FrameLayout
+                android:id="@+id/user_head"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="30dp"
+                android:clickable="true">
+
+                <ImageButton
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:background="@drawable/avatar_bottom_2" />
+<ImageView
+                    android:id="@+id/iv_head"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:src="@drawable/head_2" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:id="@+id/line_username"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/user_head"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="12dp"
+                android:clickable="true"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tv_username"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="nickname"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/xiaomiMyTextNickname" />
+
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/iv_username"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignTop="@id/line_username"
+                android:layout_marginLeft="5dp"
+                android:layout_marginTop="5dp"
+                android:layout_toRightOf="@id/line_username"
+                android:background="@drawable/name_edit_disable"
+                android:clickable="true"
+                android:visibility="visible" />
+
+        </RelativeLayout>
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <RelativeLayout
+                android:id="@+id/line_birthday"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/SingleItemHeight"
+                android:background="@drawable/setting_item_selector"
+                android:clickable="true"
+                android:paddingLeft="@dimen/divideleftandright"
+                android:paddingRight="@dimen/divideleftandright">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:text="@string/birthday"
+                    android:textColor="@color/black"
+                    android:textSize="@dimen/xiaomiMyTextSize3" />
+
+                <TextView
+                    android:id="@+id/tv_birthday"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginRight="18.33dp"
+                    android:text="2012-12-12"
+                    android:textColor="@color/txt_grey"
+                    android:textSize="@dimen/xiaomiMyTextSize1" />
+
+                <ImageButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:background="@drawable/btn_next_selector" />
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="1px"
+                    android:layout_alignParentBottom="true"
+                    android:src="@color/divider_color" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/line_height"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/SingleItemHeight"
+                android:background="@drawable/setting_item_selector"
+                android:clickable="true"
+                android:paddingLeft="@dimen/divideleftandright"
+                android:paddingRight="@dimen/divideleftandright">
+
+                <TextView
+                    android:id="@+id/tv_height"
+                    android:layout_width="wrap_content"
+
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginRight="18.33dp"
+                    android:text="厘米"
+                    android:textColor="@color/txt_grey"
+                    android:textSize="@dimen/xiaomiMyTextSize1" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:text="@string/height"
+                    android:textColor="@color/black"
+                    android:textSize="@dimen/xiaomiMyTextSize3" />
+
+                <ImageButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:background="@drawable/btn_next_selector" />
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="1px"
+                    android:layout_alignParentBottom="true"
+                    android:src="@color/divider_color" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/line_weight"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/SingleItemHeight"
+                android:background="@drawable/setting_item_selector"
+                android:clickable="true"
+                android:paddingLeft="@dimen/divideleftandright"
+                android:paddingRight="@dimen/divideleftandright">
+
+                <TextView
+                    android:id="@+id/tv_weight"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginRight="18.33dp"
+                    android:text="公斤"
+
+                    android:textColor="@color/txt_grey"
+                    android:textSize="@dimen/xiaomiMyTextSize1" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:text="@string/weight"
+                    android:textColor="@color/black"
+                    android:textSize="@dimen/xiaomiMyTextSize3" />
+
+                <ImageButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:background="@drawable/btn_next_selector" />
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="1px"
+                    android:layout_alignParentBottom="true"
+                    android:src="@color/divider_color" />
+            </RelativeLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btn_next_step"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="21.3dp"
+        android:background="@drawable/btn_dialgo_one_button"
+        android:text="@string/security_zone_next"
+        android:textColor="@color/black"
+        android:textSize="@dimen/xiaomiMyTextSize1" />
+
+</RelativeLayout>

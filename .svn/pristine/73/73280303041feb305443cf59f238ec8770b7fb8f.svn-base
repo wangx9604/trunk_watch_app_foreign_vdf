@@ -1,0 +1,33 @@
+package com.xiaoxun.xun.networkv2;
+
+import com.xiaoxun.xun.Url;
+
+import com.xiaoxun.xun.networkv2.apis.Retrofit2Api;
+
+
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
+public class NetReqByRetrofit2 {
+
+    private static Retrofit2Api getXunDialShop(){
+        Retrofit retrofit= new Retrofit.Builder()
+                .baseUrl(Url.URL_DIAL_SHOP)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        return retrofit.create(Retrofit2Api.class);
+    }
+
+
+    public static void getXunDialShop(String mRequestData, Callback<ResponseBody> mCallback) {
+        RequestBody requestBody = RequestBody.create(MediaType.parse("text/plain"), mRequestData);
+        Call<ResponseBody> mCall = getXunDialShop().xunDialShopCheckVisibleApi(requestBody);
+        mCall.enqueue(mCallback);
+    }
+
+}

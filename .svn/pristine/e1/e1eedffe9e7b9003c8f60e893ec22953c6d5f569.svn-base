@@ -1,0 +1,153 @@
+package com.xiaoxun.xun.networkv2.beans;
+
+import java.util.ArrayList;
+
+public class PrivacyUpdateInfo {
+    int RC;
+    PInfo PL;
+
+    public PrivacyUpdateInfo(int RC) {
+        this.RC = RC;
+    }
+
+    public int getRC() {
+        return RC;
+    }
+
+    public void setRC(int RC) {
+        this.RC = RC;
+    }
+
+    public PInfo getPL() {
+        return PL;
+    }
+
+    public void setPL(PInfo PL) {
+        this.PL = PL;
+    }
+
+    public class PInfo{
+        String content;
+        String privacyUrl;
+        int ver;
+        ArrayList<WatchPrivacyInfo> devices;
+
+        public String getContent() {
+            return content;
+        }
+
+        public void setContent(String content) {
+            this.content = content;
+        }
+
+        public String getPrivacyUrl() {
+            return privacyUrl;
+        }
+
+        public void setPrivacyUrl(String privacyUrl) {
+            this.privacyUrl = privacyUrl;
+        }
+
+        public int getVer() {
+            return ver;
+        }
+
+        public void setVer(int ver) {
+            this.ver = ver;
+        }
+
+        public ArrayList<WatchPrivacyInfo> getDevices() {
+            return devices;
+        }
+
+        public void setDevices(ArrayList<WatchPrivacyInfo> devices) {
+            this.devices = devices;
+        }
+
+        @Override
+        public String toString() {
+            return "PInfo{" +
+                    "content='" + content + '\'' +
+                    ", privacyUrl='" + privacyUrl + '\'' +
+                    ", ver=" + ver +
+                    ", devices=" + devices + '}';
+        }
+    }
+
+    public static class WatchPrivacyInfo{
+        String eid;
+        String privacyUrl;
+        String privacyContent;
+        int ver;
+        String content;
+        String title;
+
+        public String getTitle() {
+            return title;
+        }
+
+        public void setTitle(String title) {
+            this.title = title;
+        }
+
+        public String getEid() {
+            return eid;
+        }
+
+        public void setEid(String eid) {
+            this.eid = eid;
+        }
+
+        public String getPrivacyUrl() {
+            return privacyUrl;
+        }
+
+        public void setPrivacyUrl(String privacyUrl) {
+            this.privacyUrl = privacyUrl;
+        }
+
+        public String getPrivacyContent() {
+            return privacyContent;
+        }
+
+        public void setPrivacyContent(String privacyContent) {
+            this.privacyContent = privacyContent;
+        }
+
+        public int getVer() {
+            return ver;
+        }
+
+        public void setVer(int ver) {
+            this.ver = ver;
+        }
+
+        public String getContent() {
+            return content;
+        }
+
+        public void setContent(String content) {
+            this.content = content;
+        }
+
+        @Override
+        public String toString() {
+            return "WatchPrivacyInfo{" +
+                    "eid='" + eid + '\'' +
+                    ", privacyUrl='" + privacyUrl + '\'' +
+                    ", privacyContent='" + privacyContent + '\'' +
+                    ", ver=" + ver +
+                    ", content='" + content + '\'' +
+                    ", title='" + title + '\'' +
+                    '}';
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "PrivacyUpdateInfo{" +
+                "RC=" + RC +
+                ", PL=" + PL.toString() +
+                '}';
+    }
+}

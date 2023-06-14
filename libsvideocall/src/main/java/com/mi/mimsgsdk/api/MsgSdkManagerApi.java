@@ -1,0 +1,78 @@
+package com.mi.mimsgsdk.api;
+
+import android.content.Context;
+import android.view.SurfaceView;
+
+public interface MsgSdkManagerApi {
+
+    // 初始化
+    void voipMsgSdkInit(MiEngineCallback miEngineCallback, Context context, String appId);
+
+    // 加入房间
+    void enterConference(String token, String conferenceid, int uid);
+
+    // 离开房间
+    void exitConference();
+
+    // 开启音频发送
+    void startAudio();
+
+    // 停止音频发送
+    void stopAudio();
+
+    // 开启mic
+    void openMic();
+
+    // 关闭mic
+    void closeMic();
+
+    // 屏蔽某用户音频
+    void audioMuteUser(int uid, boolean muted);
+
+    // 设置音频参数
+    void setAudioProfile(int profile, int scenario);
+
+    // 是否使用扬声器输出声音
+    void setEnableSpeakerphone(boolean enabled);
+
+    // 允许SDK定期向应用程序反馈当前谁在说话以及通话者的音量
+    void enableAudioVolumeIndication();
+
+    // 开启视频发送
+    void startVideo();
+
+    // 停止视频发送
+    void stopVideo();
+
+    // 设置远程用户画面
+    void setupRemoteVideo(SurfaceView surfaceView, int uid);
+
+    // 设置本地画面
+    void setupLocalVideo(SurfaceView surfaceView, int uid);
+
+    SurfaceView createRendererView(Context context);
+
+    // 开启摄像头
+    void openCamera();
+
+    // 关闭摄像头
+    void closeCamera();
+
+    // 切换摄像头
+    void switchCamera();
+
+    // 屏蔽某用户视频
+    void videoMuteUser(int uid, boolean muted);
+
+    // 设置视频参数
+    void setVideoProfile(int width, int height, int frameRate, int bitrate);
+
+    // 设置参数
+    void setParameters(String parameters);
+
+    // 引擎销毁
+    void destroy();
+
+    // log路径
+    void setLogFile(String path);
+}

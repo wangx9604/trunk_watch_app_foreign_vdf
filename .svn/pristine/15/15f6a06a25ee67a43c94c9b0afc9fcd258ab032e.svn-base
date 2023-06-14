@@ -1,0 +1,394 @@
+package com.mi.mimsgsdk;
+
+import android.content.Context;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.SurfaceView;
+
+
+import com.blankj.utilcode.util.LogUtils;
+import com.juphoon.cloud.JCCall;
+import com.juphoon.cloud.JCCallCallback;
+import com.juphoon.cloud.JCCallItem;
+import com.juphoon.cloud.JCClient;
+import com.juphoon.cloud.JCClientCallback;
+import com.juphoon.cloud.JCMediaDevice;
+import com.juphoon.cloud.JCMediaDeviceCallback;
+import com.juphoon.cloud.JCMediaDeviceVideoCanvas;
+import com.justalk.cloud.zmf.ZmfVideo;
+import com.mi.mimsgsdk.api.MiEngineCallback;
+
+public class MsgSdkJuphoon implements MsgSdkApi {
+
+    private static final String TAG = "MsgSdkJuphoon";
+
+    private static MsgSdkJuphoon mMsgSdkManager;
+    private MiEngineCallback mMiEngineCallback;
+
+    private JCClient mClient;
+    private JCMediaDevice mMediaDevice;
+    private JCCall mCall;
+
+    // JCClient.create回调
+    private JCClientCallback mJCClientCallback=new JCClientCallback() {
+
+        @Override
+        public void onLogin(boolean result, int reason) {
+            Log.i(TAG, " onLogin result:" + result + " reason:" + reason);
+            if (result && callType == MsgSdkManager.RTC_CALLTYPE_CALL)
+                executeCall();
+        }
+
+        @Override
+        public void onLogout(int reason) {
+            Log.i(TAG ,  " onLogout reason:" + reason);
+        }
+
+        @Override
+        public void onClientStateChange(int state, int oldState) {
+            Log.i(TAG , " onClientStateChange state:" + state + " oldState:" + oldState);
+        }
+
+        @Override
+        public void onOnlineMessageSendResult(int i, boolean b) {
+            Log.i(TAG , " onOnlineMessageSendResult " + i + " | " + b);
+        }
+
+        @Override
+        public void onOnlineMessageReceive(String s, String s1) {
+            Log.i(TAG , " onOnlineMessageReceive " + s + " | " + s1);
+        }
+    };
+
+    // JCMediaDevice.create回调
+    private JCMediaDeviceCallback mJCMediaDeviceCallback = new JCMediaDeviceCallback() {
+
+        @Override
+        public void onCameraUpdate() {  //摄像头变化
+            Log.i(TAG ,  " onCameraUpdate");
+        }
+
+        @Override
+        public void onAudioOutputTypeChange(int i) {  //音频输出类型变化
+            Log.i(TAG , " onAudioOutputTypeChange i:" + i);
+        }
+
+        @Override
+        public void onRenderReceived(JCMediaDeviceVideoCanvas jcMediaDeviceVideoCanvas) {  //收到第一帧数据
+
+            Log.i(TAG, " onRenderReceived");
+            mMiEngineCallback.onReceiveFirstRemoteVideo(0 ,0, 0);
+        }
+
+        @Override
+        public void onRenderStart(JCMediaDeviceVideoCanvas jcMediaDeviceVideoCanvas) {  //渲染开始
+            Log.i(TAG, " onRenderStart");
+        }
+
+        @Override
+        public void onVideoError(JCMediaDeviceVideoCanvas jcMediaDeviceVideoCanvas) {  //视频渲染错误
+            Log.i(TAG, " onVideoError");
+        }
+
+        @Override
+        public void onNeedKeyFrame() {
+            Log.i(TAG, " onNeedKeyFrame");
+        }
+    };
+
+    // JCCall.create回调
+    private JCCallCallback mJCCallCallback = new JCCallCallback() {
+
+        @Override
+        public void onCallItemAdd(JCCallItem jcCallItem) {  //新增通话回调
+            Log.i(TAG, " onCallItemAdd item.direction : " + jcCallItem.getDirection());
+            mJcCallItem = jcCallItem;
+            if (jcCallItem.getDirection() == JCCall.DIRECTION_IN && answerState == 1) {
+                enterConference();
+            }
+        }
+
+        @Override
+        public void onCallItemRemove(JCCallItem jcCallItem, int reason, String description ) {  //移除通话回调
+            Log.i(TAG, " onCallItemRemove reason : " + reason + " description : " + description);
+//            jcCallItem.stopSelfVideo();  // 销毁本地视频画面
+//            jcCallItem.stopOtherVideo();  // 销毁远端视频画面
+            if(reason == JCCall.REASON_NETWORK/* || reason == JCCall.REASON_SESSION_TIMEOUT*/) {
+                mMiEngineCallback.onConnectionLost();
+            } else {
+                mMiEngineCallback.onUserLeave(uid);
+            }
+        }
+
+        @Override
+        public void onCallItemUpdate(JCCallItem jcCallItem, JCCallItem.ChangeParam changeParam) {  //更新通话回调
+            Log.i(TAG, " onCallItemUpdate state : " + jcCallItem.getState());
+            if (jcCallItem.getState() == JCCall.STATE_TALKING)
+                mMiEngineCallback.onJoinRes();
+        }
+
+        @Override
+        public void onMessageReceive(String s, String s1, JCCallItem jcCallItem) {  //通话中收到的消息回调
+            Log.i(TAG, " onMessageReceive");
+        }
+
+        @Override
+        public void onMissedCallItem(JCCallItem jcCallItem) {  //拉取未接来电的回调
+            Log.i(TAG, " onMissedCallItem");
+        }
+
+        @Override
+        public void onDtmfReceived(JCCallItem jcCallItem, int i) {  //通话中收到DTMF回调
+            Log.i(TAG, " onDtmfReceived");
+        }
+    };
+
+    public static synchronized MsgSdkJuphoon getInStance() {
+
+        if (mMsgSdkManager == null)
+            mMsgSdkManager = new MsgSdkJuphoon();
+        return mMsgSdkManager;
+    }
+
+    @Override
+    public void voipMsgSdkInit(MiEngineCallback miEngineCallback, Context context, String appId,String accountEid,String appUrl) {
+
+        this.mMiEngineCallback = miEngineCallback;
+        try {
+            // 初始化
+            mClient = JCClient.create(context, appId, mJCClientCallback, null);
+            LogUtils.e("voipMsgSdkInit appUrl: " + appUrl);
+            //海外环境配置
+            if(!TextUtils.isEmpty(appUrl))
+                mClient.setServerAddress(appUrl);
+            // 登录
+            JCClient.LoginParam loginParam = new JCClient.LoginParam();
+            mClient.login(accountEid, accountEid, loginParam);
+
+            //媒体类
+            mMediaDevice = JCMediaDevice.create(mClient, mJCMediaDeviceCallback);
+            ZmfVideo.screenOrientation(0);
+            ZmfVideo.captureListenRotation(0, 0);
+            ZmfVideo.renderListenRotation(0, 0);
+            //通话类
+            mCall = JCCall.create(mClient, mMediaDevice, mJCCallCallback);
+            mCall.termWhenNetDisconnected = true;  //音频接收网络状态为无网络时是否挂断，默认为 false
+            //根据模式生成配置参数
+            JCCall.MediaConfig mediaConfig = JCCall.MediaConfig.generateByMode(JCCall.MediaConfig.MODE_IOT_SMALL);
+            mCall.updateMediaConfig(mediaConfig);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private JCCallItem mJcCallItem;
+    private String token, conferenceid, targetId;
+    private int uid, callType;
+    @Override
+    public void voipMsgAccountInit(String token, String conferenceid, int uid, String targetId, int callType) {
+        this.token = token;
+        this.conferenceid = conferenceid;
+        this.targetId = targetId;
+        this.uid = uid;
+        this.callType = callType;
+    }
+
+    private int answerState = 0;  //1,点击接听；2，执行接听
+    @Override
+    public void enterConference() {
+
+        Log.i(TAG, " enterConference");
+        answerState = 1;
+        if (callType == MsgSdkManager.RTC_CALLTYPE_RECEIVECALL && mJcCallItem != null) {
+            //mCall.answer(mJcCallItem, true);
+            executeCall();
+            answerState = 2;
+        }
+    }
+
+    private void executeCall() {
+        Log.i(TAG, " executeCall");
+        try {
+            if (mClient != null)
+                mCall.call(targetId, true, new JCCall.CallParam(null, conferenceid));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void exitConference() {
+
+        Log.i(TAG, " exitConference");
+        if (mCall != null) {
+            JCCallItem item = mCall.getActiveCallItem();  //获取当前活跃通话
+            mCall.term(item, JCCall.REASON_NONE, null);  //挂断当前活跃通话
+            JCCall.destroy();
+            JCMediaDevice.destroy();
+        }
+        if (mClient != null) {
+            mClient.logout();
+            mClient = null;
+        }
+        mJcCallItem = null;
+    }
+
+    @Override
+    public void startAudio() {
+
+        mMediaDevice.startAudio();
+    }
+
+    @Override
+    public void stopAudio() {
+
+        mMediaDevice.stopAudio();
+    }
+
+    @Override
+    public void openMic() {
+
+        if (mCall != null) {
+            JCCallItem mCallItem = mCall.getActiveCallItem();
+            mCall.mute(mCallItem);  //开启、取消静音
+        }
+    }
+
+    @Override
+    public void closeMic() {
+
+        if (mCall != null) {
+            JCCallItem mCallItem = mCall.getActiveCallItem();
+            mCall.mute(mCallItem);  //开启、取消静音
+        }
+    }
+
+    @Override
+    public void audioMuteUser(int uid, boolean muted) {
+
+        JCCallItem mCallItem = mCall.getActiveCallItem();
+        mCall.mute(mCallItem);  //开启、取消静音
+    }
+
+    @Override
+    public void setAudioProfile(int profile, int scenario) {
+
+    }
+
+    @Override
+    public void setAudioChangerType(int type) {
+
+    }
+
+    @Override
+    public void setEnableSpeakerphone(boolean enabled) {
+        mMediaDevice.enableSpeaker(enabled);
+    }
+
+    @Override
+    public void enableAudioVolumeIndication() {
+
+    }
+
+    @Override
+    public void startVideo() {
+
+//        JCCallItem mCallItem = mCall.getActiveCallItem();
+//        mCall.enableUploadVideoStream(mCallItem);  //开启/关闭视频流发送
+//        mMediaDevice.startCamera();
+    }
+
+    @Override
+    public void stopVideo() {
+
+//        JCCallItem mCallItem = mCall.getActiveCallItem();
+//        mCall.enableUploadVideoStream(mCallItem);  //开启/关闭视频流发送
+        mMediaDevice.stopCamera();
+    }
+
+    @Override
+    public void setupRemoteVideo(SurfaceView surfaceView, int uid) {
+
+    }
+
+    @Override
+    public void setupLocalVideo(SurfaceView surfaceView, int uid) {
+
+    }
+
+    @Override
+    public SurfaceView createRendererView(Context context, int type) {
+
+        JCCallItem mCallItem = mCall.getActiveCallItem();  // 获取当前活跃通话
+        //Log.i(TAG, " createRendererView JCCallItem : " + mCallItem.toString());
+        JCMediaDeviceVideoCanvas mCanvas;
+        if (type == 1) {
+            mMediaDevice.setCameraProperty(640, 360, 15);
+            mCanvas = mCallItem.startSelfVideo(JCMediaDevice.RENDER_FULL_SCREEN);  // 打开本地视频预览
+        } else {
+            mCanvas = mCallItem.startOtherVideo(JCMediaDevice.RENDER_FULL_SCREEN);  // 打开对端视频预览
+        }
+        return mCanvas.getVideoView();
+    }
+
+    @Override
+    public void openCamera() {
+
+        mMediaDevice.startCamera();
+    }
+
+    @Override
+    public void closeCamera() {
+
+        mMediaDevice.stopCamera();
+    }
+
+    @Override
+    public void switchCamera() {
+
+        if (mMediaDevice != null) {
+            mMediaDevice.switchCamera();
+        }
+    }
+
+    @Override
+    public void videoMuteUser(int uid, boolean muted) {
+
+    }
+
+    @Override
+    public void setVideoProfile(int width, int height, int frameRate, int bitrate) {
+        //mMediaDevice.setCameraProperty(640, 360, 15);  //在这个地方调用，不会生效
+    }
+
+    @Override
+    public void setParameters(String parameters) {
+
+    }
+
+    @Override
+    public void destroy() {
+
+        JCClient.destroy();
+    }
+
+    @Override
+    public void setLogFile(String path) {
+
+    }
+
+    @Override
+    public void onCallVideoRecord(String filePath) {
+
+        JCCallItem item = mCall.getActiveCallItem();
+        if (item != null) {
+            if (item.getLocalVideoRecord()) {
+                mCall.videoRecord(item, false, false, 0, 0, "", false);
+            } else if (item.getRemoteVideoRecord()) {
+                mCall.videoRecord(item, false, true, 0, 0, "", false);
+            } else {
+                mCall.videoRecord(item, true, true, 176, 144, filePath, false);
+            }
+        }
+    }
+}

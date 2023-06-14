@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/setting_item_selector"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="49.66dp"
+        android:background="@drawable/setting_item_selector"
+        android:clickable="true"
+        android:gravity="center_vertical"
+        android:orientation="vertical"
+        android:paddingLeft="@dimen/divideleftandright"
+        android:paddingRight="@dimen/divideleftandright">
+
+        <TextView
+            android:id="@+id/sport_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_toEndOf="@+id/setting_icon"
+            android:text="@string/yesterday"
+            android:textColor="@color/color_7"
+            android:textSize="@dimen/xiaomiMyTextSize1" />
+    </RelativeLayout>
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:paddingLeft="@dimen/divideleftandright"
+        android:paddingRight="@dimen/divideleftandright"
+        android:src="@color/line_grey" />
+
+</LinearLayout>

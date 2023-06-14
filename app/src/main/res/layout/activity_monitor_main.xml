@@ -1,0 +1,800 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/health_monitor_bg"
+    android:fitsSystemWindows="true"
+    tools:context=".health.monitor.MonitorMainActivity">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/title_ly"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/iv_back"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:src="@drawable/title_back_icon"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/health_monitor_monitor_name"
+            android:textColor="@color/true_black"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/iv_help"
+            android:visibility="visible"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="10dp"
+            android:src="@drawable/set_new"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:paddingBottom="30dp"
+        app:layout_constraintTop_toBottomOf="@id/title_ly"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.xiaoxun.xun.health.customview.HCircleProgress
+                android:id="@+id/pb_step"
+                android:layout_width="200dp"
+                android:layout_height="160dp"
+                android:layout_marginTop="10dp"
+                app:HdisableAngle="0"
+                app:Hduration="1000"
+                app:HisClockwise="true"
+                app:HisDecimal="true"
+                app:HisRound="true"
+                app:HisShowPercentText="false"
+                app:HmaxProgress="100"
+                app:HneiYuanColor="@color/transparent"
+                app:HoffsetCenterY="50dp"
+                app:Hprogress2="0"
+                app:HringColor="@color/health_circle_pb_background"
+                app:HringProgressColor="@color/health_circle_pb_foreground"
+                app:HringRadius="90dp"
+                app:HringWidth="10dp"
+                app:HstartAngle="-200"
+                app:HtextColor="@color/health_circle_pb_foreground"
+                app:HtextSize="40sp"
+                app:HuseAnimation="true"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <LinearLayout
+                android:id="@+id/ly_disatace"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:gravity="center"
+                android:orientation="vertical"
+                app:layout_constraintEnd_toStartOf="@id/ly_cal"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/pb_step">
+
+                <TextView
+                    android:id="@+id/tv_distance"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:text="--"
+                    android:textColor="@color/black"
+                    android:textSize="23sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/health_monitor_distance_unit"
+                    android:textColor="@color/black"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/ly_cal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:gravity="center"
+                android:orientation="vertical"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/ly_disatace"
+                app:layout_constraintTop_toBottomOf="@id/pb_step">
+
+                <TextView
+                    android:id="@+id/tv_cal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:text="--"
+                    android:textColor="@color/black"
+                    android:textSize="23sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/health_monitor_cal_unit"
+                    android:textColor="@color/black"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cv_outside"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:layout_marginStart="15dp"
+                android:layout_marginEnd="15dp"
+                app:layout_constraintTop_toBottomOf="@id/ly_disatace">
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <ImageView
+                        android:id="@+id/iv_outside_icon"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        android:layout_marginStart="12dp"
+                        android:layout_marginTop="12dp"
+                        android:src="@drawable/health_icon_huwairizhao_nor"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintStart_toEndOf="@id/iv_outside_icon"
+                        android:layout_marginTop="13dp"
+                        android:layout_marginStart="6dp"
+                        android:textSize="15sp"
+                        android:textColor="@color/black"
+                        android:text="@string/health_outside"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        android:layout_marginTop="12dp"
+                        android:layout_marginEnd="12dp"
+                        android:textSize="14sp"
+                        android:textColor="@color/app_score_color"
+                        android:text="@string/health_health_target"/>
+                    <LinearLayout
+                        android:id="@+id/ly_outside_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintTop_toBottomOf="@id/iv_outside_icon"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        android:layout_marginStart="12dp"
+                        android:layout_marginTop="12dp"
+                        android:layout_marginBottom="12dp"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:id="@+id/tv_outside_dura"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="25sp"
+                            android:textColor="@color/black"
+                            android:textStyle="bold"
+                            android:text=""
+                            android:visibility="gone"/>
+                        <TextView
+                            android:id="@+id/tv_outside_unit"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="13sp"
+                            android:textColor="@color/app_score_color"
+                            android:text="@string/unit_minute"
+                            android:visibility="gone"/>
+                        <TextView
+                            android:id="@+id/tv_no_outside_data"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="15sp"
+                            android:textColor="@color/app_score_color"
+                            android:text="@string/battery_detail_chart_no_data"
+                            android:visibility="visible"/>
+                    </LinearLayout>
+
+                    <ProgressBar
+                        android:id="@+id/pb_outside"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintStart_toEndOf="@id/ly_outside_title"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="@id/ly_outside_title"
+                        app:layout_constraintBottom_toBottomOf="@id/ly_outside_title"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginEnd="12dp"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:progressDrawable="@drawable/progressbar_outside"
+                        android:max="60" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </androidx.cardview.widget.CardView>
+
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/ly_first_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="15dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginEnd="15dp"
+                android:orientation="horizontal"
+                app:layout_constraintTop_toBottomOf="@id/cv_outside">
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/card_heart"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="5dp"
+                    app:layout_constraintEnd_toStartOf="@id/card_oxy"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="90dp">
+
+                        <ImageView
+                            android:id="@+id/iv_heart"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_marginTop="12dp"
+                            android:src="@drawable/health_icon_xinlv_nor"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:layout_marginTop="12dp"
+                            android:text="@string/heart_rate_title"
+                            android:textStyle="bold"
+                            app:layout_constraintStart_toEndOf="@id/iv_heart"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <LinearLayout
+                            android:id="@+id/ly_heart_monitor"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:layout_marginEnd="12dp"
+                            android:background="@drawable/btn_jiance_nor"
+                            android:gravity="center"
+                            android:orientation="horizontal"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent">
+
+                            <ImageView
+                                android:id="@+id/iv_heart_monitor"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginEnd="4dp"
+                                android:src="@drawable/icon_jiance_nor" />
+
+                            <TextView
+                                android:id="@+id/tv_heart_monitor_str"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/monitor"
+                                android:textColor="@color/health_monitor_str_color"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/tv_heart_count"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_marginBottom="12dp"
+                            android:text="--"
+                            android:textColor="@color/black"
+                            android:textSize="25sp"
+                            android:textStyle="bold"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toStartOf="parent" />
+
+                        <TextView
+                            android:id="@+id/tv_heartrate_unit"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="14dp"
+                            android:text="@string/unit_min"
+                            android:textColor="@color/app_score_color"
+                            android:textSize="13sp"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toEndOf="@id/tv_heart_count" />
+
+                        <TextView
+                            android:id="@+id/tv_heart_monitoring"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_marginBottom="12dp"
+                            android:text="@string/health_monitor_monitoring"
+                            android:textColor="@color/app_score_color"
+                            android:textSize="15sp"
+                            android:visibility="gone"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toStartOf="parent" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/card_oxy"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@id/card_heart"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="90dp">
+
+                        <ImageView
+                            android:id="@+id/iv_oxy"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_marginTop="12dp"
+                            android:src="@drawable/health_icon_xueyang_nor"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:layout_marginTop="12dp"
+                            android:text="@string/oxygen_monitor"
+                            android:textStyle="bold"
+                            app:layout_constraintStart_toEndOf="@id/iv_oxy"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <LinearLayout
+                            android:id="@+id/ly_oxy_monitor"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:layout_marginEnd="12dp"
+                            android:background="@drawable/btn_jiance_nor"
+                            android:gravity="center"
+                            android:orientation="horizontal"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent">
+
+                            <ImageView
+                                android:id="@+id/iv_oxy_monitor"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginEnd="4dp"
+                                android:src="@drawable/icon_jiance_nor" />
+
+                            <TextView
+                                android:id="@+id/tv_oxy_monitor_str"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/monitor"
+                                android:textColor="@color/health_monitor_str_color"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/tv_oxy_count"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_marginBottom="12dp"
+                            android:text="--"
+                            android:textColor="@color/black"
+                            android:textSize="25sp"
+                            android:textStyle="bold"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toStartOf="parent" />
+
+                        <TextView
+                            android:id="@+id/tv_oxy_unit"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="14dp"
+                            android:text="%"
+                            android:textColor="@color/app_score_color"
+                            android:textSize="13sp"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toEndOf="@id/tv_oxy_count" />
+
+                        <TextView
+                            android:id="@+id/tv_oxy_monitoring"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_marginBottom="12dp"
+                            android:text="@string/health_monitor_monitoring"
+                            android:textColor="@color/app_score_color"
+                            android:textSize="15sp"
+                            android:visibility="gone"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toStartOf="parent" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+                </androidx.cardview.widget.CardView>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/cl_monitor_switch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="15dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginEnd="17dp"
+                android:layout_marginBottom="1dp"
+                app:layout_constraintTop_toBottomOf="@+id/ly_first_row">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginTop="9dp"
+                    android:layout_marginBottom="9dp"
+                    android:text="@string/health_monitor_switch"
+                    android:textColor="#ff000000"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <ImageView
+                    android:id="@+id/iv_monitor_switch"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/icon_monitor_info"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!--            <androidx.cardview.widget.CardView-->
+            <!--                android:id="@+id/card_heart_monitor"-->
+            <!--                android:layout_width="match_parent"-->
+            <!--                android:layout_height="wrap_content"-->
+            <!--                android:layout_marginStart="15dp"-->
+            <!--                android:layout_marginTop="10dp"-->
+            <!--                android:layout_marginEnd="15dp"-->
+            <!--                app:layout_constraintTop_toBottomOf="@+id/cl_monitor_switch">-->
+
+            <!--                <androidx.constraintlayout.widget.ConstraintLayout-->
+            <!--                    android:layout_width="match_parent"-->
+            <!--                    android:layout_height="wrap_content">-->
+
+            <!--                    <TextView-->
+            <!--                        android:id="@+id/tv_heart_monitor_title"-->
+            <!--                        android:layout_width="wrap_content"-->
+            <!--                        android:layout_height="wrap_content"-->
+            <!--                        android:layout_marginStart="12dp"-->
+            <!--                        android:layout_marginTop="12dp"-->
+            <!--                        android:text="@string/health_monitor_heart_monitor_title"-->
+            <!--                        android:textColor="@color/black"-->
+            <!--                        android:textSize="15sp"-->
+            <!--                        android:textStyle="bold"-->
+            <!--                        app:layout_constraintStart_toStartOf="parent"-->
+            <!--                        app:layout_constraintTop_toTopOf="parent" />-->
+
+            <!--                    <TextView-->
+            <!--                        android:id="@+id/tv_heart_monitor_content"-->
+            <!--                        android:layout_width="wrap_content"-->
+            <!--                        android:layout_height="wrap_content"-->
+            <!--                        android:layout_marginTop="4dp"-->
+            <!--                        android:layout_marginBottom="13dp"-->
+            <!--                        android:text="@string/health_monitor_heart_monitor_content"-->
+            <!--                        android:textColor="@color/app_score_color"-->
+            <!--                        android:textSize="14sp"-->
+            <!--                        app:layout_constraintBottom_toBottomOf="parent"-->
+            <!--                        app:layout_constraintStart_toStartOf="@id/tv_heart_monitor_title"-->
+            <!--                        app:layout_constraintTop_toBottomOf="@id/tv_heart_monitor_title" />-->
+
+            <!--                    <ToggleButton-->
+            <!--                        android:id="@+id/tb_heart_monitor"-->
+            <!--                        android:layout_width="40dp"-->
+            <!--                        android:layout_height="24dp"-->
+            <!--                        android:layout_marginEnd="12dp"-->
+            <!--                        android:background="@drawable/switch_toggle_selector"-->
+            <!--                        android:checked="false"-->
+            <!--                        android:textOff="@null"-->
+            <!--                        android:textOn="@null"-->
+            <!--                        app:layout_constraintBottom_toBottomOf="parent"-->
+            <!--                        app:layout_constraintEnd_toEndOf="parent"-->
+            <!--                        app:layout_constraintTop_toTopOf="parent" />-->
+            <!--                </androidx.constraintlayout.widget.ConstraintLayout>-->
+            <!--            </androidx.cardview.widget.CardView>-->
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="15dp"
+                android:layout_marginTop="1dp"
+                android:layout_marginEnd="15dp"
+                android:layout_marginBottom="30dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:orientation="vertical"
+                app:cardCornerRadius="10dp"
+                app:layout_constraintTop_toBottomOf="@+id/cl_monitor_switch">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/cl_heart_monitor"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <TextView
+                            android:id="@+id/tv_heart_monitor_title"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_marginTop="12dp"
+                            android:text="@string/health_monitor_heart_monitor_title_allday"
+                            android:textColor="@color/black"
+                            android:textSize="15sp"
+                            android:textStyle="bold"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:layout_marginBottom="13dp"
+                            android:layout_marginEnd="12dp"
+                            android:text="@string/health_monitor_heart_monitor_content_allday"
+                            android:textColor="@color/app_score_color"
+                            app:layout_constraintEnd_toStartOf="@+id/tb_heart_monitor"
+                            android:textSize="14sp"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toStartOf="@id/tv_heart_monitor_title"
+                            app:layout_constraintTop_toBottomOf="@id/tv_heart_monitor_title" />
+
+                        <ToggleButton
+                            android:id="@+id/tb_heart_monitor"
+                            android:layout_width="40dp"
+                            android:layout_height="24dp"
+                            android:layout_marginEnd="12dp"
+                            android:background="@drawable/switch_toggle_selector"
+                            android:checked="false"
+                            android:textOff="@null"
+                            android:textOn="@null"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <View
+                        android:id="@+id/line_heart_monitor"
+                        app:layout_constraintTop_toBottomOf="@+id/cl_heart_monitor"
+                        android:layout_width="match_parent"
+                        android:layout_marginStart="12dp"
+                        android:layout_marginEnd="12dp"
+                        android:layout_height="1dp"
+                        android:background="#EDEDED"/>
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/cl_heart_monitor_schedule"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingBottom="15dp"
+                        app:layout_constraintTop_toBottomOf="@+id/line_heart_monitor"
+                        android:visibility="visible">
+
+
+                        <TextView
+                            android:id="@+id/tv_heart_monitor_schedule_title"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_marginTop="12dp"
+                            android:text="@string/health_monitor_heart_monitor_schedule_title"
+                            android:textColor="@color/black"
+                            android:textSize="15sp"
+                            android:textStyle="bold"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <ToggleButton
+                            android:id="@+id/tb_fatigue_monitor"
+                            android:layout_width="40dp"
+                            android:layout_height="24dp"
+                            android:layout_marginEnd="12dp"
+                            android:background="@drawable/switch_toggle_selector"
+                            android:checked="false"
+                            android:textOff="@null"
+                            android:textOn="@null"
+                            app:layout_constraintBottom_toBottomOf="@id/tv_heart_monitor_schedule_title"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="@id/tv_heart_monitor_schedule_title" />
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:id="@+id/cl_heart_monitor_schedule_daily"
+                            app:layout_constraintTop_toBottomOf="@+id/tv_heart_monitor_schedule_title"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_marginTop="10dp">
+                            <TextView
+                                app:layout_constraintTop_toTopOf="parent"
+                                app:layout_constraintStart_toStartOf="parent"
+                                android:id="@+id/tv_heart_monitor_schedule_daily"
+                                android:textSize="16sp"
+                                android:text="@string/health_monitor_monitor_title_daily"
+                                android:textColor="@color/true_black"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+
+                            <TextView
+                                android:id="@+id/tv_heart_monitor_schedule_content_daily"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:text="@string/health_monitor_help_daily_content"
+                                android:textColor="@color/app_score_color"
+                                android:textSize="14sp"
+                                android:layout_marginEnd="12dp"
+                                app:layout_constraintEnd_toStartOf="@+id/tb_fatigue_monitor_daily"
+                                app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintTop_toBottomOf="@id/tv_heart_monitor_schedule_daily" />
+
+
+                            <ToggleButton
+                                android:id="@+id/tb_fatigue_monitor_daily"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:layout_marginEnd="12dp"
+                                android:background="@drawable/monitor_tb_selector"
+                                android:checked="false"
+                                android:textOff="@null"
+                                android:textOn="@null"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintTop_toTopOf="parent" />
+
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:id="@+id/cl_heart_monitor_schedule_highfrequency"
+                            app:layout_constraintTop_toBottomOf="@+id/cl_heart_monitor_schedule_daily"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_marginTop="4dp">
+                            <TextView
+                                app:layout_constraintTop_toTopOf="parent"
+                                app:layout_constraintStart_toStartOf="parent"
+                                android:id="@+id/tv_heart_monitor_schedule_highfrequency"
+                                android:textSize="16sp"
+                                android:text="@string/health_monitor_monitor_title_highfrequency"
+                                android:textColor="@color/true_black"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+
+                            <TextView
+                                android:id="@+id/tv_heart_monitor_schedule_content"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:text="@string/health_monitor_heart_monitor_content_hf"
+                                android:textColor="@color/app_score_color"
+                                android:textSize="14sp"
+                                android:layout_marginEnd="12dp"
+                                app:layout_constraintEnd_toStartOf="@+id/tb_fatigue_monitor_highfrequency"
+                                app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintTop_toBottomOf="@id/tv_heart_monitor_schedule_highfrequency" />
+
+
+                            <ToggleButton
+                                android:id="@+id/tb_fatigue_monitor_highfrequency"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:layout_marginEnd="12dp"
+                                android:background="@drawable/monitor_tb_selector"
+                                android:checked="false"
+                                android:textOff="@null"
+                                android:textOn="@null"
+                                app:layout_constraintBottom_toBottomOf="@id/tv_heart_monitor_schedule_content"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintTop_toTopOf="@id/tv_heart_monitor_schedule_content" />
+
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:id="@+id/ly_fatigue_enable"
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp"
+                            app:layout_constraintTop_toTopOf="@id/cl_heart_monitor_schedule_daily"
+                            app:layout_constraintBottom_toBottomOf="@id/cl_heart_monitor_schedule_highfrequency"
+                            android:background="@color/color_white_50"/>
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:id="@+id/cl_fatigue_monitor_auth"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            app:layout_constraintTop_toBottomOf="@id/cl_heart_monitor_schedule_highfrequency"
+                            android:layout_marginTop="15dp"
+                            android:visibility="visible">
+
+                            <TextView
+                                android:id="@+id/tv_fatigue_auth_content"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                app:layout_constraintTop_toTopOf="parent"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintEnd_toStartOf="@id/btn_fatigue_monitor_auth"
+                                android:layout_marginStart="12dp"
+                                android:layout_marginEnd="12dp"
+                                android:textColor="@color/txt_coupon_focus_color"
+                                android:text="@string/monitor_fatigue_auth_content"
+                                android:textSize="12sp"
+                                android:singleLine="false"/>
+
+                            <Button
+                                android:id="@+id/btn_fatigue_monitor_auth"
+                                android:layout_width="36dp"
+                                android:layout_height="20dp"
+                                app:layout_constraintTop_toTopOf="parent"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintStart_toEndOf="@id/tv_fatigue_auth_content"
+                                android:layout_marginEnd="12dp"
+                                android:background="@color/quit_background"
+                                android:text="@string/quit"
+                                android:textColor="@color/txt_coupon_focus_color"
+                                android:textSize="12sp"/>
+
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </androidx.cardview.widget.CardView>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>

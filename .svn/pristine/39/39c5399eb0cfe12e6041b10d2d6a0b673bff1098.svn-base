@@ -1,0 +1,851 @@
+package com.xiaoxun.xun.views;
+
+
+import static com.xiaoxun.xun.utils.CalendarTableUtils.setSwitchViewVisible;
+
+import android.app.Dialog;
+import android.content.Context;
+import android.text.InputFilter;
+import android.text.TextUtils;
+import android.view.Gravity;
+import android.view.KeyEvent;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import androidx.cardview.widget.CardView;
+
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.interfaces.InterfacesUtil;
+import com.xiaoxun.xun.utils.CalendarTableUtils;
+import com.xiaoxun.xun.utils.TimeUtil;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.TimeZone;
+
+public class CustomSelectorDialog extends Dialog {
+
+    private Context context;
+    private String title;
+    private String mUnit;
+    private String content;
+    private String hint;
+    private String mLeftBtnTxt;
+    private String mRightBtnTxt;
+    private int mDailogType;//1:星期选择  2：分钟选择  3：输入框  4：提示文案 5：选择提示框 6：单项滑动选择框 7：设置年龄选择框 8:双向滑动选择框
+    private int mLimitLength = 70;
+    private int mMinsType = 0;//1:120分钟 5分钟一格  2:60分钟，1分钟1格
+    private boolean isTopConfirmLayout = false;
+    private List<String> mSelectData;
+    private boolean isEnableCancel = true;
+    private boolean isEnableKeyBack = true;
+    private boolean isOnlyButton = false;
+    private int mHightLightColor1 = 0;
+    private int mHightLightColor2 = 0;
+
+    private String mDefValue;
+
+    private InterfacesUtil.UpdateViewData mSmallBtnLeftListener;
+    private InterfacesUtil.UpdateViewData mSmallBtnRightListener;
+
+    private CustomSelectorDialog(Builder builder) {
+        super(builder.context, R.style.Theme_DataSheet);
+        this.context = builder.context;
+        this.mDailogType = builder.mDailogType;
+        this.title = builder.title;
+        this.mUnit = builder.mUnit;
+        this.mSelectData = builder.selectData;
+        this.mDefValue = builder.mDefValue;
+        this.mSmallBtnLeftListener = builder.mSmallBtnLeftListener;
+        this.mSmallBtnRightListener = builder.mSmallBtnRightListener;
+        this.hint = builder.hint;
+        this.mLimitLength = builder.mLimitLength;
+        this.content = builder.content;
+        this.mMinsType = builder.mMinsType;
+        this.isTopConfirmLayout = builder.isTopConfirmLayout;
+        this.mLeftBtnTxt = builder.mLeftBtnTxt;
+        this.mRightBtnTxt = builder.mRightBtnTxt;
+        this.isEnableCancel = builder.isEnableCancel;
+        this.isEnableKeyBack = builder.isEnableKeyBack;
+        this.mHightLightColor1 = builder.mHightLightColor1;
+        this.mHightLightColor2 = builder.mHightLightColor2;
+        this.isOnlyButton = builder.isOnlyButton;
+        initDialogBySetType();
+    }
+
+    private void initDialogBySetType() {
+        LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View layout = null;
+        if (mDailogType == 1) {
+            layout = GenLayoutSeletorWeek(inflater, mDefValue, true, mSmallBtnLeftListener, mSmallBtnRightListener);
+        } else if (mDailogType == 2) {
+            layout = GenLayoutSelectorMins(inflater, mDefValue, title, mMinsType, mSmallBtnLeftListener, mSmallBtnRightListener);
+        } else if (mDailogType == 3) {
+            layout = GenLayoutSeelctorInput(inflater, title, hint, mLimitLength, mSmallBtnLeftListener, mSmallBtnRightListener);
+        } else if (mDailogType == 4) {
+            layout = GenLayoutSelectorRemind(inflater);
+        } else if (mDailogType == 5) {
+            layout = GenlayoutSelectHandle(inflater, title, content, mSmallBtnLeftListener, mSmallBtnRightListener);
+        } else if (mDailogType == 6) {
+            layout = GenLayoutSelectSingle(inflater);
+        } else if (mDailogType == 7) {
+            layout = GenLayoutSetBirth(inflater);
+        } else if (mDailogType == 8) {
+            layout = GenLayoutSelectTwo(inflater);
+        }
+
+        Window w = getWindow();
+        w.getDecorView().setPadding(0, 0, 0, 0);
+        WindowManager.LayoutParams lp = w.getAttributes();
+        if (mDailogType == 3 || mDailogType == 4) {
+            lp.gravity = Gravity.CENTER;
+        } else {
+            lp.gravity = Gravity.BOTTOM;
+        }
+        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
+        onWindowAttributesChanged(lp);
+        enableCancel(isEnableCancel);
+        setContentView(layout);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        super.onKeyDown(keyCode, event);
+        return isEnableKeyBack;
+    }
+
+    public void enableCancel(boolean enable) {
+        //setCancelable(enable);
+        setCanceledOnTouchOutside(enable);
+    }
+
+    private View GenLayoutSelectTwo(LayoutInflater inflater) {
+        final String[] mSetData = new String[2];
+        Double mDefInfo = Double.valueOf(mDefValue);
+        mSetData[0] = String.valueOf((int) (mDefInfo * 10 / 10));
+        mSetData[1] = String.valueOf((int) (mDefInfo * 10 % 10));
+        View layout = inflater.inflate(R.layout.selector_two, null);
+        TextView mTvTitle = layout.findViewById(R.id.tv_title);
+        TextView mTvUnit = layout.findViewById(R.id.tv_unit);
+        if (!TextUtils.isEmpty(title)) {
+            mTvTitle.setVisibility(View.VISIBLE);
+            mTvTitle.setText(title);
+        } else {
+            mTvTitle.setVisibility(View.GONE);
+        }
+        CustomerPickerView mTimeMins = layout.findViewById(R.id.moring_hour_pv);
+        setTimeParams(mTimeMins, mSelectData, mSetData[0],
+                new CustomerPickerView.onSelectListener() {
+                    @Override
+                    public void onSelect(String text) {
+                        mSetData[0] = text;
+                    }
+                }
+        );
+        List<String> mSelectSubData = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            mSelectSubData.add(i + "");
+        }
+        CustomerPickerView mSubSelect = layout.findViewById(R.id.cpv_sub_select);
+        setTimeParams(mSubSelect, mSelectSubData, mSetData[1],
+                new CustomerPickerView.onSelectListener() {
+                    @Override
+                    public void onSelect(String text) {
+                        mSetData[1] = text;
+                    }
+                }
+        );
+
+        layout.findViewById(R.id.tv_cancle).setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (mSmallBtnLeftListener != null) {
+                            double mReback = (Integer.valueOf(mSetData[0]) * 10 + Integer.valueOf(mSetData[1])) / 10;
+                            mSmallBtnLeftListener.UpdateView(v, String.valueOf(mReback));
+                        }
+                        dismiss();
+                    }
+                }
+        );
+        layout.findViewById(R.id.tv_confirm).setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (mSmallBtnRightListener != null) {
+                            double mReback = (Double.valueOf(mSetData[0]) * 10 + Double.valueOf(mSetData[1])) / 10;
+                            mSmallBtnRightListener.UpdateView(v, String.valueOf(mReback));
+                        }
+                        dismiss();
+                    }
+                }
+        );
+        return layout;
+    }
+
+    private View GenLayoutSetBirth(LayoutInflater inflater) {
+        View layout = inflater.inflate(R.layout.selector_set_birth, null);
+        TextView mTvTitle = layout.findViewById(R.id.tv_title);
+        if (!TextUtils.isEmpty(title)) {
+            mTvTitle.setVisibility(View.VISIBLE);
+            mTvTitle.setText(title);
+        } else {
+            mTvTitle.setVisibility(View.GONE);
+        }
+
+        final String[] mSelectDay = new String[3];
+        CustomerPickerView mDayPv = layout.findViewById(R.id.day_pv);
+        List<String> mDayData = new ArrayList<>();
+
+        Calendar c = Calendar.getInstance(TimeZone.getTimeZone("GMT+08:00"));
+        c.add(Calendar.YEAR, -20);
+        int year1 = c.get(Calendar.YEAR);
+        mSelectDay[0] = mDefValue.substring(0, 4);
+        mSelectDay[1] = mDefValue.substring(4, 6);
+        mSelectDay[2] = mDefValue.substring(6, 8);
+        List<String> mYearData = new ArrayList<>();
+        for (int i = year1; i < year1 + 21; i++) {
+            mYearData.add(i + "");
+        }
+        setTimeParams(layout.findViewById(R.id.year_pv), mYearData, mSelectDay[0],
+                new CustomerPickerView.onSelectListener() {
+                    @Override
+                    public void onSelect(String text) {
+                        mSelectDay[0] = text;
+                        onSelectDayByYearAndMonth(mSelectDay[0], mSelectDay[1], mDayData, mDayPv, mSelectDay[2]);
+                    }
+                }
+        );
+        List<String> mMonthData = new ArrayList<>();
+        for (int i = 1; i < 13; i++) {
+            mMonthData.add(i < 10 ? "0" + i : "" + i);
+        }
+        setTimeParams(layout.findViewById(R.id.month_pv), mMonthData, mSelectDay[1],
+                new CustomerPickerView.onSelectListener() {
+                    @Override
+                    public void onSelect(String text) {
+                        mSelectDay[1] = text;
+                        onSelectDayByYearAndMonth(mSelectDay[0], mSelectDay[1], mDayData, mDayPv, mSelectDay[2]);
+                    }
+                }
+        );
+        onSelectDayByYearAndMonth(mSelectDay[0], mSelectDay[1], mDayData, mDayPv, mSelectDay[2]);
+        setTimeParams(mDayPv, mDayData, mSelectDay[2],
+                new CustomerPickerView.onSelectListener() {
+                    @Override
+                    public void onSelect(String text) {
+                        mSelectDay[2] = text;
+                    }
+                }
+        );
+
+
+        layout.findViewById(R.id.tv_cancle).setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (mSmallBtnLeftListener != null) {
+                            mSmallBtnLeftListener.UpdateView(v, "0");
+                        }
+                        dismiss();
+                    }
+                }
+        );
+        layout.findViewById(R.id.tv_confirm).setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (mSmallBtnRightListener != null) {
+                            mSmallBtnRightListener.UpdateView(v, mSelectDay[0] + mSelectDay[1] + mSelectDay[2]);
+                        }
+                        dismiss();
+                    }
+                }
+        );
+        return layout;
+    }
+
+    private void onSelectDayByYearAndMonth(String year1, String month, List<String> mDayData,
+                                           CustomerPickerView mDayPv, String mDayDef) {
+        mDayData.clear();
+        int maxDay = TimeUtil.getMaxday(year1, month);
+        for (int i = 1; i < maxDay + 1; i++) {
+            mDayData.add(i < 10 ? "0" + i : "" + i);
+        }
+        mDayPv.setData(mDayData);
+        mDayPv.setSelected(mDayDef);
+    }
+
+    private void setTimeParams(CustomerPickerView mTimeYears, List<String> mData,
+                               String mDefValue, CustomerPickerView.onSelectListener onSelectListener) {
+        mTimeYears.setmMaxTextSize(60);
+        mTimeYears.setSelectTextColor(0x000000);
+        mTimeYears.setMarginAlphaValue((float) 3.8, "H");
+        if (mData == null) mData = new ArrayList<>();
+        mTimeYears.setData(mData);
+        mTimeYears.setOnSelectListener(onSelectListener);
+        mTimeYears.setSelected(mDefValue);
+    }
+
+
+    private View GenlayoutSelectHandle(LayoutInflater inflater, String action_1, String action_2,
+                                       InterfacesUtil.UpdateViewData mSmallBtnLeftListener,
+                                       InterfacesUtil.UpdateViewData mSmallBtnRightListener) {
+        View layout = inflater.inflate(R.layout.selector_dialog_handle, null);
+        TextView mAction1 = layout.findViewById(R.id.tv_action_1);
+        TextView mAction2 = layout.findViewById(R.id.tv_action_2);
+        if (mHightLightColor1 != 0) {
+            mAction1.setTextColor(mHightLightColor1);
+        }
+        if (mHightLightColor2 != 0) {
+            mAction2.setTextColor(mHightLightColor2);
+        }
+        if(!TextUtils.isEmpty(title)) mAction1.setText(title);
+        if(!TextUtils.isEmpty(content)) mAction2.setText(content);
+
+        mAction1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mSmallBtnLeftListener != null) {
+                    mSmallBtnLeftListener.UpdateView(v, "action_1");
+                }
+                dismiss();
+            }
+        });
+
+        mAction2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mSmallBtnRightListener != null) {
+                    mSmallBtnRightListener.UpdateView(v, "action_2");
+                }
+                dismiss();
+            }
+        });
+
+        layout.findViewById(R.id.layout_cancle).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dismiss();
+            }
+        });
+
+        return layout;
+    }
+
+    private View GenLayoutSelectorRemind(LayoutInflater inflater) {
+        View layout = inflater.inflate(R.layout.selector_remind_info, null);
+        ((TextView) layout.findViewById(R.id.tv_title)).setText(title);
+        if (!TextUtils.isEmpty(content)) {
+            ((TextView) layout.findViewById(R.id.tv_content)).setText(content);
+        } else {
+            layout.findViewById(R.id.tv_content).setVisibility(View.GONE);
+        }
+        TextView mLeftBtnView = layout.findViewById(R.id.tv_cancle);
+        View mDiviLine = layout.findViewById(R.id.view_divi_line);
+        if (!TextUtils.isEmpty(mLeftBtnTxt)) {
+            mLeftBtnView.setText(mLeftBtnTxt);
+        }
+        if (!TextUtils.isEmpty(mRightBtnTxt)) {
+            ((TextView) layout.findViewById(R.id.tv_confirm)).setText(mRightBtnTxt);
+        }
+
+        if(isOnlyButton){
+            mLeftBtnView.setVisibility(View.GONE);
+            mDiviLine.setVisibility(View.GONE);
+        }
+        layout.findViewById(R.id.tv_cancle).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mSmallBtnLeftListener != null) {
+                    mSmallBtnLeftListener.UpdateView(v, "cancle");
+                }
+                dismiss();
+            }
+        });
+        layout.findViewById(R.id.tv_confirm).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mSmallBtnRightListener != null) {
+                    mSmallBtnRightListener.UpdateView(v, "confirm");
+                }
+                dismiss();
+            }
+        });
+        return layout;
+    }
+
+    private View GenLayoutSeelctorInput(LayoutInflater inflater, String title,
+                                        String hint, int mLimitLength,
+                                        InterfacesUtil.UpdateViewData mSmallBtnLeftListener,
+                                        InterfacesUtil.UpdateViewData mSmallBtnRightListener) {
+        View layout = inflater.inflate(R.layout.selector_input, null);
+        ((TextView) layout.findViewById(R.id.tv_title)).setText(title);
+        EditText editText = layout.findViewById(R.id.tv_content);
+        editText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(mLimitLength)});
+        editText.setHint(hint);
+        editText.setFocusable(true);
+        layout.findViewById(R.id.tv_cancle).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mSmallBtnLeftListener != null) {
+                    mSmallBtnLeftListener.UpdateView(v, editText.getText().toString());
+                }
+                dismiss();
+            }
+        });
+        layout.findViewById(R.id.tv_confirm).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mSmallBtnRightListener != null) {
+                    mSmallBtnRightListener.UpdateView(v, editText.getText().toString());
+                }
+                dismiss();
+            }
+        });
+        return layout;
+    }
+
+    private View GenLayoutSelectSingle(LayoutInflater inflater) {
+        final String[] mSetData = new String[1];
+        mSetData[0] = mDefValue;
+        View layout = inflater.inflate(R.layout.selector_mins, null);
+        TextView mTvTitle = layout.findViewById(R.id.tv_title);
+        TextView mTvUnit = layout.findViewById(R.id.tv_unit);
+        if (!TextUtils.isEmpty(title)) {
+            mTvTitle.setVisibility(View.VISIBLE);
+            mTvTitle.setText(title);
+        } else {
+            mTvTitle.setVisibility(View.GONE);
+        }
+        if (!TextUtils.isEmpty(mUnit)) {
+            mTvUnit.setVisibility(View.VISIBLE);
+            mTvUnit.setText(mUnit);
+        } else {
+            mTvUnit.setVisibility(View.GONE);
+        }
+        CustomerPickerView mTimeMins = layout.findViewById(R.id.moring_hour_pv);
+        setTimeParams(mTimeMins, mSelectData, mDefValue,
+                new CustomerPickerView.onSelectListener() {
+                    @Override
+                    public void onSelect(String text) {
+                        mSetData[0] = text;
+                    }
+                }
+        );
+
+        layout.findViewById(R.id.tv_cancle).setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (mSmallBtnLeftListener != null) {
+                            mSmallBtnLeftListener.UpdateView(v, mSetData[0]);
+                        }
+                        dismiss();
+                    }
+                }
+        );
+        layout.findViewById(R.id.tv_confirm).setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (mSmallBtnRightListener != null) {
+                            mSmallBtnRightListener.UpdateView(v, mSetData[0]);
+                        }
+                        dismiss();
+                    }
+                }
+        );
+        return layout;
+    }
+
+    private View GenLayoutSelectorMins(LayoutInflater inflater, String mDefValue, String title, int mType,
+                                       InterfacesUtil.UpdateViewData mSmallBtnLeftListener,
+                                       InterfacesUtil.UpdateViewData mSmallBtnRightListener) {
+        final String[] data_text = new String[1];
+        View layout = inflater.inflate(R.layout.selector_mins, null);
+        TextView mTvTitle = layout.findViewById(R.id.tv_title);
+        TextView mTopCalcle = layout.findViewById(R.id.tv_top_cancle);
+        TextView mTopConfirm = layout.findViewById(R.id.tv_top_confirm);
+        CardView mBottomLayout = layout.findViewById(R.id.cv_layout_bottom);
+        if (isTopConfirmLayout) {
+            mTopCalcle.setVisibility(View.VISIBLE);
+            mTopConfirm.setVisibility(View.VISIBLE);
+            mBottomLayout.setVisibility(View.GONE);
+        } else {
+            mTopCalcle.setVisibility(View.GONE);
+            mTopConfirm.setVisibility(View.GONE);
+            mBottomLayout.setVisibility(View.VISIBLE);
+        }
+        if (!TextUtils.isEmpty(title)) {
+            mTvTitle.setVisibility(View.VISIBLE);
+            mTvTitle.setText(title);
+        } else {
+            mTvTitle.setVisibility(View.GONE);
+        }
+        data_text[0] = mDefValue;
+        CustomerPickerView mTimeMins = layout.findViewById(R.id.moring_hour_pv);
+        CalendarTableUtils.initMinsSelectorView(mTimeMins, Integer.parseInt(mDefValue), mType,
+                new CustomerPickerView.onSelectListener() {
+                    @Override
+                    public void onSelect(String text) {
+                        data_text[0] = text;
+                    }
+                });
+        View.OnClickListener onCancleListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mSmallBtnLeftListener != null) {
+                    mSmallBtnLeftListener.UpdateView(v, data_text[0]);
+                }
+                dismiss();
+            }
+        };
+        View.OnClickListener onConfirmListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mSmallBtnRightListener != null) {
+                    mSmallBtnRightListener.UpdateView(v, data_text[0]);
+                }
+                dismiss();
+            }
+        };
+
+        mTopCalcle.setOnClickListener(onCancleListener);
+        mTopConfirm.setOnClickListener(onConfirmListener);
+        layout.findViewById(R.id.tv_cancle).setOnClickListener(onCancleListener);
+        layout.findViewById(R.id.tv_confirm).setOnClickListener(onConfirmListener);
+        return layout;
+    }
+
+    private View GenLayoutSeletorWeek(LayoutInflater inflater, String mDefValue, boolean mWeekSunnay,
+                                      InterfacesUtil.UpdateViewData mSmallBtnLeftListener,
+                                      InterfacesUtil.UpdateViewData mSmallBtnRightListener) {
+        String[] mDataVaule = {"0", "0", "0", "0", "0", "0", "0"};
+        View layout = inflater.inflate(R.layout.selector_week, null);
+        //1:初始化默认值
+        ImageView mSelector1 = layout.findViewById(R.id.iv_week_selector_1);
+        ImageView mSelector2 = layout.findViewById(R.id.iv_week_selector_2);
+        ImageView mSelector3 = layout.findViewById(R.id.iv_week_selector_3);
+        ImageView mSelector4 = layout.findViewById(R.id.iv_week_selector_4);
+        ImageView mSelector5 = layout.findViewById(R.id.iv_week_selector_5);
+        ImageView mSelector6 = layout.findViewById(R.id.iv_week_selector_6);
+        ImageView mSelector7 = layout.findViewById(R.id.iv_week_selector_7);
+
+        if (!TextUtils.isEmpty(mDefValue)) {
+            for (int i = 0; i < mDataVaule.length; i++) {
+                //1.1:周日为第一天特殊操作
+                if (mWeekSunnay) {
+                    if (i == 0) mDataVaule[6] = mDefValue.substring(i, i + 1);
+                    else mDataVaule[i - 1] = mDefValue.substring(i, i + 1);
+                } else {
+                    mDataVaule[i] = mDefValue.substring(i, i + 1);
+                }
+            }
+            setSwitchViewVisible(Integer.parseInt(mDataVaule[0]), mSelector1);
+            setSwitchViewVisible(Integer.parseInt(mDataVaule[1]), mSelector2);
+            setSwitchViewVisible(Integer.parseInt(mDataVaule[2]), mSelector3);
+            setSwitchViewVisible(Integer.parseInt(mDataVaule[3]), mSelector4);
+            setSwitchViewVisible(Integer.parseInt(mDataVaule[4]), mSelector5);
+            setSwitchViewVisible(Integer.parseInt(mDataVaule[5]), mSelector6);
+            setSwitchViewVisible(Integer.parseInt(mDataVaule[6]), mSelector7);
+        }
+
+
+        //2:设置点击事件
+        layout.findViewById(R.id.tv_week_1).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mDataVaule[0] = setViewControlClick(mDataVaule[0], mSelector1);
+            }
+        });
+        layout.findViewById(R.id.tv_week_2).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mDataVaule[1] = setViewControlClick(mDataVaule[1], mSelector2);
+            }
+        });
+        layout.findViewById(R.id.tv_week_3).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mDataVaule[2] = setViewControlClick(mDataVaule[2], mSelector3);
+            }
+        });
+        layout.findViewById(R.id.tv_week_4).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mDataVaule[3] = setViewControlClick(mDataVaule[3], mSelector4);
+            }
+        });
+        layout.findViewById(R.id.tv_week_5).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mDataVaule[4] = setViewControlClick(mDataVaule[4], mSelector5);
+            }
+        });
+        layout.findViewById(R.id.tv_week_6).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mDataVaule[5] = setViewControlClick(mDataVaule[5], mSelector6);
+            }
+        });
+        layout.findViewById(R.id.tv_week_7).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mDataVaule[6] = setViewControlClick(mDataVaule[6], mSelector7);
+            }
+        });
+
+        layout.findViewById(R.id.tv_cancel).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mSmallBtnLeftListener != null) {
+                    String mRetData = "";
+                    for (String s : mDataVaule) {
+                        mRetData += s;
+                    }
+                    mSmallBtnLeftListener.UpdateView(v, mRetData);
+                }
+                dismiss();
+            }
+        });
+        layout.findViewById(R.id.tv_confirm).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mSmallBtnRightListener != null) {
+                    StringBuilder mRetData = new StringBuilder();
+                    for (int i = 0; i < mDataVaule.length; i++) {
+                        if (mWeekSunnay) {
+                            if (i == mDataVaule.length - 1) {
+                                mRetData.insert(0, mDataVaule[i]);
+                            } else {
+                                mRetData.append(mDataVaule[i]);
+                            }
+                        } else {
+                            mRetData.append(mDataVaule[i]);
+                        }
+                    }
+                    mSmallBtnRightListener.UpdateView(v, mRetData.toString());
+                }
+                dismiss();
+            }
+        });
+
+        return layout;
+    }
+
+    private String setViewControlClick(String s, ImageView mSelector1) {
+        if (s.equals("1")) {
+            s = "0";
+        } else {
+            s = "1";
+        }
+        setSwitchViewVisible(Integer.parseInt(s), mSelector1);
+        return s;
+    }
+
+    public static class Builder {
+
+        public boolean isTopConfirmLayout;
+        public boolean isOnlyButton;
+        private Context context;
+        private String title;
+        private String mUnit;
+        private String hint;
+        private String content;
+        private int mDailogType;
+        private String mDefValue;
+        private int mLimitLength;
+        private int mMinsType;
+        private String mLeftBtnTxt;
+        private String mRightBtnTxt;
+        private List<String> selectData;
+        private boolean isEnableCancel;
+        private boolean isEnableKeyBack;
+        private int mHightLightColor1;
+        private int mHightLightColor2;
+
+        private InterfacesUtil.UpdateViewData mSmallBtnLeftListener;
+        private InterfacesUtil.UpdateViewData mSmallBtnRightListener;
+
+        public Builder(Context context) {
+            this.context = context;
+        }
+
+        public boolean isOnlyButton() {
+            return isOnlyButton;
+        }
+
+        public Builder setOnlyButton(boolean onlyButton) {
+            isOnlyButton = onlyButton;
+            return this;
+        }
+
+        public int getmHightLightColor1() {
+            return mHightLightColor1;
+        }
+
+        public Builder setmHightLightColor1(int mHightLightColor1) {
+            this.mHightLightColor1 = mHightLightColor1;
+            return this;
+        }
+
+        public int getmHightLightColor2() {
+            return mHightLightColor2;
+        }
+
+        public Builder setmHightLightColor2(int mHightLightColor2) {
+            this.mHightLightColor2 = mHightLightColor2;
+            return this;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public Builder setTitle(String title) {
+            this.title = title;
+            return this;
+        }
+
+        public Builder setmUnit(String mUnit) {
+            this.mUnit = mUnit;
+            return this;
+        }
+
+        public Builder setSelectData(List<String> selectData) {
+            this.selectData = selectData;
+            return this;
+        }
+
+        public int getmMinsType() {
+            return mMinsType;
+        }
+
+        public Builder setmMinsType(int mMinsType) {
+            this.mMinsType = mMinsType;
+            return this;
+        }
+
+        public int getmDailogType() {
+            return mDailogType;
+        }
+
+        public Builder setmDailogType(int mDailogType) {
+            this.mDailogType = mDailogType;
+            return this;
+        }
+
+        public InterfacesUtil.UpdateViewData getmSmallBtnLeftListener() {
+            return mSmallBtnLeftListener;
+        }
+
+        public Builder setmSmallBtnLeftListener(InterfacesUtil.UpdateViewData mSmallBtnLeftListener) {
+            this.mSmallBtnLeftListener = mSmallBtnLeftListener;
+            return this;
+        }
+
+        public InterfacesUtil.UpdateViewData getmSmallBtnRightListener() {
+            return mSmallBtnRightListener;
+        }
+
+        public Builder setmSmallBtnRightListener(InterfacesUtil.UpdateViewData mSmallBtnRightListener) {
+            this.mSmallBtnRightListener = mSmallBtnRightListener;
+            return this;
+        }
+
+        public String getmDefValue() {
+            return mDefValue;
+        }
+
+        public Builder setmDefValue(String mDefValue) {
+            this.mDefValue = mDefValue;
+            return this;
+        }
+
+        public boolean isEnableCancel() {
+            return isEnableCancel;
+        }
+
+        public Builder setEnableCancel(boolean enableCancel) {
+            isEnableCancel = enableCancel;
+            return this;
+        }
+
+        public boolean isEnableKeyBack() {
+            return isEnableKeyBack;
+        }
+
+        public Builder setEnableKeyBack(boolean enableKeyBack) {
+            isEnableKeyBack = enableKeyBack;
+            return this;
+        }
+
+        public String getHint() {
+            return hint;
+        }
+
+        public Builder setHint(String hint) {
+            this.hint = hint;
+            return this;
+        }
+
+        public String getContent() {
+            return content;
+        }
+
+        public Builder setContent(String content) {
+            this.content = content;
+            return this;
+        }
+
+        public int getmLimitLength() {
+            return mLimitLength;
+        }
+
+        public Builder setmLimitLength(int mLimitLength) {
+            this.mLimitLength = mLimitLength;
+            return this;
+        }
+
+        public boolean isTopConfirmLayout() {
+            return isTopConfirmLayout;
+        }
+
+        public Builder setTopConfirmLayout(boolean topConfirmLayout) {
+            isTopConfirmLayout = topConfirmLayout;
+            return this;
+        }
+
+        public String getmLeftBtnTxt() {
+            return mLeftBtnTxt;
+        }
+
+        public Builder setmLeftBtnTxt(String mLeftBtnTxt) {
+            this.mLeftBtnTxt = mLeftBtnTxt;
+            return this;
+        }
+
+        public String getmRightBtnTxt() {
+            return mRightBtnTxt;
+        }
+
+        public Builder setmRightBtnTxt(String mRightBtnTxt) {
+            this.mRightBtnTxt = mRightBtnTxt;
+            return this;
+        }
+
+        public CustomSelectorDialog build() {
+            return new CustomSelectorDialog(this);
+        }
+
+    }
+
+
+}

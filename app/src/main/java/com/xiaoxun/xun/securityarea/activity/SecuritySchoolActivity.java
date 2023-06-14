@@ -1,0 +1,488 @@
+package com.xiaoxun.xun.securityarea.activity;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.ImageButton;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.ToggleButton;
+
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.alibaba.fastjson.JSONObject;
+import com.chad.library.adapter.base.BaseQuickAdapter;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.activitys.NormalActivity;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.interfaces.MsgCallback;
+import com.xiaoxun.xun.securityarea.adapter.LeaveSchoolTimeAdapter;
+import com.xiaoxun.xun.securityarea.bean.SchoolGuardBean;
+import com.xiaoxun.xun.securityarea.bean.SchoolGuardTimeBean;
+import com.xiaoxun.xun.securityarea.view.MinuteSecondSelectDialog;
+import com.xiaoxun.xun.utils.CloudBridgeUtil;
+import com.xiaoxun.xun.utils.StatusBarUtil;
+import com.xiaoxun.xun.utils.ToastUtil;
+
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+
+public class SecuritySchoolActivity extends NormalActivity implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
+    ImibabyApp myApp;
+    private WatchData focusWatch;
+    private ImageButton mBtnBack;
+    private Button btnSave;
+
+    private ToggleButton tbGuardMain;//上下学守护总开关
+    private ToggleButton tbFestival;//节假日
+    private ConstraintLayout clGoSchool;
+    private TextView tvGoSchoolTime;//上学路程时间  30分钟
+    private ConstraintLayout cl_arrive_school_setting;
+    private TextView tvArriveTime;//上午到校时间 08：00
+    private TextView tvArriveGuardTime;//守护时间 07:40-08:10
+    private ConstraintLayout cl_after_school_setting;
+    private TextView tvAfterSchoolTime;//放学路程时间  30分钟
+    private RecyclerView rv;
+    private ConstraintLayout clAddLeaveItem;
+    private ConstraintLayout clLatestTime;
+    private TextView tv_latest_time;
+
+    private LeaveSchoolTimeAdapter adapter;
+
+    private View view_mask1;//遮罩
+    private View view_mask2;
+    private View view_mask3;
+    private View view_mask4;
+
+    private SchoolGuardTimeBean defaultArrive = new SchoolGuardTimeBean("0000000010", "1", "08:00", "1111100", "18,12");
+    private SchoolGuardTimeBean defaultLeave = new SchoolGuardTimeBean("0000000020", "2", "16:00", "1111100", "6,24");
+    private SchoolGuardBean mBean;//操作修改使用此bean
+    private List<SchoolGuardTimeBean> mList = new ArrayList<>();
+    private List<SchoolGuardTimeBean> mListLeaveTime = new ArrayList<>();//放学 可能多个
+    private SchoolGuardTimeBean mListArriveTime;//上学  一个
+
+    private boolean isDataChange = false;
+    private int changeItem;//放学时间修改的item
+    private int school = -1;//外部总开关
+
+
+    private int dialogType;//0 上午到校时间 1 下午放学时间 2 最晚到家时间  3上学路程  4放学路程
+    private MinuteSecondSelectDialog dialogHourMinute;
+    private MinuteSecondSelectDialog dialogMinute;
+    private View.OnClickListener hourMinuteListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            isDataChange = true;
+            String time = dialogHourMinute.getHour() + ":" + dialogHourMinute.getMinute();
+            String timeText = getString(R.string.guard_school_time_format, dialogHourMinute.getHour(), dialogHourMinute.getMinute());
+            if (dialogType == 0) {
+                tvArriveTime.setText(timeText);
+                mListArriveTime.setTime(time);
+                calculateArriveTime();
+            } else if (dialogType == 2) {
+                tv_latest_time.setText(timeText);
+                mBean.setLast_time(time);
+            }
+            dialogHourMinute.dismiss();
+        }
+    };
+    private View.OnClickListener minuteListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            isDataChange = true;
+            int t = Integer.parseInt(dialogMinute.getMinute());
+            String time = getString(R.string.guard_school_minute, dialogMinute.getMinute());
+            if (dialogType == 3) {
+                tvGoSchoolTime.setText(time);
+                mListArriveTime.setFl(t * 3 / 5 + "," + t * 2 / 5);
+                calculateArriveTime();
+            } else if (dialogType == 4) {
+                tvAfterSchoolTime.setText(time);
+                for (int i = 0; i < mListLeaveTime.size(); i++) {
+                    mListLeaveTime.get(i).setFl(t / 5 + "," + t * 4 / 5);
+                }
+                //所有离校时间通知修改fl
+                adapter.notifyDataSetChanged();
+            }
+            dialogMinute.dismiss();
+        }
+    };
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_security_school);
+//        StatusBarUtil.changeStatusBarColor(this, getResources().getColor(R.color.schedule_no_class));
+        myApp = (ImibabyApp) getApplication();
+        focusWatch = myApp.getCurUser().getFocusWatch();
+        school = getIntent().getIntExtra("school",-1);
+        if (focusWatch == null) {
+            finish();
+            return;
+        }
+        initViews();
+        initListener();
+        sendGetToCloud();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    private void initViews() {
+        mBtnBack = findViewById(R.id.iv_title_back);
+        btnSave = findViewById(R.id.btn_save);
+
+        tbGuardMain = findViewById(R.id.guard_enable);
+        tbFestival = findViewById(R.id.festival_enable);
+        clGoSchool = findViewById(R.id.cl_go_school_setting);
+        tvGoSchoolTime = findViewById(R.id.tv_go_school_time);
+        cl_arrive_school_setting = findViewById(R.id.cl_arrive_school_setting);
+        tvArriveTime = findViewById(R.id.tv_arrive_time);
+        tvArriveGuardTime = findViewById(R.id.tv_arrive_guard_time);
+        cl_after_school_setting = findViewById(R.id.cl_after_school_setting);
+        tvAfterSchoolTime = findViewById(R.id.tv_after_school_time);
+        rv = findViewById(R.id.rv_leave_time);
+        clAddLeaveItem = findViewById(R.id.cl_add_leave_item);
+        clLatestTime = findViewById(R.id.cl_latest_time);
+        tv_latest_time = findViewById(R.id.tv_latest_time);
+        view_mask1 = findViewById(R.id.view_mask1);
+        view_mask2 = findViewById(R.id.view_mask2);
+        view_mask3 = findViewById(R.id.view_mask3);
+        view_mask4 = findViewById(R.id.view_mask4);
+
+        adapter = new LeaveSchoolTimeAdapter(this, mListLeaveTime);
+        LinearLayoutManager manager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+        rv.setLayoutManager(manager);
+        rv.setAdapter(adapter);
+        adapter.bindToRecyclerView(rv);
+        adapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
+                if (mBean.getOnoff().equals("1")) {
+                    if (!myApp.isMeAdmin(myApp.getCurUser().getFocusWatch())) {
+                        ToastUtil.show(getApplicationContext(), getString(R.string.need_admit_edit));
+                        return;
+                    }
+                    changeItem = position;
+                    String s = getDayWhichHasSet();
+                    Intent intent = new Intent(SecuritySchoolActivity.this, LeaveSchoolTimeSetActivity.class);
+                    intent.putExtra("data", mListLeaveTime.get(position));
+                    intent.putExtra("days", s);
+                    startActivityForResult(intent, 1);
+                }
+            }
+        });
+    }
+
+    private void initListener() {
+        mBtnBack.setOnClickListener(this);
+        btnSave.setOnClickListener(this);
+
+        clGoSchool.setOnClickListener(this);
+        cl_arrive_school_setting.setOnClickListener(this);
+        cl_after_school_setting.setOnClickListener(this);
+        clAddLeaveItem.setOnClickListener(this);
+        clLatestTime.setOnClickListener(this);
+
+        tbGuardMain.setOnCheckedChangeListener(this);
+        tbFestival.setOnCheckedChangeListener(this);
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (v == mBtnBack) {
+            Intent intent = getIntent();
+            intent.putExtra("school",mBean);
+            setResult(RESULT_OK,intent);
+            finish();
+        } else if (v == btnSave) {
+            isDataChange = false;
+            sendSetToCloud();
+        } else if (v == clGoSchool) {//设置上学路程
+            if (!myApp.isMeAdmin(myApp.getCurUser().getFocusWatch())) {
+                ToastUtil.show(getApplicationContext(), getString(R.string.need_admit_edit));
+                return;
+            }
+            dialogType = 3;
+            String[] fl = mListArriveTime.getFl().split(",");
+            int min = Integer.parseInt(fl[0]) + Integer.parseInt(fl[1]);
+            dialogMinute = new MinuteSecondSelectDialog(this, 3, String.valueOf(min), minuteListener);
+            dialogMinute.show();
+
+        } else if (v == cl_arrive_school_setting) {//设置上学时间和重复天数
+            if (!myApp.isMeAdmin(myApp.getCurUser().getFocusWatch())) {
+                ToastUtil.show(getApplicationContext(), getString(R.string.need_admit_edit));
+                return;
+            }
+            dialogType = 0;
+            String[] time = mListArriveTime.getTime().split(":");
+            dialogHourMinute = new MinuteSecondSelectDialog(this, 0, time[0], time[1], hourMinuteListener);
+            dialogHourMinute.show();
+
+        } else if (v == cl_after_school_setting) {//设置放学路程
+            if (!myApp.isMeAdmin(myApp.getCurUser().getFocusWatch())) {
+                ToastUtil.show(getApplicationContext(), getString(R.string.need_admit_edit));
+                return;
+            }
+            dialogType = 4;
+            String[] fl = mListLeaveTime.get(0).getFl().split(",");
+            int min = Integer.parseInt(fl[0]) + Integer.parseInt(fl[1]);
+            dialogMinute = new MinuteSecondSelectDialog(this, 4, String.valueOf(min), minuteListener);
+            dialogMinute.show();
+
+        } else if (v == clAddLeaveItem) {//新增设置放学时间和重复天数
+            if (!myApp.isMeAdmin(myApp.getCurUser().getFocusWatch())) {
+                ToastUtil.show(getApplicationContext(), getString(R.string.need_admit_edit));
+                return;
+            }
+            String s1 = getDayWhichHasSet();
+            if (s1.equals("1111111")) {
+                Toast.makeText(getApplicationContext(), "没有剩余的离校时间可用", Toast.LENGTH_SHORT).show();
+            } else {
+                changeItem = -1;
+                Intent intent = new Intent(SecuritySchoolActivity.this, LeaveSchoolTimeSetActivity.class);
+                intent.putExtra("days", s1);
+                startActivityForResult(intent, 2);
+            }
+
+        } else if (v == clLatestTime) {//设置最晚到家时间
+            if (!myApp.isMeAdmin(myApp.getCurUser().getFocusWatch())) {
+                ToastUtil.show(getApplicationContext(), getString(R.string.need_admit_edit));
+                return;
+            }
+            String[] time = mBean.getLast_time().split(":");
+            dialogType = 2;
+            dialogHourMinute = new MinuteSecondSelectDialog(this, 2, time[0], time[1], hourMinuteListener);
+            dialogHourMinute.show();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 1 && resultCode == RESULT_OK) {//修改
+            SchoolGuardTimeBean bean = (SchoolGuardTimeBean) data.getSerializableExtra("data");
+            mListLeaveTime.set(changeItem, bean);
+            adapter.notifyItemChanged(changeItem);
+        } else if (requestCode == 1 && resultCode == 2) {//删除
+            mListLeaveTime.remove(changeItem);
+            adapter.notifyItemRemoved(changeItem);
+        } else if (requestCode == 2 && resultCode == RESULT_OK) {//新增
+            SchoolGuardTimeBean bean = (SchoolGuardTimeBean) data.getSerializableExtra("data");
+            mListLeaveTime.add(bean);
+            adapter.replaceData(mListLeaveTime);
+        }
+        if (mListLeaveTime.size() >= 4) {
+            clAddLeaveItem.setVisibility(View.GONE);
+        } else {
+            clAddLeaveItem.setVisibility(View.VISIBLE);
+        }
+    }
+
+    /**
+     * 获取当前已经被设置的离校时间
+     *
+     * @return 例如1111100 -->代表周六周日未被设置
+     */
+    private String getDayWhichHasSet() {
+        String[] s = new String[7];
+        StringBuilder strDay = new StringBuilder();
+        for (int i = 0; i < 7; i++) {
+            s[i] = mListLeaveTime.get(0).getDays().substring(i, i + 1);
+        }
+        for (int i = 0; i < mListLeaveTime.size(); i++) {
+            for (int j = 0; j < 7; j++) {
+                if (mListLeaveTime.get(i).getDays().charAt(j) == '1') {
+                    s[j] = mListLeaveTime.get(i).getDays().substring(j, j + 1);
+                }
+            }
+        }
+        for (int i = 0; i < 7; i++) {
+            strDay.append(s[i]);
+        }
+        String s1 = String.valueOf(strDay);
+        return s1;
+    }
+
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        if (buttonView == tbGuardMain) {
+            if (buttonView.isPressed()) {
+                if (!myApp.isMeAdmin(myApp.getCurUser().getFocusWatch())) {
+                    ToastUtil.show(getApplicationContext(), getString(R.string.need_admit_edit));
+                    tbGuardMain.setChecked(!isChecked);
+                    return;
+                }
+
+                //置灰
+                guardMainToggleStatus(isChecked);
+
+            }
+        } else if (buttonView == tbFestival) {
+            if (buttonView.isPressed()) {
+                if (!myApp.isMeAdmin(myApp.getCurUser().getFocusWatch())) {
+                    ToastUtil.show(getApplicationContext(), getString(R.string.need_admit_edit));
+                    return;
+                }
+                if (isChecked) {
+                    //节假日开
+                    mBean.setHoliday_onoff("1");
+                } else {
+                    //节假日关
+                    mBean.setHoliday_onoff("0");
+                }
+            }
+        }
+    }
+
+    //上下学守护总开关
+    private void guardMainToggleStatus(boolean status) {
+        if (status) {
+            mBean.setOnoff("1");
+            clGoSchool.setClickable(true);
+            cl_arrive_school_setting.setClickable(true);
+            cl_after_school_setting.setClickable(true);
+            clAddLeaveItem.setClickable(true);
+            clLatestTime.setClickable(true);
+            tbFestival.setClickable(true);
+            view_mask1.setVisibility(View.GONE);
+            view_mask2.setVisibility(View.GONE);
+            view_mask3.setVisibility(View.GONE);
+            view_mask4.setVisibility(View.GONE);
+        } else {
+            mBean.setOnoff("0");
+            clGoSchool.setClickable(false);
+            cl_arrive_school_setting.setClickable(false);
+            cl_after_school_setting.setClickable(false);
+            clAddLeaveItem.setClickable(false);
+            clLatestTime.setClickable(false);
+            tbFestival.setClickable(false);
+            view_mask1.setVisibility(View.VISIBLE);
+            view_mask2.setVisibility(View.VISIBLE);
+            view_mask3.setVisibility(View.VISIBLE);
+            view_mask4.setVisibility(View.VISIBLE);
+        }
+    }
+
+    //上传上下学守护设置
+    private void sendSetToCloud() {
+        mList.clear();
+        mList.add(mListArriveTime);
+        mList.addAll(mListLeaveTime);
+        mBean.setTimes(mList);
+        if (myApp.getNetService() != null) {
+            myApp.getNetService().sendMapSetMsg(focusWatch.getEid(), focusWatch.getFamilyId(), CloudBridgeUtil.KEY_GUARD_LIST_NEW, JSONObject.toJSONString(mBean), new MsgCallback() {
+                @Override
+                public void doCallBack(net.minidev.json.JSONObject reqMsg, net.minidev.json.JSONObject respMsg) {
+                    int rc = CloudBridgeUtil.getCloudMsgRC(respMsg);
+                    if (rc == 1) {
+                        Toast.makeText(getApplicationContext(), getString(R.string.save_successs), Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+        }
+    }
+
+    //获取上下学守护设置
+    private void sendGetToCloud() {
+        if (myApp.getNetService() != null) {
+            myApp.getNetService().sendMapGetMsg(focusWatch.getEid(), CloudBridgeUtil.KEY_GUARD_LIST_NEW, new MsgCallback() {
+                @Override
+                public void doCallBack(net.minidev.json.JSONObject reqMsg, net.minidev.json.JSONObject respMsg) {
+                    net.minidev.json.JSONObject pl = (net.minidev.json.JSONObject) respMsg.get(CloudBridgeUtil.KEY_NAME_PL);
+                    if (pl != null) {
+                        mBean = JSONObject.parseObject((String) pl.get(CloudBridgeUtil.KEY_GUARD_LIST_NEW), SchoolGuardBean.class);
+                    }
+
+                    if (mBean == null) {
+                        mList.add(defaultArrive);
+                        mList.add(defaultLeave);
+                        mBean = new SchoolGuardBean("0", "1", mList, "18:00", "18:00");
+                    }
+                    mList = mBean.getTimes();
+                    for (int i = 0; i < mList.size(); i++) {
+                        if (mList.get(i).getType().equals("1")) {
+                            mListArriveTime = mBean.getTimes().get(i);
+                        } else {
+                            mListLeaveTime.add(mList.get(i));
+                        }
+                    }
+                    adapter.replaceData(mListLeaveTime);
+                    updateView();
+                }
+            });
+        }
+
+    }
+
+    private void updateView() {
+        if(school == 1){
+            mBean.setOnoff("1");
+        }else if(school == 0){
+            mBean.setOnoff("0");
+        }
+        guardMainToggleStatus(mBean.getOnoff().equals("1"));
+        tbGuardMain.setChecked(mBean.getOnoff().equals("1"));
+        tbFestival.setChecked(mBean.getHoliday_onoff().equals("1"));
+        String[] goSchool = mListArriveTime.getFl().split(",");
+        int goSchoolTime = Integer.parseInt(goSchool[0]) + Integer.parseInt(goSchool[1]);
+        tvGoSchoolTime.setText(getString(R.string.guard_school_minute, "" + goSchoolTime));
+        tvArriveTime.setText(mListArriveTime.getTime());
+        //计算到校守护时间段
+        calculateArriveTime();
+
+        String[] afterSchool = mListLeaveTime.get(0).getFl().split(",");
+        int afterSchoolTime = Integer.parseInt(afterSchool[0]) + Integer.parseInt(afterSchool[1]);
+        tvAfterSchoolTime.setText(getString(R.string.guard_school_minute, "" + afterSchoolTime));
+
+        tv_latest_time.setText(mBean.getLast_time());
+        addNewLeaveSchoolLayoutVisible();
+    }
+
+    private void addNewLeaveSchoolLayoutVisible() {
+        if (mListLeaveTime.size() >= 5) {
+            clLatestTime.setVisibility(View.GONE);
+        } else {
+            clLatestTime.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void calculateArriveTime() {
+        String[] goSchool = mListArriveTime.getFl().split(",");
+        //上学区间前3/5 后2/5
+        DecimalFormat decimalFormat = new DecimalFormat("00");
+        String[] ai = mListArriveTime.getTime().split(":");
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, Integer.parseInt(ai[0]));
+        cal.set(Calendar.MINUTE, Integer.parseInt(ai[1]));
+        cal.add(Calendar.MINUTE, -Integer.parseInt(goSchool[0]));
+        String arr1_h = decimalFormat.format(cal.get(Calendar.HOUR_OF_DAY));
+        String arr1_m = decimalFormat.format(cal.get(Calendar.MINUTE));
+
+        cal.set(Calendar.HOUR_OF_DAY, Integer.parseInt(ai[0]));
+        cal.set(Calendar.MINUTE, Integer.parseInt(ai[1]));
+        cal.add(Calendar.MINUTE, Integer.parseInt(goSchool[1]));
+        String arr2_h = decimalFormat.format(cal.get(Calendar.HOUR_OF_DAY));
+        String arr2_m = decimalFormat.format(cal.get(Calendar.MINUTE));
+
+        tvArriveGuardTime.setText(getString(R.string.guard_school_guard_time, arr1_h, arr1_m, arr2_h, arr2_m));
+    }
+
+    @Override
+    public void onBackPressed() {
+        Intent intent = getIntent();
+        intent.putExtra("school",mBean);
+        setResult(RESULT_OK,intent);
+        finish();
+    }
+}

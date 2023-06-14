@@ -1,0 +1,90 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="@color/welcome_bg_color"
+              android:gravity="center_horizontal"
+              android:orientation="vertical">
+
+    <include
+        android:id="@+id/title"
+        layout="@layout/activity_title"/>
+
+    <RelativeLayout
+        android:id="@+id/layer_root"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/welcome_bg_color">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:text="@string/guide_bind_title"
+            android:textColor="@color/white"
+            android:textSize="@dimen/xiaomiMyTextBigTitle"/>
+
+        <ImageView
+            android:id="@+id/iv_bind_code"
+            android:layout_width="140dp"
+            android:layout_height="140dp"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="75dp"
+            android:background="@drawable/btn_bind_code_selector"/>
+
+        <TextView
+            android:id="@+id/tv_scan_code_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/iv_bind_code"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="11dp"
+            android:text="@string/bind_code"
+            android:textColor="@color/white"
+            android:textSize="@dimen/xiaomiMyTextBigTitle"/>
+
+        <TextView
+            android:id="@+id/tv_scan_code_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/tv_scan_code_title"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="7dp"
+            android:text="@string/bind_code_detail"
+            android:textColor="@color/color_white_50"
+            android:textSize="@dimen/xiaomiMyTextSize3"/>
+
+        <ImageView
+            android:id="@+id/iv_bind_num"
+            android:layout_width="140dp"
+            android:layout_height="140dp"
+            android:layout_below="@+id/tv_scan_code_info"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="60dp"
+            android:background="@drawable/btn_bind_num_selector"
+            android:visibility="gone"/>
+
+        <TextView
+            android:id="@+id/tv_bind_num_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/iv_bind_num"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="11dp"
+            android:text="@string/bind_number"
+            android:textColor="@color/white"
+            android:textSize="@dimen/xiaomiMyTextBigTitle"
+            android:visibility="gone"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/tv_bind_num_title"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="7dp"
+            android:text="@string/bind_num_detail"
+            android:textColor="@color/color_white_50"
+            android:textSize="@dimen/xiaomiMyTextSize3"
+            android:visibility="gone"/>
+    </RelativeLayout>
+
+</LinearLayout>

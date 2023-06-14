@@ -1,0 +1,266 @@
+package com.xiaoxun.xun.networkv2.beans;
+
+import java.util.ArrayList;
+
+public class AllPrivacysInfo{
+
+    public AllPrivacysInfo(int RC) {
+        this.RC = RC;
+    }
+
+    int RC;
+    PInfo PL;
+
+    public int getRC() {
+        return RC;
+    }
+
+    public void setRC(int RC) {
+        this.RC = RC;
+    }
+
+    public PInfo getPL() {
+        return PL;
+    }
+
+    public void setPL(PInfo PL) {
+        this.PL = PL;
+    }
+
+    public static class PInfo{
+        ArrayList<WatchPrivacysInfo> devices;
+
+        public ArrayList<WatchPrivacysInfo> getDevices() {
+            return devices;
+        }
+
+        public void setDevices(ArrayList<WatchPrivacysInfo> devices) {
+            this.devices = devices;
+        }
+
+    }
+
+    public static class WatchPrivacysInfo{
+        String eid;
+        String privacyUrl;
+        String agreementUrl;
+        String ver;
+        String childrenprivacy;
+        String cpver;
+        String collectionList;
+        String sharingList;
+        WatchUrlInfo map;
+        WatchUrlInfo locus;
+        WatchUrlInfo dataUsage;
+        WatchUrlInfo wifi;
+        WatchUrlInfo appstore;
+        WatchUrlInfo sport;
+        WatchUrlInfo heartRate;
+        WatchUrlInfo aienglish;
+        WatchUrlInfo mialbum;
+        WatchUrlInfo callRecord;
+        WatchUrlInfo msg;
+        WatchUrlInfo heightWeight;
+        WatchUrlInfo temperature;
+        WatchUrlInfo sportGPS;
+
+        public String getCollectionList() {
+            return collectionList;
+        }
+
+        public void setCollectionList(String collectionList) {
+            this.collectionList = collectionList;
+        }
+
+        public String getSharingList() {
+            return sharingList;
+        }
+
+        public void setSharingList(String sharingList) {
+            this.sharingList = sharingList;
+        }
+
+        public WatchUrlInfo getTemperature() {
+            return temperature;
+        }
+
+        public void setTemperature(WatchUrlInfo temperature) {
+            this.temperature = temperature;
+        }
+
+        public WatchUrlInfo getHeightWeight() {
+            return heightWeight;
+        }
+
+        public void setHeightWeight(WatchUrlInfo heightWeight) {
+            this.heightWeight = heightWeight;
+        }
+
+
+        public WatchUrlInfo getCallRecord() {
+            return callRecord;
+        }
+
+        public void setCallRecord(WatchUrlInfo callRecord) {
+            this.callRecord = callRecord;
+        }
+
+        public String getEid() {
+            return eid;
+        }
+
+        public void setEid(String eid) {
+            this.eid = eid;
+        }
+
+        public String getPrivacyUrl() {
+            return privacyUrl;
+        }
+
+        public void setPrivacyUrl(String privacyUrl) {
+            this.privacyUrl = privacyUrl;
+        }
+
+        public String getAgreementUrl() {
+            return agreementUrl;
+        }
+
+        public void setAgreementUrl(String agreementUrl) {
+            this.agreementUrl = agreementUrl;
+        }
+
+        public String getVer() {
+            return ver;
+        }
+
+        public void setVer(String ver) {
+            this.ver = ver;
+        }
+
+        public String getChildrenprivacy() {
+            return childrenprivacy;
+        }
+
+        public void setChildrenprivacy(String childrenprivacy) {
+            this.childrenprivacy = childrenprivacy;
+        }
+
+        public String getCpver() {
+            return cpver;
+        }
+
+        public void setCpver(String cpver) {
+            this.cpver = cpver;
+        }
+
+        public WatchUrlInfo getMap() {
+            return map;
+        }
+
+        public void setMap(WatchUrlInfo map) {
+            this.map = map;
+        }
+
+        public WatchUrlInfo getLocus() {
+            return locus;
+        }
+
+        public void setLocus(WatchUrlInfo locus) {
+            this.locus = locus;
+        }
+
+        public WatchUrlInfo getDataUsage() {
+            return dataUsage;
+        }
+
+        public void setDataUsage(WatchUrlInfo dataUsage) {
+            this.dataUsage = dataUsage;
+        }
+
+        public WatchUrlInfo getWifi() {
+            return wifi;
+        }
+
+        public void setWifi(WatchUrlInfo wifi) {
+            this.wifi = wifi;
+        }
+
+        public WatchUrlInfo getAppstore() {
+            return appstore;
+        }
+
+        public void setAppstore(WatchUrlInfo appstore) {
+            this.appstore = appstore;
+        }
+
+        public WatchUrlInfo getSport() {
+            return sport;
+        }
+
+        public void setSport(WatchUrlInfo sport) {
+            this.sport = sport;
+        }
+
+        public WatchUrlInfo getHeartRate() {
+            return heartRate;
+        }
+
+        public void setHeartRate(WatchUrlInfo heartRate) {
+            this.heartRate = heartRate;
+        }
+
+        public WatchUrlInfo getAienglish() {
+            return aienglish;
+        }
+
+        public void setAienglish(WatchUrlInfo aienglish) {
+            this.aienglish = aienglish;
+        }
+
+        public WatchUrlInfo getMialbum() {
+            return mialbum;
+        }
+
+        public void setMialbum(WatchUrlInfo mialbum) {
+            this.mialbum = mialbum;
+        }
+
+        public WatchUrlInfo getMsg() {
+            return msg;
+        }
+
+        public void setMsg(WatchUrlInfo msg) {
+            this.msg = msg;
+        }
+
+        public void setSportGPS(WatchUrlInfo sportGps) {
+            this.sportGPS = sportGps;
+        }
+
+        public WatchUrlInfo getSportGPS() {
+            return sportGPS;
+        }
+    }
+
+    public static class WatchUrlInfo{
+        String url;
+        int val;
+
+        public String getUrl() {
+            return url;
+        }
+
+        public void setUrl(String url) {
+            this.url = url;
+        }
+
+        public int getVal() {
+            return val;
+        }
+
+        public void setVal(int val) {
+            this.val = val;
+        }
+
+    }
+}

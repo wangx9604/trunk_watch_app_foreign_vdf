@@ -1,0 +1,69 @@
+package com.xiaoxun.xun.utils;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.TextPaint;
+import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.Constants;
+import com.xiaoxun.xun.FunctionUrl;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.activitys.HelpWebActivity;
+
+import net.minidev.json.JSONObject;
+
+public class PromptUtils {
+
+    /**
+     * 手表未联网，请检查手表网络
+     * 手表已关机
+     */
+    public static String getOfflinePrompt1(ImibabyApp mApp, String eid) {
+
+        String prompt = mApp.getString(R.string.watch_offline);
+        Integer state = mApp.getmWatchIsOn().get(eid);
+        if (state != null && state == Const.WATCH_STATE_POWER_OFF) {
+            prompt = mApp.getString(R.string.watch_poweroff);
+        }
+        return prompt;
+    }
+
+    /**
+     * 未联网
+     * 已关机
+     */
+    public static String getOfflinePrompt5(ImibabyApp mApp, String eid) {
+
+        String prompt = mApp.getString(R.string.watch_state_offline);
+        Integer state = mApp.getmWatchIsOn().get(eid);
+        if (state != null && state == Const.WATCH_STATE_POWER_OFF) {
+            prompt = mApp.getString(R.string.watch_state_poweroff);
+        }
+        return prompt;
+    }
+
+    public static void showAgreementAndPrivacy(Activity activity, String type) {
+        JSONObject params = new JSONObject();
+        params.put("packageName", activity.getPackageName());
+        params.put("type", type);
+        Intent intent = new Intent(activity, HelpWebActivity.class);
+        if ("1".equals(type)) {
+            intent.putExtra(Const.KEY_WEB_TYPE, Constants.KEY_WEB_TYPE_AGREEMENT);
+        } else {
+            intent.putExtra(Const.KEY_WEB_TYPE, Constants.KEY_WEB_TYPE_PRIVACY_POLICY);
+        }
+        intent.putExtra(Const.KEY_HELP_URL, FunctionUrl.POST_AGREEMENT_AND_PRIVACY_URL);
+        intent.putExtra(Const.KEY_PARAMS, params.toJSONString());
+        activity.startActivity(intent);
+    }
+
+
+}

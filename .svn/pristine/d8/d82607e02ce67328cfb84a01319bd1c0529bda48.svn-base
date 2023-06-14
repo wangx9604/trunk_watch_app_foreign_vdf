@@ -1,0 +1,510 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@android:color/white"
+    android:orientation="vertical">
+
+    <include
+        android:id="@+id/alarmclock_title"
+        layout="@layout/activity_title" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <CheckBox
+                android:id="@+id/show_all_dot"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical|left"
+                android:includeFontPadding="false"
+                android:text="@string/str_show_all_dot" />
+
+            <CheckBox
+                android:id="@+id/trace_statistics"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical|left"
+                android:includeFontPadding="false"
+                android:text="轨迹定位统计" />
+
+            <CheckBox
+                android:id="@+id/tracke_open"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical|left"
+                android:includeFontPadding="false"
+                android:text="快速定位模式" />
+            <CheckBox
+                android:id="@+id/security_50"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical|left"
+                android:includeFontPadding="false"
+                android:text="最小安全区域50" />
+            <CheckBox
+                android:id="@+id/drop_point"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical|left"
+                android:includeFontPadding="false"
+                android:text="历史轨迹显示drop点" />
+            <CheckBox
+                android:id="@+id/filter_show"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical|left"
+                android:includeFontPadding="false"
+                android:text="显示轨迹过滤统计" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <Button
+                        android:id="@+id/buttonPing"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:text="测试App网速" />
+
+                    <TextView
+                        android:id="@+id/tv_ping"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:text="App网速："
+                        android:textAppearance="?android:attr/textAppearanceLarge" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <Button
+                        android:id="@+id/buttonPing2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:text="测试手表网速" />
+
+                    <TextView
+                        android:id="@+id/tv_ping2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:text="手表网速："
+                        android:textAppearance="?android:attr/textAppearanceLarge" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <RelativeLayout
+                android:id="@+id/point_test"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/SingleItemHeight"
+                android:background="@drawable/setting_item_selector"
+                android:clickable="true"
+                android:gravity="center_vertical"
+                android:orientation="vertical"
+                android:paddingLeft="@dimen/divideleftandright"
+                android:paddingRight="@dimen/divideleftandright">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:text="专项打点测试"
+                    android:textColor="@color/black"
+                    android:textSize="@dimen/xiaomiMyTextSize1" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/btn_next_selector" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/convert"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/SingleItemHeight"
+                android:background="@drawable/setting_item_selector"
+                android:clickable="true"
+                android:gravity="center_vertical"
+                android:orientation="vertical"
+                android:paddingLeft="@dimen/divideleftandright"
+                android:paddingRight="@dimen/divideleftandright">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:text="Base64文件转换(不可用)"
+                    android:textColor="@color/black"
+                    android:textSize="@dimen/xiaomiMyTextSize1" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/btn_next_selector" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/SingleItemHeight"
+                android:background="@drawable/setting_item_selector"
+                android:clickable="true"
+                android:gravity="center_vertical"
+                android:orientation="vertical"
+                android:paddingLeft="@dimen/divideleftandright"
+                android:paddingRight="@dimen/divideleftandright">
+
+                <TextView
+                    android:id="@+id/tv_step_tag"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:hint="时间: "
+                    android:textColor="@color/black"
+                    android:textSize="@dimen/xiaomiMyTextSize0" />
+
+                <TextView
+                    android:id="@+id/tv_step_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_toRightOf="@id/tv_step_tag"
+                    android:hint="步数"
+                    android:textColor="@color/black"
+                    android:textSize="@dimen/xiaomiMyTextSize0" />
+
+                <Button
+                    android:id="@+id/bt_step_request"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:text="请求步数" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/SingleItemHeight"
+                android:background="@drawable/setting_item_selector"
+                android:clickable="true"
+                android:gravity="center_vertical"
+                android:orientation="vertical"
+                android:paddingLeft="@dimen/divideleftandright"
+                android:paddingRight="@dimen/divideleftandright">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:hint="服务器切换到："
+                    android:textColor="@color/black"
+                    android:textSize="@dimen/xiaomiMyTextSize0" />
+
+                <Button
+                    android:id="@+id/bt_shift_server"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:text="测试服务器" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/SingleItemHeight"
+                android:background="@drawable/setting_item_selector"
+                android:clickable="true"
+                android:gravity="center_vertical"
+                android:orientation="vertical"
+                android:paddingLeft="@dimen/divideleftandright"
+                android:paddingRight="@dimen/divideleftandright">
+
+                <TextView
+                    android:id="@+id/simOp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:text="SIM卡业务"
+                    android:textColor="@color/black"
+                    android:textSize="@dimen/xiaomiMyTextSize1" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/btn_next_selector" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/SingleItemHeight"
+                android:background="@drawable/setting_item_selector"
+                android:clickable="true"
+                android:gravity="center_vertical"
+                android:orientation="vertical"
+                android:paddingLeft="@dimen/divideleftandright"
+                android:paddingRight="@dimen/divideleftandright">
+
+                <TextView
+                    android:id="@+id/text3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:text="家中WIFI:"
+                    android:textColor="@color/black"
+                    android:textSize="@dimen/xiaomiMyTextSize1" />
+
+                <TextView
+                    android:id="@+id/base_wifi"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_toRightOf="@+id/text3"
+                    android:text="未检测到"
+                    android:textColor="@color/black"
+                    android:textSize="@dimen/xiaomiMyTextSize1" />
+            </RelativeLayout>
+
+
+            <RelativeLayout
+                android:id="@+id/convert2"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/SingleItemHeight"
+                android:background="@drawable/setting_item_selector"
+                android:clickable="true"
+                android:gravity="center_vertical"
+                android:orientation="vertical"
+                android:paddingLeft="@dimen/divideleftandright"
+                android:paddingRight="@dimen/divideleftandright">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:text="测试计步功能"
+                    android:textColor="@color/black"
+                    android:textSize="@dimen/xiaomiMyTextSize1" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/btn_next_selector" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/loc_policy_cfg"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/SingleItemHeight"
+                android:background="@drawable/setting_item_selector"
+                android:clickable="true"
+                android:gravity="center_vertical"
+                android:orientation="vertical"
+                android:paddingLeft="@dimen/divideleftandright"
+                android:paddingRight="@dimen/divideleftandright">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:text="定位策略配置"
+                    android:textColor="@color/black"
+                    android:textSize="@dimen/xiaomiMyTextSize1" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/btn_next_selector" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/test_history_trace"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/SingleItemHeight"
+                android:background="@drawable/setting_item_selector"
+                android:clickable="true"
+                android:gravity="center_vertical"
+                android:orientation="vertical"
+                android:paddingLeft="@dimen/divideleftandright"
+                android:paddingRight="@dimen/divideleftandright">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:text="轨迹测试查看"
+                    android:textColor="@color/black"
+                    android:textSize="@dimen/xiaomiMyTextSize1" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/btn_next_selector" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/draw_path_ly"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/SingleItemHeight"
+                android:background="@drawable/setting_item_selector"
+                android:clickable="true"
+                android:gravity="center_vertical"
+                android:orientation="vertical"
+                android:paddingLeft="@dimen/divideleftandright"
+                android:paddingRight="@dimen/divideleftandright">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:text="PDR轨迹（不可用）"
+                    android:textColor="@color/black"
+                    android:textSize="@dimen/xiaomiMyTextSize1" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/btn_next_selector" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/layout_mi_oauth"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/SingleItemHeight"
+                android:background="@drawable/setting_item_selector"
+                android:gravity="center_vertical"
+                android:orientation="vertical"
+                android:paddingLeft="@dimen/divideleftandright"
+                android:paddingRight="@dimen/divideleftandright">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:text="小米账号授权"
+                    android:textColor="@color/black"
+                    android:textSize="@dimen/xiaomiMyTextSize1" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/btn_next_selector" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/layout_ai_personalize"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/SingleItemHeight"
+                android:background="@drawable/setting_item_selector"
+                android:gravity="center_vertical"
+                android:orientation="vertical"
+                android:paddingLeft="@dimen/divideleftandright"
+                android:paddingRight="@dimen/divideleftandright">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:text="小爱训练计划"
+                    android:textColor="@color/black"
+                    android:textSize="@dimen/xiaomiMyTextSize1" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/btn_next_selector" />
+            </RelativeLayout>
+
+
+            <RelativeLayout
+                android:id="@+id/layout_versionNumber"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/SingleItemHeight"
+                android:background="@drawable/setting_item_selector"
+                android:gravity="center_vertical"
+                android:orientation="vertical"
+                android:paddingLeft="@dimen/divideleftandright"
+                android:paddingRight="@dimen/divideleftandright">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:text="获取第三方SDK版本号"
+                    android:textColor="@color/black"
+                    android:textSize="@dimen/xiaomiMyTextSize1" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/btn_next_selector" />
+            </RelativeLayout>
+            <TextView
+                android:id="@+id/tv_versionNumber"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/black"
+                android:textSize="@dimen/xiaomiMyTextSize1"
+                android:paddingLeft="@dimen/divideleftandright"
+                android:paddingRight="@dimen/divideleftandright"/>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="@dimen/divideleftandright"
+                android:paddingRight="@dimen/divideleftandright">
+                <EditText
+                    android:id="@+id/et_e2e_action"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:hint="sub_action"
+                    android:inputType="number"
+                    android:textSize="@dimen/xiaomiMyTextSize1"/>
+                <Button
+                    android:id="@+id/btn_send_e2e_msg"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="SEND"
+                    android:textSize="@dimen/xiaomiMyTextSize1"
+                    android:layout_toEndOf="@id/et_e2e_action"/>
+            </RelativeLayout>
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

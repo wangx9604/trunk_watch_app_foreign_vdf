@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black" >#ff202726</color><!-- 深灰色，字体颜色没有纯黑，看起来像黑色的都是用此颜色 --> 
+    <color name="true_black" >#ff000000</color>    <!-- 黑色 -->
+    <color name="white" >#ffffffff</color>   	   <!-- 白色 -->
+    <color name="bg_grey">#ffeaeaea</color>  
+    <color name="notice">#e5e5e5</color>
+    <color name="transparent">#00ffffff</color>  
+    <color name="halftrans">#80000000</color>      
+    <color name="gray" >#e0000000</color>
+    <color name="result_view">#b0000000</color>
+    <color name="viewfinder_mask">#60000000</color>
+    <color name="possible_result_points">#c0ffff00</color>
+    <color name="dark_grey">#ff202726</color>    <!-- 深灰色，字体颜色没有纯黑，看起来像黑色的都是用此颜色 -->
+    <color name="line_grey">#33000000</color>   <!-- 浅灰色 -->     
+    <color name="txt_grey">#ffb5b5b4</color>  <!-- 浅灰色 -->
+    <color name="txt_grey_button">#ff727272</color>
+    <color name="register_grey">#ff333333</color>
+    <color name="bg_color">#fff0f0f0</color>     
+    <color name="warning_red">#ffd63318</color>
+    <color name="welcome_bg_color">#f66d3e</color>
+    <color name="history_trace_text">#ff70716f</color>
+    <color name="m_a_spliter_line">#ffadadad</color>
+    <!--<color name="m_a_sale_color">#ff33b19e</color>    &lt;!&ndash; 安全范围颜色 &ndash;&gt;-->
+    <color name="m_a_watch_nice_name_c">#b2ffffff</color> <!-- 70%透明   白色 -->
+    <!-- 80%透明   白色 -->
+    <color name="stroke_text_balck" >#d8000000</color>   	   <!--描边85%透明黑色-->
+    <color name="WatchListItemLine">#28ffffff</color>
+    <color name="chat_item_text">#77e5e5e5</color>
+    <color name="title_grey">#ff606060</color>
+    <color name="color_1">#b0000000</color>   <!-- 70%透明   黑色 -->
+    <color name="xiaomi_bg_grey">#fff8f8f8</color>
+    <color name="heart_rate_warning_value">#007AFF</color>
+    <color name="seletor_mins_bg">#41F6F6F6</color>
+    <color name="color_2">#99ffffff</color>   <!-- 60%透明   白色 -->
+    <color name="color_3">#ffed5f11</color>   <!-- sos告警色 -->
+    <color name="passport_background_light">#ff000000</color>
+
+    <color name="app_score_color">#999999</color>
+
+    <color name="bind_finish_guide_words_color">#FF8846</color>
+
+    <color name="focustime_add_time">#808080</color>
+
+    <color name="sport_context_color">#20FE5D04</color>
+    <color name="record_rate_0">#FF445B </color>
+
+    <color name="alipay_666666">#666666</color>
+
+    <color name="battery_pb_foreground">#FF8846</color>
+    <color name="battery_detail_tab_bg">#ffe5e5e5</color>
+    <color name="battery_detail_tab_divide">#C9C9C9</color>
+
+    <!--Crop View-->
+    <color name="ucrop_color_default_crop_grid">#80ffffff</color>
+    <color name="ucrop_color_default_crop_frame">#ffffff</color>
+    <color name="ucrop_color_default_dimmed">#8c000000</color>
+    <color name="ucrop_color_default_logo">#4f212121</color>
+    <color name="motion_record_bg_0">#00DBB7</color>
+    <color name="motion_record_bg_1">#FFD600</color>
+    <color name="motion_record_bg_2">#FF7E00</color>
+    <color name="motion_record_bg_3">#FF434A</color>
+    <color name="record_zone_0">#2BEF73</color>
+    <color name="record_zone_1">#45B4FE</color>
+    <color name="record_zone_2">#FE5D04</color>
+    <color name="record_zone_3">#6F7CFF</color>
+    <color name="record_zone_4">#FDB25E</color>
+    <color name="record_zone_5">#FE0404</color>
+
+    <!-- 日常范围颜色 -->
+    <color name="color_5">#7F000000</color>   <!-- 50%透明 黑色 -->
+    <color name="color_6">#fff8f8f8</color>   <!-- 小米标准dialog背景色 -->
+    <color name="color_7">#cc000000</color>   <!-- 80%透明   黑色 -->
+    <color name="color_9">#27000000</color>   <!-- 15%透明   黑色 -->
+    <color name="color_8">#ffd3d3d3</color>
+    <color name="color_10">#ffbbbbbb</color>
+    <color name="color_11">#ffd9d9d9</color>
+     <color name="color_12">#BF000000</color>
+    <color name="color_13">#99000000</color> <!-- 60%透明   黑色 -->
+    <color name="color_14">#73000000</color> <!-- 45%透明   黑色 -->
+    <color name="color_white_50">#7fffffff</color>   <!-- 50%透明 白色 -->
+    <!-- 40%透明 白色 -->
+    <color name="divider_color">#33000000</color> <!-- 20%透明   黑色 -->
+    <color name="color_hint">#4c000000</color>   <!-- 30%透明   黑色 -->
+    <color name="red_color">#fff35e02</color>
+    <color name="fail_bg_color_gray">#383C3E</color>
+    <color name="dialog_listview_divide_color">#CCCCCC</color>  
+    <color name="title_white_color">#e5ffffff</color> <!-- 90%透明   白色 -->
+    <color name="system_update_fail">#ff566162</color> <!-- 系统升级失败背景 -->
+    <color name="bg_color_orange">#f66d3e</color><!-- 橙色背景颜色值-->
+    <color name="color_black_14">#e5000000</color> <!-- 90%透明   黑色 -->
+    <!-- 70%透明   黑色 -->
+    <color name="color_16">#fffc623b</color>   <!-- 回拨颜色 -->
+    <color name="color_17">#7f000000</color>   <!-- 50%透明 黑色 -->
+    <color name="color_hint_4">#66000000</color>   <!-- 40%透明   黑色 -->
+    <color name="warining_red">#ffed000b</color>
+    <color name="color_fail">#ca4216</color>
+    <!-- 登陆界面分隔-->
+    <color name="device_list_focus_name">#f66d3e</color>
+    <color name="msg_line_color">#ececec</color>
+    <color name="color_red_50">#7FEF0000</color><!-- 50%透明 红色 -->
+    <color name="color_red_10">#16EF0000</color><!-- 10%透明 红色 -->
+
+    <color name="txt_coupon_color">#313131</color>
+    <color name="txt_coupon_focus_color">#FF5A00</color>
+
+    <!-- 圆形进度条控件颜色 -->
+    <color name="ring_high1">#6EC868</color>
+    <color name="ring_high2">#1A6EC868</color>
+    <color name="ring_textcolor">#898989</color>
+
+    <color name="halftrans_white">#bfffffff</color>
+    <color name="black_d9_000000">#d9000000</color>
+    <color name="FF_F66D3E">#FFF66D3E</color>
+    <color name="alipay_333333">#333333</color>
+    <color name="alipay_aaaaaa">#aaaaaa</color>
+    <color name="welcome_ff5a02">#ff5a02</color>
+
+    <color name="dial_bg_list_bg">#fff1f1f1</color>
+
+    <color name="setting_F1F1F1">#F1F1F1</color>
+    <color name="setting_2C2C2C">#2C2C2C</color>
+    <color name="navi_road">#1cb954</color>
+
+    <color name="welcome2_ff5a02">#FF5A02</color>
+    <color name="divider">#E9E9E9</color>
+
+    <color name="hyperlink">#1808E4</color>
+
+    <color name="schedule_edit_oper_no">#E1F9ED</color>
+    <color name="schedule_edit_oper_yes">#86AFFD</color>
+    <color name="schedule_edit_select">#57DC99</color>
+    <color name="schedule_edit_no_select">#F2F2F7</color>
+    <color name="schedule_no_class">#F2F2F6</color>
+    <color name="schedule_time_select">#FF7B33</color>
+    <color name="schedule_time_text_color">#313131</color>
+    <color name="schedule_content_bg">#F8F8FA</color>
+    <color name="schedule_class_bg">#F9F9F9</color>
+    <color name="shape_edge_bg">#40000000</color>
+    <color name="shape_edge_bg_1">#09000000</color>
+    <color name="color_line" >#E5E5E5</color>
+    <color name="color_tile_content" >#313131</color><!-- 用于主要文字标题和内容等。 -->
+    <color name="color_dialog_content" >#222222</color><!-- 用于主要文字标题和内容等。 -->
+
+    <!-- 主题色，用于需要强调App品牌的位置，以及主要辅助色 FF5A00 -->
+    <color name="color_background" >#F8F8FA</color><!-- 用于App所有需要的底色部分。 -->
+    <!-- 用于主要输入框未输入内容的颜色等。 -->
+    <!-- 用于下划线颜色。 -->
+    <!-- 用于次要文字或副标题等。 -->
+    <color name="color_low_content" >#898989</color><!-- 辅助用于等级更弱的文字内容。 -->
+    <!-- 用于至灰文案以及空状态提示等。 -->
+
+    <color name="guard_divide_line">#979797</color>
+    <color name="guard_time_text_color">#FF7201</color>
+
+    <color name="color_navbar_normal" >#F56D3E</color><!-- 用于标题栏侧边文字颜色 -->
+    <color name="color_navbar_check" >#D5D5D5</color><!-- 用于标题栏按下侧边文字颜色 -->
+    <!-- 用于时间背景颜色 -->
+    <color name="item_grey">#EDEDED</color>
+
+    <!-- 应用的几种状态背景色 -->
+    <color name="app_color2">#999999</color>
+
+    <color name="health_circle_pb_background">#19FE5D04</color>
+    <color name="health_circle_pb_foreground">#FF6C1A</color>
+    <color name="health_monitor_str_color">#FE5D04</color>
+    <color name="health_monitor_str_dis_color">#FF9E69</color>
+    <color name="health_report_bg">#fff8f8fb</color>
+    <color name="health_report_card_bg">#F9F9FC</color>
+    <color name="health_report_legend_green">#41BA41</color>
+    <color name="health_report_legend_light_yellow">#FEBB02</color>
+    <color name="health_report_legend_orange">#FF961D</color>
+    <color name="health_report_legend_red">#FA292D</color>
+    <color name="health_report_legend_blue">#6F7CFF</color>
+    <color name="health_report_legend_purple">#E969FF</color>
+    <color name="health_report_legend_light_orange">#FDB25E</color>
+    <color name="health_report_legend_dark_orange">#FE5D04</color>
+    <color name="health_report_legend_yellow">#FFCC00</color>
+    <color name="health_report_chart_line">#D8D8D8</color>
+    <color name="health_report_chart_line_color">#FF445B</color>
+    <color name="health_report_chart_candle_color">#FF4745</color>
+    <color name="health_record_heartrate_daily">#224AEC</color>
+    <color name="health_record_heartrate_warmbody">#1588F8</color>
+    <color name="health_record_heartrate_burning">#04DEAE</color>
+    <color name="health_record_heartrate_aerobic">#FFD600</color>
+    <color name="health_record_heartrate_anaerobic">#FF8B11</color>
+    <color name="health_record_heartrate_limit">#F32B3C</color>
+    <color name="health_record_step_setting_text_normal">#868686</color>
+    <color name="health_monitor_statusbar_color">#F9EFEF</color>
+
+    <color name="btn_agree_continue_color">#FF8829</color>
+
+    <!--按钮变化颜色-->
+    <color name="bottom_text_checked">#ff8846</color>
+    <color name="bottom_btn_checked">#EE7D3F</color>
+    <color name="bottom_btn_confirm_unclickble">#FFDBC7</color>
+    <color name="bottom_btn_cancel_unclickble">#FAFAFA</color>
+    <color name="bottom_btn_cancel_press">#E5E5E5</color>
+    <color name="bottom_btn_cancel_normal">#F0F0F0</color>
+
+    <color name="quit_background">#20FF8846</color>
+    <color name="health_outside_duration_color">#FF650F</color>
+    <color name="health_outside_tips_color1">#F5FDF2</color>
+    <color name="health_outside_tips_color2">#FCFEE5</color>
+    <color name="health_outside_tips_color3">#FEF4E8</color>
+    <color name="health_outside_tips_color4">#FFEEEE</color>
+    <color name="health_outside_tips_color5">#F9F2FF</color>
+
+    <color name="score_orange">#FF813D</color>
+
+    <color name="cdb_dialog_grey_color">#F8F8FB</color>
+
+    <!-- 首页颜色 -->
+    <color name="txt_loc_type_black">#ff999999</color>
+    <color name="color_content_hint">#ACACAC</color><!-- 用于主要输入框未输入内容的颜色等。 -->
+    <color name="heart_rate_summary_average_color">#FF7123</color>
+    <color name="bg_color_dark_orange">#FF7123</color><!-- 深橙色背景颜色值-->
+
+</resources>

@@ -1,0 +1,153 @@
+package com.xiaoxun.xun.activitys;
+
+import android.annotation.TargetApi;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.view.View;
+import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.telecom.websdk.Callback;
+import com.telecom.websdk.LoginWebViewClient;
+import com.telecom.websdk.NormalWebView;
+import com.telecom.websdk.WebConfig;
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.FunctionUrl;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.OVERSEAURL;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.region.XunKidsDomain;
+import com.xiaoxun.xun.utils.LogUtil;
+
+public class RanksAreasActivity extends NormalActivity implements View.OnClickListener{
+    private ImageView iv_back;
+    private TextView tv_ranks_area;
+    private TextView tv_ranks_country;
+    private NormalWebView webView;
+    private ImibabyApp myApp;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_ranks_areas);
+        myApp = (ImibabyApp)getApplication();
+        initView();
+        initWebView();
+        dealJavascriptLeak();
+    }
+    private void initWebView(){
+        WebSettings settings = webView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        settings.setUseWideViewPort(true);
+        settings.setLoadWithOverviewMode(true);
+        settings.setDefaultTextEncodingName("UTF-8");
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        }
+        WebConfig.configureNormalWebViewByAD(RanksAreasActivity.this, webView,
+                new LoginWebViewClient() {
+                    @Override
+                    public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                        if(url.equals("http://miwifi.com/diagnosis/index.html")){
+                            view.loadUrl(url);
+                        }
+                        return true;
+                    }
+
+                    @Override
+                    public void onPageFinished(WebView view, String url) {
+                        super.onPageFinished(view, url);
+
+                    }
+
+                    @Override
+                    public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+                        super.onReceivedError(view, errorCode, description, failingUrl);
+                        String errorHtml = "<html><body><div style=\"position:relative;height:" +
+                                "100%; width:100%; display:table; *position:absolute; *top:50%; " +
+                                "*left:0;\"><p style=\"font-size:50px;position:absolute; top:40%; left:0; text" +
+                                "-align:center; width:100%; *top:0;\">"+getString(R.string.adview_net_error)+"</p>" +
+                                "</div></body></html>";
+                        view.loadDataWithBaseURL("about:blank",errorHtml,"text/html", "UTF-8",null);
+                    }
+                }
+                , new WebChromeClient() {
+                    public void onReceivedTitle(WebView view, String title) {
+                        super.onReceivedTitle(view, title);
+                    }
+                }, new Callback() {
+                    @Override
+                    public void closeWindow() {
+                    }
+
+                    @Override
+                    public void backClose() {
+                    }
+                });
+        if (myApp.getIntValue(Const.SHARE_PREF_FIELD_DEV_SERVER_FLAG, 0) > 0) {
+            webView.loadUrl(Const.APP_RANK_AREA_HTTPS_TEST_URL + "?curType=0&EID=" + myApp.getCurUser().getFocusWatch().getEid());
+        }else {
+            webView.loadUrl(XunKidsDomain.getInstance(this).getXunKidsStepsDomain(OVERSEAURL.STEPS_RANK_AREA_URL) + "?curType=0&EID=" + myApp.getCurUser().getFocusWatch().getEid());
+        }
+    }
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    private void dealJavascriptLeak() {
+        webView.removeJavascriptInterface("searchBoxJavaBridge_");
+        webView.removeJavascriptInterface("accessibility");
+        webView.removeJavascriptInterface("accessibilityTraversal");
+    }
+    private void initView(){
+        iv_back = findViewById(R.id.iv_title_back);
+        tv_ranks_area = findViewById(R.id.tv_ranks_area);
+        tv_ranks_country = findViewById(R.id.tv_ranks_country);
+        webView = findViewById(R.id.webView);
+
+        iv_back.setOnClickListener(this);
+        tv_ranks_country.setOnClickListener(this);
+        tv_ranks_area.setOnClickListener(this);
+//        webView.getSettings().setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
+        LogUtil.i("ranksAreas:   "+"https://steps.xunkids.com/dash?curType=0&EID="+myApp.getCurUser().getFocusWatch().getEid());
+      }
+
+    @Override
+    public void onClick(View v) {
+        switch(v.getId()){
+            case R.id.iv_title_back:
+                finish();
+                break;
+            case R.id.tv_ranks_area:
+                tv_ranks_area.setTextColor(getResources().getColor(R.color.bg_color_orange));
+                tv_ranks_area.setBackgroundResource(R.drawable.switch_right_select);
+                tv_ranks_country.setTextColor(getResources().getColor(R.color.white));
+                tv_ranks_country.setBackgroundResource(R.drawable.msgtitle_lablayout_selector);
+                if (myApp.getIntValue(Const.SHARE_PREF_FIELD_DEV_SERVER_FLAG, 0) > 0) {
+                    webView.loadUrl(Const.APP_RANK_AREA_HTTPS_TEST_URL + "?curType=0&EID=" + myApp.getCurUser().getFocusWatch().getEid());
+                }else {
+                    webView.loadUrl(XunKidsDomain.getInstance(this).getXunKidsStepsDomain(OVERSEAURL.STEPS_RANK_AREA_URL) + "?curType=0&EID=" + myApp.getCurUser().getFocusWatch().getEid());
+                }
+                break;
+            case R.id.tv_ranks_country:
+                tv_ranks_country.setTextColor(getResources().getColor(R.color.bg_color_orange));
+                tv_ranks_country.setBackgroundResource(R.drawable.switch_right_select);
+                tv_ranks_area.setTextColor(getResources().getColor(R.color.white));
+                tv_ranks_area.setBackgroundResource(R.drawable.msgtitle_lablayout_selector);
+                if (myApp.getIntValue(Const.SHARE_PREF_FIELD_DEV_SERVER_FLAG, 0) > 0) {
+                    webView.loadUrl(Const.APP_RANK_AREA_HTTPS_TEST_URL + "?curType=1&EID=" + myApp.getCurUser().getFocusWatch().getEid());
+                }else {
+                    webView.loadUrl(XunKidsDomain.getInstance(this).getXunKidsStepsDomain(OVERSEAURL.STEPS_RANK_AREA_URL) + "?curType=1&EID=" + myApp.getCurUser().getFocusWatch().getEid());
+                }
+                break;
+        }
+    }
+
+}

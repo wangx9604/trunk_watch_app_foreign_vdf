@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:android_custom="http://schemas.android.com/apk/res-auto"
+                android:fitsSystemWindows="true"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/welcome_bg_color"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+    <LinearLayout
+
+        android:id="@+id/layer_root"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <!-- wait -->
+        <!--wait service data -->
+        <RelativeLayout
+            android:id="@+id/layer_wait_loading"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone">
+
+            <RelativeLayout
+                android:layout_width="226.6dp"
+                android:layout_height="226.6dp"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="172.6dp">
+
+                <com.xiaoxun.xun.views.RoundProgressBar
+                    android:layout_width="226.6dp"
+                    android:layout_height="226.6dp"
+                    android_custom:max="300"
+                    android_custom:roundColor="#ffffff"
+                    android_custom:roundProgressColor="#f9926f"
+                    android_custom:roundWidth="3dip"
+                    android_custom:textIsDisplayable="false"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:layout_marginTop="78dp"
+                    android:text="@string/bind_wait"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/xiaomiMyTextSize1"
+                    android:textStyle="bold"/>
+
+            </RelativeLayout>
+        </RelativeLayout>
+
+        <!-- wait watch -->
+        <RelativeLayout
+            android:id="@+id/layer_wait_watch"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone">
+
+            <RelativeLayout
+                android:layout_width="360dp"
+                android:layout_height="366.6dp"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="120dp">
+
+                <ImageView
+                    android:id="@+id/iv_press_animation"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/animation_press"/>
+
+                <TextView
+                    android:id="@+id/tv_timecount_watch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginTop="138dp"
+                    android:text="60"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/xiaomiMyTextSizeTimeCount"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/tv_timecount_watch"
+                    android:layout_centerHorizontal="true"
+                    android:text="@string/bind_result_timeout_count"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/xiaomiMyTextSize1"
+                    android:visibility="gone"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignTop="@id/tv_timecount_watch"
+                    android:layout_toRightOf="@id/tv_timecount_watch"
+                    android:text="@string/second"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/xiaomiMyTextSize5"/>
+
+            </RelativeLayout>
+
+            <TextView
+                android:id="@+id/tv_guide_others"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:layout_marginBottom="30.6dp"
+                android:text="@string/guide_watch_accept"
+                android:textColor="@color/white"
+                android:textSize="@dimen/xiaomiMyTextSize1"/>
+
+
+        </RelativeLayout>
+
+        <!-- wait  admin-->
+
+        <RelativeLayout
+            android:id="@+id/layer_wait_admin"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone">
+
+            <RelativeLayout
+                android:layout_width="226.6dp"
+                android:layout_height="226.6dp"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="172.6dp">
+
+                <com.xiaoxun.xun.views.RoundProgressBar
+                    android:id="@+id/round_progressbar_1"
+                    android:layout_width="226.6dp"
+                    android:layout_height="226.6dp"
+                    android_custom:max="300"
+                    android_custom:roundColor="#ffffff"
+                    android_custom:roundProgressColor="#f9926f"
+                    android_custom:roundWidth="3dip"
+                    android_custom:textIsDisplayable="false"/>
+
+                <TextView
+                    android:id="@+id/tv_timecount_admin"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginTop="78dp"
+                    android:text="60"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/xiaomiMyTextSizeTimeCount"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/tv_timecount_admin"
+                    android:layout_centerHorizontal="true"
+                    android:text="@string/bind_result_timeout_count"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/xiaomiMyTextSize1"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignTop="@id/tv_timecount_admin"
+                    android:layout_marginLeft="6dp"
+                    android:layout_toRightOf="@id/tv_timecount_admin"
+                    android:text="@string/second"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/xiaomiMyTextSize5"/>
+
+            </RelativeLayout>
+
+            <TextView
+                android:id="@+id/tv_wait_admin"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:layout_marginBottom="30.6dp"
+                android:text="@string/guide_admin_accept"
+                android:textColor="@color/white"
+                android:textSize="@dimen/xiaomiMyTextSize1"/>
+
+            <TextView
+                android:id="@+id/tv_send_req"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_above="@id/tv_wait_admin"
+                android:layout_centerHorizontal="true"
+                android:layout_marginBottom="9dp"
+                android:text="@string/guide_req_send_admin"
+                android:textColor="@color/white"
+                android:textSize="@dimen/xiaomiMyTextSize1"/>
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/layer_send_admin_ok"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="visible">
+
+
+            <ImageView
+                android:id="@+id/iv_send_admin_ok"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="145dp"
+                android:src="@drawable/bind_ok_icon"/>
+
+            <TextView
+                android:id="@+id/tv_send_admin_ok"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="23.3dp"
+                android:layout_marginLeft="23.3dp"
+                android:text="@string/send_admin_ok_info"
+                android:layout_centerHorizontal="true"
+                android:gravity="center"
+                android:textColor="@color/white"
+                android:layout_marginTop="20dp"
+                android:layout_below="@+id/iv_send_admin_ok"
+                android:textSize="@dimen/xiaomiMyTextSize1"/>
+
+            <Button
+                android:id="@+id/btn_send_admin_ok"
+                android:layout_width="278dp"
+                android:layout_height="40dp"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:layout_marginBottom="21.3dp"
+                android:background="@drawable/btn_trans_selector"
+                android:paddingLeft="5dp"
+                android:paddingRight="5dp"
+                android:text="@string/confirm"
+                android:textColor="@color/bg_color"
+                android:textSize="@dimen/MyTextSize2"/>
+        </RelativeLayout>
+
+        <!-- ok   img-->
+        <RelativeLayout
+            android:id="@+id/layer_ok"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="60dp"
+                android:text="@string/bind_result_success"
+                android:textColor="@color/white"
+                android:textSize="@dimen/MyTextSize1"/>
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="205dp"
+                android:src="@drawable/bind_ok_icon"/>
+
+            <Button
+                android:id="@+id/btn_next_step_ok"
+                android:layout_width="278dp"
+                android:layout_height="40dp"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:layout_marginBottom="21.3dp"
+                android:background="@drawable/btn_trans_selector"
+                android:paddingLeft="5dp"
+                android:paddingRight="5dp"
+                android:text="@string/security_finish_next"
+                android:textColor="@color/bg_color"
+                android:textSize="@dimen/MyTextSize2"/>
+        </RelativeLayout>
+        <!-- error  img and reason-->
+        <RelativeLayout
+            android:id="@+id/layer_error"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/bind_result_error"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="60dp"
+                android:gravity="center"
+                android:text="@string/scan_wrong"
+                android:textColor="@color/white"
+                android:textSize="@dimen/MyTextSize1"/>
+
+            <TextView
+                android:id="@+id/bind_result_error_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/bind_result_error"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="10dp"
+                android:textColor="@color/white"
+                android:textSize="@dimen/MyTextSize1"/>
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="205dp"
+                android:src="@drawable/bind_error_icon"/>
+
+
+            <Button
+                android:id="@+id/btn_next_step_error"
+                android:layout_width="278dp"
+                android:layout_height="40dp"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:layout_marginBottom="21.3dp"
+                android:background="@drawable/btn_trans_selector"
+                android:paddingLeft="5dp"
+                android:paddingRight="5dp"
+                android:text="@string/retry"
+                android:textColor="@color/bg_color"
+                android:textSize="@dimen/MyTextSize2"/>
+
+            <TextView
+                android:id="@+id/bind_result_error_3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_above="@id/btn_next_step_error"
+                android:layout_centerHorizontal="true"
+                android:layout_marginBottom="19.33dp"
+                android:layout_marginLeft="23.33dp"
+                android:layout_marginRight="23.33dp"
+                android:layout_marginTop="10dp"
+                android:textColor="@color/color_white_50"
+                android:textSize="@dimen/xiaomiMyTextSize3"/>
+
+        </RelativeLayout>
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="@dimen/fragment_title_height">
+
+        <ImageButton
+            android:id="@+id/ib_help_web"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="10.66dp"
+            android:layout_centerVertical="true"
+            android:background="@drawable/btn_help_selector"
+            android:visibility="invisible" />
+    </RelativeLayout>
+
+</RelativeLayout>

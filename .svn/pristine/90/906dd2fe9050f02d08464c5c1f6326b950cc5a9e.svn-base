@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="64dp"
+    android:descendantFocusability="blocksDescendants">
+    <LinearLayout 
+        android:orientation="vertical" 
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="23.33dp"
+        android:layout_marginRight="23.33dp"> 
+        <TextView android:id="@+id/title"  
+            android:layout_width="wrap_content" 
+            android:layout_height="wrap_content"
+            android:textColor="@color/black" 
+            android:textSize="@dimen/xiaomiMyTextSize1"
+            android:singleLine="true"/> 
+        <TextView android:id="@+id/info"  
+            android:layout_width="wrap_content" 
+            android:layout_height="wrap_content"
+            android:textColor="@color/txt_grey" 
+            android:textSize="@dimen/xiaomiMyTextSize4" 
+            android:singleLine="true"/> 
+    </LinearLayout>
+    
+</RelativeLayout>

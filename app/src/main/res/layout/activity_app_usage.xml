@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
+    <include
+        android:id="@+id/title"
+        layout="@layout/activity_title" />
+    <TextView
+        android:id="@+id/tv_useage_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="14dp"
+        android:layout_margin="10dp"
+        android:layout_below="@+id/title"/>
+    <ListView
+        android:id="@+id/app_usage_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/tv_useage_time"
+        android:layout_above="@+id/tv_update_time"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:stretchMode="columnWidth"
+        android:scrollbars="none"
+        android:visibility="gone"/>
+    <TextView
+        android:id="@+id/tv_update_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="14dp"
+        android:layout_margin="10dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"/>
+    <LinearLayout
+        android:id="@+id/layout_no_use"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone">
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/watch_app_empty"
+            android:layout_marginBottom="10dp"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/app_uses_disable"
+            android:textSize="14dp"/>
+    </LinearLayout>
+
+</RelativeLayout>

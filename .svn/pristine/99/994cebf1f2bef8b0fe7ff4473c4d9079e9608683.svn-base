@@ -1,0 +1,262 @@
+package com.xiaoxun.xun.utils;
+
+import android.Manifest;
+import android.app.Activity;
+import android.app.Dialog;
+import android.content.Intent;
+import android.net.Uri;
+import android.support.v4.app.ActivityCompat;
+import android.text.Html;
+import android.view.View;
+import android.widget.Toast;
+
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.activitys.SelecterCallBackNumber;
+import com.xiaoxun.xun.activitys.SetDeviceNumberActivity;
+import com.xiaoxun.xun.activitys.VideoCallActivity;
+import com.xiaoxun.xun.activitys.VideoCallActivity2;
+import com.xiaoxun.xun.beans.PhoneNumber;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.interfaces.MsgCallback;
+
+import net.minidev.json.JSONObject;
+
+import java.util.ArrayList;
+
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+
+public class WatchFunctionUtils {
+
+    public static void call(final ImibabyApp app, final Activity activity, final WatchData watch, final int permissionTag) {
+        final String number = watch.getCellNum();
+        if (number != null && number.length() > 0 && number.length() <= 18) {
+            if (app.getStringValue(watch.getEid() + Const.SHARE_PREF_FIELD_AUTO_RECEIVE_NOTIFY, "1").equals("1")) {
+                Dialog dlg = DialogUtil.CustomNormalDialog(activity, activity.getText(R.string.call_baby_notify).toString(),
+                        activity.getString(R.string.call_baby_notify_content),
+                        new DialogUtil.OnCustomDialogListener() {
+
+                            @Override
+                            public void onClick(View v) {
+                                app.setValue(watch.getEid() + Const.SHARE_PREF_FIELD_AUTO_RECEIVE_NOTIFY, "0");
+                                makeACall(activity, number, permissionTag);
+                            }
+                        },
+                        activity.getText(R.string.donothing_text).toString());
+                dlg.show();
+            } else {
+                makeACall(activity, number, permissionTag);
+            }
+        } else {
+            if (app.getCurUser().isMeAdminByWatch(watch)) {
+                ToastUtil.show(app, activity.getString(R.string.set_watch_number));
+                Intent intent = new Intent(activity, SetDeviceNumberActivity.class);
+                intent.putExtra(Const.KEY_WATCH_ID, watch.getEid());
+                activity.startActivity(intent);
+                return;
+            } else {
+                ToastUtil.show(app, activity.getString(R.string.admin_set_watch_number));
+            }
+        }
+    }
+
+    public static void makeACall(Activity activity, String number, int permissionTag) {
+        if (ActivityCompat.checkSelfPermission(activity, Manifest.permission.CALL_PHONE) == PERMISSION_GRANTED) {
+            Intent intent = new Intent(Intent.ACTION_CALL);
+            intent.setData(Uri.parse("tel:" + number));
+            activity.startActivity(intent);
+        } else {
+            ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.CALL_PHONE}, permissionTag);
+        }
+    }
+
+    public static void findWatch(final ImibabyApp app, final Activity activity, final WatchData watch) {
+        String title = activity.getString(R.string.find_watch);
+        String des = activity.getString(R.string.find_watch_prompt_msg);
+        if (!watch.isWatch()) {
+            title = activity.getString(R.string.find_device);
+            des = activity.getString(R.string.find_device_prompt_msg);
+        }
+        Dialog dlg = DialogUtil.CustomNormalDialog(activity,
+                title,
+                des,
+                new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                    }
+                },
+                activity.getText(R.string.cancel).toString(),
+                new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (app.isInSilenceTime(watch.getEid()) > 0) {
+                            ToastUtil.show(activity, activity.getString(R.string.watch_state_silence));
+                        }
+                        deviceFindWatch(app, activity,watch);
+                    }
+                },
+                activity.getText(R.string.confirm).toString());
+        dlg.show();
+    }
+
+    public static void deviceFindWatch(ImibabyApp app, final Activity activity, WatchData watch) {
+        JSONObject pl = new JSONObject();
+        pl.put(CloudBridgeUtil.KEY_NAME_SUB_ACTION, CloudBridgeUtil.SUB_ACTION_VALUE_NAME_SET_WATCH_BUZZER);
+        pl.put(CloudBridgeUtil.KEY_NAME_KEY, Integer.valueOf(1).toString());
+        String[] teid;
+        teid = new String[1];
+        teid[0] = watch.getEid();
+        int sn = Long.valueOf(TimeUtil.getTimeStampGMT()).intValue();
+
+        if (app.getNetService() != null) {
+            app.getNetService().sendE2EMsg(watch.getEid(), sn, pl, 120 * 1000, false, new MsgCallback() {
+                @Override
+                public void doCallBack(JSONObject reqMsg, JSONObject respMsg) {
+                    int tmpRc = CloudBridgeUtil.getCloudMsgRC(respMsg);
+                    if (tmpRc == CloudBridgeUtil.RC_NETERROR) {
+                        ToastUtil.showMyToast(activity, activity.getString(R.string.network_error_prompt), Toast.LENGTH_SHORT);
+                    } else if (tmpRc == CloudBridgeUtil.RC_HALF_SUCCESS) {
+                    } else if (tmpRc == CloudBridgeUtil.ERROR_CODE_E2E_OFFLINE) {//手表不在线
+                        ToastUtil.show(activity, activity.getString(R.string.watch_offline));
+                    } else if (tmpRc != CloudBridgeUtil.ERROR_CODE_E2E_OFFLINE && tmpRc < 0
+                            && tmpRc != CloudBridgeUtil.RC_TIMEOUT) {//网络不好,有时候手表关机服务器没有返回值,所以也存在手表不在线的可能
+                        ToastUtil.showMyToast(activity, activity.getString(R.string.watch_offline), Toast.LENGTH_SHORT);
+                    }
+                }
+            });
+        }
+    }
+
+
+    public static void clickVideoCall(ImibabyApp app, Activity activity, WatchData watch) {
+        Intent intent = new Intent(activity, VideoCallActivity.class);
+        if (WatchData.getVideoCallVersion(watch) == 2) {
+            intent.setClass(activity, VideoCallActivity2.class);
+        }
+        intent.putExtra(Const.VIDEOCALL_TYPE, 0);
+        intent.putExtra(CloudBridgeUtil.KEY_NAME_EID, watch.getEid());
+        activity.startActivity(intent);
+    }
+
+    public static void listen(final ImibabyApp app, final Activity activity, final WatchData watch, final int result) {
+        String callBackNumber = app.getStringValue(watch.getEid() + Const.SHARE_PREF_CALL_BACK_NUMBER, Const.DEFAULT_NEXT_KEY);
+        String callBackAttri = app.getStringValue(watch.getEid() + Const.SHARE_PREF_CALL_BACK_ATTRI, Const.DEFAULT_NEXT_KEY);
+        String textStr1 = "<font color=\"#a3a3a3\">" + activity.getString(R.string.send_monitor_number_tips) + "</font>";
+        String title = activity.getString(R.string.listen_tel_title);
+
+
+        boolean isFamilyMember = false;
+        String jsonStr = app.getStringValue(watch.getEid() + Const.SHARE_PREF_DEVICE_CONTACT_KEY, null);
+        ArrayList<PhoneNumber> phoneWhiteList = CloudBridgeUtil.parseContactListFromJsonStr(jsonStr);
+        if (callBackNumber.equals(Const.DEFAULT_NEXT_KEY)) {
+            for (PhoneNumber data : phoneWhiteList) {
+                if (data.userEid != null && data.userEid.equals(app.getCurUser().getEid()) && data.number != null) {
+                    callBackNumber = data.number;
+                    callBackAttri = app.getRelation(data);
+                    isFamilyMember = true;
+                    app.setValue(watch.getEid() + Const.SHARE_PREF_CALL_BACK_NUMBER, callBackNumber);
+                    app.setValue(watch.getEid() + Const.SHARE_PREF_CALL_BACK_ATTRI, callBackAttri);
+                    break;
+                }
+            }
+        } else {
+            for (PhoneNumber data : phoneWhiteList) {
+                if ((data.number != null && data.number.length() > 0 && data.number.endsWith(callBackNumber)) ||
+                        (data.subNumber != null && data.subNumber.length() > 0 && data.subNumber.endsWith(callBackNumber))) {
+                    isFamilyMember = true;
+                    break;
+                }
+            }
+        }
+
+        String text;
+        if (callBackNumber.length() > 0 && !callBackNumber.equals(Const.DEFAULT_NEXT_KEY) && isFamilyMember) {
+            text = callBackAttri + " " + callBackNumber;
+        } else {
+            text = activity.getString(R.string.choose_number_hint);
+        }
+
+        final String finalCallNumber = callBackNumber;
+        Dialog dlg = CustomSelectDialogUtil.CustomInputDialogWithSelect(activity,
+                title,
+                Html.fromHtml(textStr1),
+                new CustomSelectDialogUtil.CustomDialogListener() {
+                    @Override
+                    public void onClick(View v, String text) {
+                        Intent it = new Intent(activity, SelecterCallBackNumber.class);
+                        it.putExtra(Const.KEY_WATCH_ID, watch.getEid());
+                        activity.startActivityForResult(it, result);
+                    }
+                }, text,
+                new CustomSelectDialogUtil.CustomDialogListener() {
+
+                    @Override
+                    public void onClick(View v, String text) {
+                    }
+                },
+                activity.getText(R.string.cancel).toString(),
+                new CustomSelectDialogUtil.CustomDialogListener() {
+
+                    @Override
+                    public void onClick(View v, String text) {
+                        if (text != null && text.length() > 0 && !text.equals(activity.getString(R.string.choose_number_hint))) {
+                            sendDeviceListenMsg(app, activity, watch, finalCallNumber);
+                        } else {
+                            ToastUtil.show(activity, activity.getString(R.string.number_not_null));
+                        }
+                    }
+                },
+                activity.getText(R.string.confirm).toString(), activity.getResources().getDrawable(R.drawable.btn_pick_contact_selector),
+                new CustomSelectDialogUtil.CustomDialogListener() {
+                    @Override
+                    public void onClick(View v, String text) {
+                        Intent it = new Intent(activity, SelecterCallBackNumber.class);
+                        it.putExtra(Const.KEY_WATCH_ID, watch.getEid());
+                        activity.startActivityForResult(it, result);
+                    }
+                });
+        dlg.show();
+    }
+
+    public static void sendDeviceListenMsg(final ImibabyApp app, final Activity activity, WatchData watch, String number) {
+        if (null != app.getNetService()) {
+            app.getNetService().sendDeviceListenMsg(watch.getEid(), number, 2, new MsgCallback() {
+                @Override
+                public void doCallBack(JSONObject reqMsg, JSONObject respMsg) {
+                    JSONObject reqPL = (JSONObject) reqMsg.get(CloudBridgeUtil.KEY_NAME_PL);
+                    JSONObject respPL = (JSONObject) respMsg.get(CloudBridgeUtil.KEY_NAME_PL);
+                    String[] watchid = (String[]) reqMsg.get(CloudBridgeUtil.KEY_NAME_TEID);
+                    String eid = watchid[0];
+                    int rc = CloudBridgeUtil.getCloudMsgRC(respMsg);
+                    int type = (Integer) reqPL.get(CloudBridgeUtil.KEY_DEVICE_LISTEN_TYPE);
+                    if (type == 2) {
+                        if (respPL != null) {
+                            int plRC = (Integer) respPL.get(CloudBridgeUtil.KEY_NAME_RC);
+                            if (plRC == 1) {
+                                ToastUtil.show(activity, activity.getString(R.string.listen_success));
+                            } else if (plRC == -1) {
+                                ToastUtil.show(activity, activity.getString(R.string.listen_reject));
+                            } else {
+                                ToastUtil.show(activity, activity.getString(R.string.listen_timeout));
+                            }
+                        } else {
+                            if (rc == -160) {
+                                ToastUtil.show(activity, activity.getString(R.string.watch_offline));
+                            } else if (CloudBridgeUtil.RC_TIMEOUT == rc) {
+                                ToastUtil.show(activity, activity.getString(R.string.listen_timeout));
+                            } else if (rc == CloudBridgeUtil.RC_NETERROR || rc == CloudBridgeUtil.RC_SOCKET_NOTREADY) {
+                                ToastUtil.showMyToast(activity, activity.getString(R.string.network_error_prompt),
+                                        Toast.LENGTH_SHORT);
+                            } else {
+                                ToastUtil.show(activity, activity.getString(R.string.listen_fail));
+                            }
+                        }
+                        app.setValue(eid + Const.SHARE_PREF_LISTEN_STATE, 0);
+                    }
+                }
+            });
+            app.setValue(watch.getEid() + Const.SHARE_PREF_LISTEN_STATE, 1);
+        }
+    }
+}

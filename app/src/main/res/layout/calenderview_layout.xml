@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>  
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"  
+    xmlns:tools="http://schemas.android.com/tools"  
+    android:layout_width="match_parent"  
+    android:layout_height="match_parent"
+    android:background="@color/white"  
+    android:orientation="vertical" >  
+  
+    <RelativeLayout  
+        android:layout_width="match_parent"  
+        android:layout_height="30dp"   
+        android:layout_marginTop="10dp"
+         >  
+  
+        <ImageButton  
+            android:id="@+id/btnPreMonth"  
+            android:layout_width="wrap_content"  
+            android:layout_height="wrap_content"  
+            android:layout_centerVertical="true"  
+            android:layout_marginRight="33dip"  
+            android:layout_toLeftOf="@+id/tvCurrentMonth"  
+            android:background="@drawable/left_small_arrow_0" />  
+  
+        <ImageButton  
+            android:id="@+id/btnNextMonth"  
+            android:layout_width="wrap_content"  
+            android:layout_height="wrap_content"  
+            android:layout_centerVertical="true"  
+            android:layout_marginLeft="33dip"  
+            android:layout_toRightOf="@+id/tvCurrentMonth"  
+            android:background="@drawable/right_small_arrow_1" />  
+  
+        <TextView  
+            android:id="@+id/tvCurrentMonth"  
+            android:layout_width="wrap_content"  
+            android:layout_height="wrap_content"  
+            android:layout_centerInParent="true"  
+            android:layout_centerVertical="true"  
+            android:text="11月"  
+            android:textColor="#323232"  
+            android:textSize="16sp" />  
+  <!--  
+        <ImageButton  
+            android:id="@+id/btnClose"  
+            android:layout_width="wrap_content"  
+            android:layout_height="wrap_content"  
+            android:layout_alignParentRight="true"  
+            android:layout_centerVertical="true"  
+            android:layout_marginRight="15dp"  
+            android:background="@drawable/ic_close" />  
+ -->
+    </RelativeLayout>  
+  
+    <ImageView   
+        android:layout_width="300dp"  
+        android:layout_height="1px"  
+        android:layout_gravity="center"
+        android:layout_marginTop="10dp"
+        android:background="@color/txt_grey"  
+        />
+    
+    <LinearLayout  
+        android:layout_width="match_parent"  
+        android:layout_height="wrap_content"  
+        android:layout_marginTop="25dp"  
+        android:orientation="vertical" 
+        android:layout_marginLeft="23.33dp"
+        android:layout_marginRight="23.33dp" 
+         >  
+  
+        <TableLayout  
+            android:layout_width="match_parent"  
+            android:layout_height="20dp"
+            >  
+  
+            <TableRow>  
+  
+                <TextView 
+                    style="@style/dateStyle"  
+                    android:text="@string/calender_week_0"
+                    android:textColor="@color/txt_grey" />  
+  
+                <TextView  
+                    style="@style/dateStyle"  
+                    android:text="@string/calender_week_1"
+                    android:textColor="@color/txt_grey" />  
+                <TextView  
+                    style="@style/dateStyle"  
+                    android:text="@string/calender_week_2"
+                    android:textColor="@color/txt_grey" />  
+  
+                <TextView  
+                    style="@style/dateStyle"  
+                    android:text="@string/calender_week_3"
+                    android:textColor="@color/txt_grey" />  
+  
+                <TextView  
+                    style="@style/dateStyle"  
+                    android:text="@string/calender_week_4"
+                    android:textColor="@color/txt_grey" />  
+  
+                <TextView  
+                    style="@style/dateStyle"  
+                    android:text="@string/calender_week_5"
+                    android:textColor="@color/txt_grey" />  
+  
+                <TextView  
+                    style="@style/dateStyle"  
+                    android:text="@string/calender_week_6"
+                    android:textColor="@color/txt_grey" />  
+            </TableRow>  
+        </TableLayout>  
+    </LinearLayout>  
+  
+    <LinearLayout  
+        android:layout_width="match_parent"  
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_weight="1"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="0dp"
+        android:layout_marginLeft="23.33dp"
+        android:layout_marginRight="23.33dp">  
+  
+        <androidx.viewpager.widget.ViewPager
+            android:id="@+id/vp_calendar"  
+            android:layout_width="match_parent"  
+            android:layout_height="wrap_content"  
+            android:background="@color/white" >  
+        </androidx.viewpager.widget.ViewPager>
+    </LinearLayout>  
+  
+</LinearLayout>

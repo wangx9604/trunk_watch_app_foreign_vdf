@@ -1,0 +1,127 @@
+package com.xiaoxun.xun.networkv2.beans;
+
+import android.content.Context;
+
+import com.xiaoxun.xun.R;
+
+import java.io.Serializable;
+
+public class PetModelInfo implements Serializable{
+    private static final long serialVersionUID = 5414682258494268859L;
+    String type;  //类型，hat头部、dress衣服、pants裤子、scenes场景
+    int rate; //是否稀有，1稀有
+    String tag; //标签，season季节限定，holiday节日限定，city城市限定，time时间，无标签空串
+    String id; //造型id
+    String srcurl;//原始图片URL
+    String miniurl; //小图URL
+    int isOn; //inOn是否使用中，1使用中，0未使用
+    int price;//价格
+    String taskId;//专属任务奖励id
+
+    public PetModelInfo() {
+    }
+
+    public PetModelInfo(String type, int rate, String tag, String id, String srcurl, String miniurl, int isOn, int price, String taskId) {
+        this.type = type;
+        this.rate = rate;
+        this.tag = tag;
+        this.id = id;
+        this.srcurl = srcurl;
+        this.miniurl = miniurl;
+        this.isOn = isOn;
+        this.price = price;
+        this.taskId = taskId;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public int getRate() {
+        return rate;
+    }
+
+    public void setRate(int rate) {
+        this.rate = rate;
+    }
+
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getSrcurl() {
+        return srcurl;
+    }
+
+    public void setSrcurl(String srcurl) {
+        this.srcurl = srcurl;
+    }
+
+    public String getMiniurl() {
+        return miniurl;
+    }
+
+    public void setMiniurl(String miniurl) {
+        this.miniurl = miniurl;
+    }
+
+    public int getIsOn() {
+        return isOn;
+    }
+
+    public void setIsOn(int isOn) {
+        this.isOn = isOn;
+    }
+
+    public int getPrice() {
+        return price;
+    }
+
+    public void setPrice(int price) {
+        this.price = price;
+    }
+
+    public String getTaskId() {
+        return taskId;
+    }
+
+    public void setTaskId(String taskId) {
+        this.taskId = taskId;
+    }
+    //hat头部、dress衣服、pants裤子、scenes场景
+    public static String analyPetModelType(Context mcontext, String mType){
+        String mPetModelName = mcontext.getString(R.string.watch_behavior_model_type_0);
+        switch (mType){
+            case "hat":
+                mPetModelName = mcontext.getString(R.string.watch_behavior_model_type_0);
+                break;
+            case "dress":
+                mPetModelName = mcontext.getString(R.string.watch_behavior_model_type_1);
+                break;
+            case "pants":
+                mPetModelName = mcontext.getString(R.string.watch_behavior_model_type_2);
+                break;
+            case "scenes":
+                mPetModelName = mcontext.getString(R.string.watch_behavior_model_type_3);
+                break;
+        }
+
+        return mPetModelName;
+    }
+}

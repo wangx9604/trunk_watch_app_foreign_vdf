@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/transparent">
+
+    <LinearLayout
+        android:id="@+id/title_blank1"
+        android:layout_width="fill_parent"
+        android:layout_height="20dp"
+        android:orientation="vertical" />
+
+    <ViewFlipper
+        android:id="@+id/flipper"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/title_blank1"
+        android:inAnimation="@anim/main_title_popup"
+        android:outAnimation="@anim/calendar_pop_down">
+		   <LinearLayout
+			   android:id="@+id/watch_list"
+			   android:layout_width="match_parent"
+			   android:layout_height="wrap_content"
+			   android:background="@color/bg_color_orange"
+			   android:orientation="vertical">
+		   </LinearLayout>
+			<!--<View -->
+			    <!--android:id="@+id/view1"-->
+		        <!--android:layout_width="330.66dp"  -->
+		        <!--android:layout_height="1px"-->
+		        <!--android:layout_centerHorizontal="true"-->
+		        <!--android:layout_below="@+id/watch_list"-->
+		        <!--android:background="@color/WatchListItemLine"-->
+				<!--android:visibility="gone"/>-->
+			<!--<RelativeLayout-->
+			    <!--android:id="@+id/add_watch_ly"-->
+		        <!--android:layout_width="match_parent"-->
+		        <!--android:layout_height="56.33dp"-->
+		        <!--android:layout_below="@+id/view1"-->
+		        <!--android:background="@color/color_3"-->
+		        <!--android:visibility="gone"-->
+		        <!--android:clickable="true">-->
+		        <!--<ImageView-->
+		            <!--android:id="@+id/add_watch_btn"-->
+		            <!--android:layout_width="wrap_content"-->
+		            <!--android:layout_height="wrap_content"-->
+		            <!--android:layout_centerVertical="true"-->
+		            <!--android:layout_marginLeft="143dp"-->
+		            <!--android:background="@drawable/btn_add_watch_selector" />-->
+		        <!--<TextView-->
+		            <!--android:layout_width="wrap_content"-->
+		            <!--android:layout_height="wrap_content"-->
+		            <!--android:layout_toRightOf="@+id/add_watch_btn"-->
+		            <!--android:layout_marginLeft="4.6dp"-->
+		            <!--android:layout_centerVertical="true"-->
+		            <!--android:text="@string/setting_watch_add"-->
+		            <!--android:textColor="@color/white"-->
+		            <!--android:textSize="@dimen/xiaomiMyTextSize1"/>-->
+		    <!--</RelativeLayout>-->
+		<ImageView
+			android:id="@+id/view2"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:background="@color/transparent" />
+    </ViewFlipper>
+</RelativeLayout>

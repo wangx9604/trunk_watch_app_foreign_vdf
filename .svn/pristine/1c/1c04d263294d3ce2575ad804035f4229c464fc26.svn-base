@@ -1,0 +1,189 @@
+package com.xiaoxun.xun.securityarea.activity;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.cardview.widget.CardView;
+
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.activitys.NormalActivity;
+import com.xiaoxun.xun.securityarea.bean.SchoolGuardTimeBean;
+import com.xiaoxun.xun.securityarea.view.CustomerPickerView1;
+import com.xiaoxun.xun.utils.StatusBarUtil;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class LeaveSchoolTimeSetActivity extends NormalActivity implements View.OnClickListener{
+    private ImageButton mBtnBack;
+    private Button btnSave;
+    private Button btnSmallSave;
+    private Button btnSmallDelete;
+
+    CustomerPickerView1 pvHour;
+    CustomerPickerView1 pvMinute;
+    TextView tv_repeat_day;
+    CardView cv_repeat;
+
+    private SchoolGuardTimeBean mBean;
+    private String mDays;//已经设置的天数
+
+    private List<String> hourList = new ArrayList<>();
+    private List<String> minList = new ArrayList<>();
+    private String hour;
+    private String minute;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_leave_school_time_set);
+//        StatusBarUtil.changeStatusBarColor(this, getResources().getColor(R.color.schedule_no_class));
+        mBean = (SchoolGuardTimeBean) getIntent().getSerializableExtra("data");
+        mDays = getIntent().getStringExtra("days");
+        if(mBean==null){
+            mBean = new SchoolGuardTimeBean(String.valueOf(System.currentTimeMillis() / 1000), "2", "16:00", "0000000", "6,24");
+        }
+        initViews();
+        initListener();
+        initData();
+    }
+
+    private void initData() {
+        for (int i = 12; i < 22; i++) {
+            hourList.add("" + i);
+        }
+        for (int i = 0; i < 60; i ++) {
+            minList.add(i < 10 ? "0" + i : "" + i);
+        }
+        String[] time = mBean.getTime().split(":");
+        hour = time[0];
+        minute = time[1];
+        pvHour.setData(hourList);
+        pvMinute.setData(minList);
+        pvHour.setMarginAlphaValue((float) 3.8, "H");
+        pvMinute.setMarginAlphaValue((float) 3.8, "M");
+        pvHour.setSelected(getPositionInList(hour, hourList));
+        pvMinute.setSelected(getPositionInList(minute, minList));
+        pvHour.setOnSelectListener(new CustomerPickerView1.onSelectListener() {
+            @Override
+            public void onSelect(String text) {
+                hour = text;
+            }
+        });
+        pvMinute.setOnSelectListener(new CustomerPickerView1.onSelectListener() {
+            @Override
+            public void onSelect(String text) {
+                minute = text;
+            }
+        });
+        setDayText(mBean.getDays());
+
+    }
+
+    private void initViews() {
+        mBtnBack = findViewById(R.id.iv_title_back);
+        btnSave = findViewById(R.id.btn_save);
+        btnSmallSave = findViewById(R.id.btn_small_save);
+        btnSmallDelete = findViewById(R.id.btn_small_delete);
+
+        cv_repeat = findViewById(R.id.cv_repeat);
+        tv_repeat_day = findViewById(R.id.tv_repeat_day);
+        pvHour = findViewById(R.id.start_hour_pv);
+        pvMinute = findViewById(R.id.start_min_pv);
+        if(mBean.getId().equals("0000000020")){
+            btnSave.setVisibility(View.VISIBLE);
+            btnSmallSave.setVisibility(View.GONE);
+            btnSmallDelete.setVisibility(View.GONE);
+        }else {
+            btnSave.setVisibility(View.GONE);
+            btnSmallSave.setVisibility(View.VISIBLE);
+            btnSmallDelete.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void initListener() {
+        mBtnBack.setOnClickListener(this);
+        btnSave.setOnClickListener(this);
+        cv_repeat.setOnClickListener(this);
+        btnSmallSave.setOnClickListener(this);
+        btnSmallDelete.setOnClickListener(this);
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (v == mBtnBack) {
+            finish();
+        } else if (v == btnSave || v == btnSmallSave) {
+            if(mBean.getDays().equals("0000000")){
+                Toast.makeText(this, "请选择离校日期", Toast.LENGTH_SHORT).show();
+            }else {
+                Toast.makeText(getApplicationContext(), getString(R.string.save_successs), Toast.LENGTH_SHORT).show();
+                mBean.setTime(getString(R.string.guard_school_time_format,hour,minute));
+                Intent intent = getIntent();
+                intent.putExtra("data",mBean);
+                setResult(RESULT_OK,intent);
+                finish();
+            }
+        }else if (v == cv_repeat) {
+            Intent intent = new Intent(LeaveSchoolTimeSetActivity.this,LeaveSchoolDaySetActivity.class);
+            intent.putExtra("mDays",mDays);
+            intent.putExtra("day",mBean.getDays());
+            startActivityForResult(intent,1);
+        }else if(v == btnSmallDelete){
+            setResult(2);
+            finish();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == 1&&resultCode ==RESULT_OK){
+            String day = data.getStringExtra("day");
+            String mDays = data.getStringExtra("mDays");
+            if(day!=null){
+                mBean.setDays(day);
+                setDayText(day);
+            }
+            if(mDays!=null){
+                this.mDays = mDays;
+            }
+        }
+    }
+
+    private void setDayText(String days){
+        switch (days) {
+            case "1111111":
+                tv_repeat_day.setText(getText(R.string.device_alarm_reset_3));
+                break;
+            case "1111100":
+                tv_repeat_day.setText("工作日");
+                break;
+            case "0000011":
+                tv_repeat_day.setText("休息日");
+                break;
+            default:
+                tv_repeat_day.setText((mBean.getDays().substring(0, 1).equals("1") ? " " + getText(R.string.week_1) : "")
+                        + (mBean.getDays().substring(1, 2).equals("1") ? " " + getText(R.string.week_2) : "")
+                        + (mBean.getDays().substring(2, 3).equals("1") ? " " + getText(R.string.week_3) : "")
+                        + (mBean.getDays().substring(3, 4).equals("1") ? " " + getText(R.string.week_4) : "")
+                        + (mBean.getDays().substring(4, 5).equals("1") ? " " + getText(R.string.week_5) : "")
+                        + (mBean.getDays().substring(5, 6).equals("1") ? " " + getText(R.string.week_6) : "")
+                        + (mBean.getDays().substring(6, 7).equals("1") ? " " + getText(R.string.week_0) : ""));
+//                break;
+        }
+    }
+
+    private int getPositionInList(String s, List<String> list) {
+        for (int i = 0; i < list.size(); i++) {
+            if (s.equals(list.get(i)))
+                return i;
+        }
+        return 0;
+    }
+}

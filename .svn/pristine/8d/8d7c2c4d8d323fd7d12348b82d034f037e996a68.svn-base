@@ -1,0 +1,209 @@
+package com.xiaoxun.xun.region;
+
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.Constants;
+import com.xiaoxun.xun.OVERSEAURL;
+import com.xiaoxun.xun.region.bean.RegionBean;
+import com.xiaoxun.xun.utils.AESUtil;
+import com.xiaoxun.xun.utils.LogUtil;
+
+public class XunKidsDomain {
+    public static final String DOMAIN_WEBSOCKET_SSL = "domain_websocket_ssl";//网络拉取到的websocket的ssl
+    public static final String DOMAIN_OTA_URL = "domain_ota_url";//短链接的otaUrl
+    public static final String DOMAIN_FILE_URL = "domain_file_url";//短链接的fileUrl
+    public static final String DOMAIN_STEPS_URL = "domain_steps_url";//短链接的stepsUrl
+    public static final String DOMAIN_DIAL_URL = "domain_dial_url";//短链接的dialUrl
+    public static final String DOMAIN_DCENTER_URL = "domain_dcenter_url";//短链接的dcenterUrl
+    public static final String DOMAIN_COU_URL = "domain_cou_url";//短链接的couUrl
+    public static final String DOMAIN_QR_URL = "domain_qr_url";//短链接的qrUrl
+
+    private static XunKidsDomain instance;
+    private Context context;
+
+    public XunKidsDomain(Context context) {
+        this.context = context;
+    }
+
+    public static XunKidsDomain getInstance(Context context) {
+        if (instance == null) return new XunKidsDomain(context);
+        return instance;
+    }
+
+    public void setDomainWebSocketAndHttpBaseUrl(RegionBean mRegionBean,
+                                                 boolean isNoticeNetserice) {
+        String mWebSocket = mRegionBean.getAppHostUrl();
+        if (mWebSocket == null) return;
+        LogUtil.e("SetDomainInfo:" + mWebSocket + ":" + mWebSocket + ":" + isNoticeNetserice);
+        setValue(DOMAIN_WEBSOCKET_SSL, mWebSocket);
+        setValue(DOMAIN_OTA_URL, "https://" + mRegionBean.getOtaUrl());
+        setValue(DOMAIN_FILE_URL, "https://" + mRegionBean.getFileUrl());
+        setValue(DOMAIN_STEPS_URL, "https://" + mRegionBean.getSteps());
+        setValue(DOMAIN_DIAL_URL, "https://" + mRegionBean.getDialUrl());
+        setValue(DOMAIN_DCENTER_URL,"https://" + mRegionBean.getDcenter());
+        setValue(DOMAIN_COU_URL, "https://" + mRegionBean.getCou());
+        setValue(DOMAIN_QR_URL,"http://"+mRegionBean.getQr());
+
+        //发送域名切换广播
+        if (isNoticeNetserice) {
+            Intent intent = new Intent(Constants.ACTION_DOMAIN_CHANGE);
+            context.sendBroadcast(intent);
+        }
+    }
+
+    //0:小米国内服务器  1：新加坡服务器  2：俄罗斯服务器
+    public String getXunKidsDomain() {
+        String mDomainXunKids;
+        if (!"####".equals(getStringValue(DOMAIN_WEBSOCKET_SSL, "####"))) {
+            mDomainXunKids = getStringValue(DOMAIN_WEBSOCKET_SSL, "####");
+            LogUtil.e("getXunKidsDomainBySet:" + mDomainXunKids);
+        } else {
+            mDomainXunKids = OVERSEAURL.OVERSEA_DOMAIN_SG_RELEASE;
+            LogUtil.e("getXunKidsDomainByDefault:" + mDomainXunKids);
+        }
+        return mDomainXunKids;
+    }
+
+    public String getXunKidsOtaDomain(String mPath) {
+        String mGetDomainUrl = getXunKidsOtaDomain() + mPath;
+        LogUtil.e("getXunKidsOtaDomain:" + mGetDomainUrl);
+        return mGetDomainUrl;
+    }
+
+    public String getXunKidsOtaDomain() {
+        String mGetDomainUrl;
+        if (!"####".equals(getStringValue(DOMAIN_OTA_URL, "####"))) {
+            mGetDomainUrl = getStringValue(DOMAIN_OTA_URL, "####");
+            LogUtil.e("getXunBaseOtaDomainBySet:" + mGetDomainUrl);
+        } else {
+            mGetDomainUrl = "https://" + OVERSEAURL.URL_APP_XUNKIDS_BASE_UPGRADE;
+            LogUtil.e("getXunKidsOtaDomain:" + mGetDomainUrl);
+        }
+
+        return mGetDomainUrl;
+    }
+
+    public String getXunKidsFilesDomain(String mPath) {
+        String mGetDomainUrl = getXunKidsFilesDomain() + mPath;
+        LogUtil.e("getXunKidsFilesDomain:" + mGetDomainUrl);
+        return mGetDomainUrl;
+    }
+
+    public String getXunKidsFilesDomain() {
+        String mGetDomainUrl;
+        if (!"####".equals(getStringValue(DOMAIN_FILE_URL, "####"))) {
+            mGetDomainUrl = getStringValue(DOMAIN_FILE_URL, "####");
+            LogUtil.e("getXunBaseFilesDomainBySet:" + mGetDomainUrl);
+        } else {
+            mGetDomainUrl = "https://" + OVERSEAURL.URL_APP_XUNKIDS_BASE_FILES;
+            LogUtil.e("getXunKidsFilesDomain:" + mGetDomainUrl);
+        }
+
+        return mGetDomainUrl;
+    }
+
+    public String getXunKidsStepsDomain(String mPath) {
+        String mGetDomainUrl = getXunKidsStepsDomain() + mPath;
+        LogUtil.e("getXunKidsStepsDomain:" + mGetDomainUrl);
+        return mGetDomainUrl;
+    }
+
+    public String getXunKidsStepsDomain() {
+        String mGetDomainUrl;
+        if (!"####".equals(getStringValue(DOMAIN_STEPS_URL, "####"))) {
+            mGetDomainUrl = getStringValue(DOMAIN_STEPS_URL, "####");
+            LogUtil.e("getXunBaseStepsDomainBySet:" + mGetDomainUrl);
+        } else {
+            mGetDomainUrl = "https://" + OVERSEAURL.URL_APP_XUNKIDS_BASE_STEPS;
+            LogUtil.e("getXunKidsStepsDomain:" + mGetDomainUrl);
+        }
+
+        return mGetDomainUrl;
+    }
+
+    public String getXunKidsDcenterDomain(String mPath) {
+        String mGetDomainUrl = getXunKidsDcenterDomain() + mPath;
+        LogUtil.e("getXunKidsDcenterDomain:" + mGetDomainUrl);
+        return mGetDomainUrl;
+    }
+
+    public String getXunKidsDcenterDomain() {
+        String mGetDomainUrl;
+        if (!"####".equals(getStringValue(DOMAIN_DCENTER_URL, "####"))) {
+            mGetDomainUrl = getStringValue(DOMAIN_DCENTER_URL, "####");
+            LogUtil.e("getXunBaseDcenterDomainBySet:" + mGetDomainUrl);
+        } else {
+            mGetDomainUrl = "https://" + OVERSEAURL.URL_APP_XUNKIDS_BASE_DCENTER;
+            LogUtil.e("getXunKidsDcenterDomain:" + mGetDomainUrl);
+        }
+
+        return mGetDomainUrl;
+    }
+
+    public String getXunKidsCouDomain(String mPath) {
+        String mGetCouUrl = getXunKidsCouDomain() + mPath;
+        LogUtil.e("getXunKidsCouDomain:" + mGetCouUrl);
+        return mGetCouUrl;
+    }
+
+    public String getXunKidsCouDomain() {
+        String mGetCouUrl;
+        if (!"####".equals(getStringValue(DOMAIN_COU_URL, "####"))) {
+            mGetCouUrl = getStringValue(DOMAIN_COU_URL, "####");
+            LogUtil.e("getXunBaseCouDomainBySet:" + mGetCouUrl);
+        } else {
+            mGetCouUrl = "https://" + OVERSEAURL.URL_APP_XUNKIDS_BASE_COU;
+            LogUtil.e("getXunKidsCouDomain:" + mGetCouUrl);
+        }
+
+        return mGetCouUrl;
+    }
+
+    public String getXunKidsShopDomain(String mPath) {
+        String mGetDomainUrl = getXunKidsShopDomain() + mPath;
+        LogUtil.e("getXunKidsOtaDomain:" + mGetDomainUrl);
+        return mGetDomainUrl;
+    }
+
+    public String getXunKidsShopDomain() {
+        String mGetDomainUrl;
+        if (!"####".equals(getStringValue(DOMAIN_DIAL_URL, "####"))) {
+            mGetDomainUrl = getStringValue(DOMAIN_DIAL_URL, "####");
+            LogUtil.e("getXunBaseOtaDomainBySet:" + mGetDomainUrl);
+        } else {
+            mGetDomainUrl = "https://" + OVERSEAURL.URL_APP_XUNKIDS_BASE_SHOP;
+            LogUtil.e("getXunKidsShopDomain:" + mGetDomainUrl);
+        }
+
+        return mGetDomainUrl;
+    }
+
+    private void setValue(String key, String value) {
+        final SharedPreferences preferences = context.getSharedPreferences(Const.SHARE_PREF_NAME, Context.MODE_PRIVATE);
+        final SharedPreferences.Editor editor = preferences.edit();
+        try {
+            editor.putString(key, AESUtil.getInstance().encryptDataStr(value));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        editor.commit();
+    }
+
+    private String getStringValue(String key, String defValue) {
+        String str = context.getSharedPreferences(Const.SHARE_PREF_NAME, Context.MODE_PRIVATE)
+                .getString(key, defValue);
+        if (str == null || str.equals(defValue)) {
+            return str;
+        } else {
+            try {
+                return AESUtil.getInstance().decryptDataStr(str);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return defValue;
+            }
+        }
+    }
+}

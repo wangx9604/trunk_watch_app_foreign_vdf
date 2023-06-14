@@ -1,0 +1,60 @@
+package com.xiaoxun.xun.networkv2.beans;
+
+public class BannerInfo {
+        String imgUrl;
+        String targUrl;
+        String onlineTime;
+        String expirationTime;
+        int type;
+
+        public String getImgUrl() {
+                return imgUrl;
+        }
+
+        public void setImgUrl(String imgUrl) {
+                this.imgUrl = imgUrl;
+        }
+
+        public String getTargUrl() {
+                return targUrl;
+        }
+
+        public void setTargUrl(String targUrl) {
+                this.targUrl = targUrl;
+        }
+
+        public String getOnlineTime() {
+                return onlineTime;
+        }
+
+        public void setOnlineTime(String onlineTime) {
+                this.onlineTime = onlineTime;
+        }
+
+        public String getExpirationTime() {
+                return expirationTime;
+        }
+
+        public void setExpirationTime(String expirationTime) {
+                this.expirationTime = expirationTime;
+        }
+
+        public int getType() {
+                return type;
+        }
+
+        public void setType(int type) {
+                this.type = type;
+        }
+
+        @Override
+        public String toString() {
+                return "BannerInfo{" +
+                        "imgUrl='" + imgUrl + '\'' +
+                        ", targUrl='" + targUrl + '\'' +
+                        ", onlineTime='" + onlineTime + '\'' +
+                        ", expirationTime='" + expirationTime + '\'' +
+                        ", type=" + type +
+                        '}';
+        }
+}

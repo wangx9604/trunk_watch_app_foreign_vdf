@@ -1,0 +1,465 @@
+package com.xiaoxun.xun.activitys;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.ImageButton;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+
+import com.github.mikephil.charting.charts.BarChart;
+import com.xiaoxun.xun.Constants;
+import com.xiaoxun.xun.FunctionUrl;
+import com.xiaoxun.xun.OVERSEAURL;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.db.WatchDAO;
+import com.xiaoxun.xun.interfaces.InterfacesUtil;
+import com.xiaoxun.xun.interfaces.MsgCallback;
+import com.xiaoxun.xun.region.XunKidsDomain;
+import com.xiaoxun.xun.utils.CloudBridgeUtil;
+import com.xiaoxun.xun.utils.LogUtil;
+import com.xiaoxun.xun.utils.MyHandler;
+import com.xiaoxun.xun.utils.Sport2Utils;
+import com.xiaoxun.xun.utils.StepsUtil;
+import com.xiaoxun.xun.utils.TimeUtil;
+import com.xiaoxun.xun.utils.ToastUtil;
+import com.xiaoxun.xun.utils.alipayLoginUtil.NetworkRequestUtils;
+import com.xiaoxun.xun.views.RoundProgressBar;
+
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class SportActivity extends NormalActivity implements View.OnClickListener, MsgCallback {
+
+    private RelativeLayout layout_sport_step;
+    private RelativeLayout layout_sport_time;
+    private RelativeLayout layout_sport_rank;
+    private RelativeLayout layout_sport_sport;
+    private RelativeLayout layout_sport_chall;
+
+    private RoundProgressBar mCurStepProgress;
+    private BarChart mChart;
+
+    private ImageButton ib_menu;
+    private TextView mSportTarget;
+    private TextView mSportCurStep;
+    private TextView mSportUpdateTime;
+    private TextView mSportShow1;
+    private TextView mSportShow2;
+    private TextView mSportShow3;
+    private TextView mRankInfo1;
+    private TextView mRankInfo2;
+    private TextView mSportInfo1;
+    private TextView mSportInfo2;
+    private TextView mSportInfo3;
+    private TextView mChallInfo1;
+    private TextView mChallInfo2;
+
+    private WatchData mCurWatch;
+    private Map<String, String> mSportData;  //快照数据
+    private List<Map<String, String>> mSportCurDaysData;  //24小时的计步数据
+    private Map<String, String> mSportKiloCalData;
+    private MyHandler myHandler;
+
+    //控制逻辑数据
+    private String mNetUpdateTime;  //更新时间戳：网络拉取时间戳 or e2e刷新的时间戳
+    private String target = "8000";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_sport);
+
+        initAppManage();
+        initData();
+        initView();
+        initListener();
+        Sport2Utils.initChartParms(mChart);
+        getSportSnapShotData();
+        getSportTargetAndDeviceData();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        String targetFlag = myApp.getStringValue(mCurWatch.getEid() + CloudBridgeUtil.STEPS_TARGET_LEVEL, "8000");
+        if (!targetFlag.equals("8000")) {
+            target = targetFlag;
+        }
+        updateRoundViewByTarget();
+    }
+
+    private void initData() {
+        mSportData = new HashMap<>();
+        mSportKiloCalData = new HashMap<>();
+        mSportCurDaysData = new ArrayList<>();
+        mSportCurDaysData.addAll(Sport2Utils.initSportListByDefaultData());
+    }
+
+    private void initAppManage() {
+        String mWatchData = getIntent().getStringExtra(Constants.WATCH_EID_DATA);
+        mCurWatch = myApp.getCurUser().queryWatchDataByEid(mWatchData);
+        myHandler = new MyHandler(this, new InterfacesUtil.UpdateView() {
+            @Override
+            public void UpdateView(int position) {
+                switch (position) {
+                    case MyHandler.CHANGE_VIEW_FLAG:
+                        updateViewByResult();
+                        break;
+                    case MyHandler.CHANGE_ITEM_VIEW_FLAG:
+                        updateViewByWatchCurStep();
+                        break;
+                }
+            }
+        });
+    }
+
+    private void getSportTargetAndDeviceData() {
+        if (myApp.getNetService() != null) {
+            myApp.getNetService().sendMapGetMsg(mCurWatch.getEid(), CloudBridgeUtil.STEPS_TARGET_LEVEL, this);
+            myApp.getNetService().sendDeviceGet(mCurWatch.getEid(), this);
+        }
+    }
+
+    private void getSportSnapShotData() {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("eid", mCurWatch.getEid());
+        jsonObject.put("type", 0);
+        String data = jsonObject.toJSONString();
+        NetworkRequestUtils.getInstance(this).getNetWorkRequest(data,
+                myApp.getNetService().getAESKEY(), myApp.getToken(),
+                XunKidsDomain.getInstance(myApp).getXunKidsStepsDomain(OVERSEAURL.SPORT_SNAP_SHOT), new NetworkRequestUtils.OperationCallback() {
+                    @Override
+                    public void onSuccess(String result) {
+                        LogUtil.e("result:" + result);
+                        //1:数据解析
+                        parseSnapShotDataByResult(result);
+
+                        //2:拉取服务器端的每日数据
+                        getSportDataByDays();
+                    }
+
+                    @Override
+                    public void onFail(String error) {
+                        LogUtil.e("result:" + error);
+                    }
+                });
+    }
+
+    private void getSportDataByDays() {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("eid", mCurWatch.getEid());
+        jsonObject.put("stime", TimeUtil.getDay());
+        jsonObject.put("etime", TimeUtil.getDay());
+        jsonObject.put("type", 1);
+        String data = jsonObject.toJSONString();
+        NetworkRequestUtils.getInstance(this).getNetWorkRequest(data,
+                myApp.getNetService().getAESKEY(), myApp.getToken(),
+                XunKidsDomain.getInstance(myApp).getXunKidsStepsDomain(OVERSEAURL.SPORT_DAY_STEPS), new NetworkRequestUtils.OperationCallback() {
+                    @Override
+                    public void onSuccess(String result) {
+                        LogUtil.e("result:" + result);
+                        //1:数据解析
+                        parseDataByDayStepsResult(result);
+
+                        //2:发送E2E消息
+                        myApp.getNetService().sendE2EMsg(mCurWatch.getEid(), CloudBridgeUtil.SUB_ACTION_VALUE_NAME_WATCH_SPORT,
+                                30 * 1000, true, SportActivity.this);
+
+                        //3:刷新视图
+                        myHandler.sendEmptyMessage(MyHandler.CHANGE_VIEW_FLAG);
+                        myHandler.sendEmptyMessage(MyHandler.CHANGE_ITEM_VIEW_FLAG);
+                    }
+
+                    @Override
+                    public void onFail(String error) {
+                        LogUtil.e("result:" + error);
+                    }
+                });
+    }
+
+    private void parseDataByDayStepsResult(String result) {
+        if (Sport2Utils.getIntFromResult(result, "code") == 0) {
+            String datajs = Sport2Utils.getStringFromResult(result, "datajs");
+            String daysData = Sport2Utils.getStringFromResult(datajs, TimeUtil.getDay());
+            mNetUpdateTime = Sport2Utils.getStringFromResult(daysData, "updatetime");
+            String dataList = Sport2Utils.getStringFromResult(daysData, "datalist");
+            mSportKiloCalData.put(Constants.SPORT_TOTAL_CALOR, Sport2Utils.getStringFromResult(daysData, Constants.SPORT_TOTAL_CALOR));
+            mSportKiloCalData.put(Constants.SPORT_TOTAL_METER, Sport2Utils.getStringFromResult(daysData, Constants.SPORT_TOTAL_METER));
+
+            Sport2Utils.parseCurDaysData(mSportCurDaysData, dataList);
+        } else {
+//            Toast.makeText(this,R.string.ximalaya_story_data_delay,Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void updateRoundViewByTarget() {
+        mSportTarget.setText(getString(R.string.steps_target_step, target));
+        mCurStepProgress.setMax(Integer.valueOf(target));
+    }
+
+    private void updateViewByResult() {
+        String rank_0 = mSportData.get(Constants.SPORT_LAST_RANK_0);
+        String rank_1 = mSportData.get(Constants.SPORT_LAST_RANK_1);
+        String chanllName = mSportData.get(Constants.SPORT_LAST_MEDAL_NAME);
+        String steps = mSportData.get(Constants.SPORT_LAST_RUNNING_DISTANCE);
+        String dura = Sport2Utils.CalcSportDura(mSportData.get(Constants.SPORT_LAST_RUNNING_STIME),
+                mSportData.get(Constants.SPORT_LAST_RUNNING_ETIME));
+        String type = mSportData.get(Constants.SPORT_RUNNING_TYPE);
+
+        if (rank_0 == null || rank_1 == null) {
+            String noRankStrArea = getString(R.string.sport_step_no_rank);
+            String noRankStrCoun = getString(R.string.sport_step_no_rank);
+            mRankInfo1.setText(noRankStrArea);
+            mRankInfo2.setText(noRankStrCoun);
+        } else {
+            mRankInfo1.setText(getString(R.string.sport_step_area_data, rank_0));
+            mRankInfo2.setText(getString(R.string.sport_step_count_data, rank_1));
+        }
+        if (steps == null) {
+            layout_sport_sport.setOnClickListener(null);
+            mSportInfo1.setVisibility(View.GONE);
+            mSportInfo2.setVisibility(View.GONE);
+            mSportInfo3.setVisibility(View.VISIBLE);
+        } else {
+            layout_sport_sport.setOnClickListener(this);
+            mSportInfo1.setVisibility(View.VISIBLE);
+            mSportInfo2.setVisibility(View.VISIBLE);
+            mSportInfo3.setVisibility(View.GONE);
+            if ("6".equals(type)) { //跳绳的单位单独添加
+                String mCount = mSportData.get(Constants.SPORT_RUNNING_COUNT);
+                mSportInfo1.setText(getString(R.string.sport_running_steps,
+                        Sport2Utils.getRunningTypeInfo(this, type),
+                        mCount + getString(R.string.sport_rope_jump_unit)));
+            } else {
+                mSportInfo1.setText(getString(R.string.sport_running_steps,
+                        Sport2Utils.getRunningTypeInfo(this, type),
+                        StepsUtil.formatKiloByMeter(Double.valueOf(steps),
+                                getString(R.string.unit_kilometer),
+                                getString(R.string.unit_meter))));
+            }
+            mSportInfo2.setText(getString(R.string.sport_running_duration, dura));
+        }
+
+        if (chanllName == null) {
+            mChallInfo1.setVisibility(View.GONE);
+            mChallInfo2.setVisibility(View.VISIBLE);
+        } else {
+            mChallInfo1.setVisibility(View.VISIBLE);
+            mChallInfo2.setVisibility(View.GONE);
+            mChallInfo1.setText(chanllName);
+        }
+    }
+
+    private void updateViewByWatchCurStep() {
+        if (mNetUpdateTime != null) {
+            mSportUpdateTime.setVisibility(View.VISIBLE);
+            mSportUpdateTime.setText(getString(R.string.steps_update_time, TimeUtil.getDayTime(mNetUpdateTime)));
+        } else {
+            mSportUpdateTime.setVisibility(View.VISIBLE);
+        }
+
+        int curStep = Sport2Utils.setBarChartLoadData(this, mSportCurDaysData, mChart);
+
+        mSportCurStep.setText(curStep + "");
+        updateRoundViewByTarget();
+        if (curStep > 0)
+            mCurStepProgress.setProgress(curStep);
+
+        if (curStep > 0) {
+            mSportShow1.setVisibility(View.VISIBLE);
+            mSportShow2.setVisibility(View.VISIBLE);
+            mSportShow3.setVisibility(View.GONE);
+            mSportShow1.setText(StepsUtil.formatKiloByMeter(StepsUtil.calcMeterBySteps(myApp, String.valueOf(curStep))
+                    , getString(R.string.unit_kilometer), getString(R.string.unit_meter)));
+            mSportShow2.setText(getString(R.string.unit_kiloCard_with_num, Integer.toString(StepsUtil.calcCalBySteps(myApp, String.valueOf(curStep)))));
+            //最新协议中卡路里和公里使用手表数据，如果手表没有数据才显示本地计算数据
+            if (null != mSportKiloCalData.get(Constants.SPORT_TOTAL_METER)
+                    && !"".equals(mSportKiloCalData.get(Constants.SPORT_TOTAL_METER))) {
+                String total_meter = mSportKiloCalData.get(Constants.SPORT_TOTAL_METER) + getString(R.string.unit_kilometer);
+                mSportShow1.setText(total_meter);
+            }
+            if (null != mSportKiloCalData.get(Constants.SPORT_TOTAL_CALOR)
+                    && !"".equals(mSportKiloCalData.get(Constants.SPORT_TOTAL_CALOR))) {
+                String total_calor = mSportKiloCalData.get(Constants.SPORT_TOTAL_CALOR) + getString(R.string.steps_unit_kiloCard);
+                mSportShow2.setText(total_calor);
+            }
+        } else {
+            mSportShow1.setVisibility(View.GONE);
+            mSportShow2.setVisibility(View.GONE);
+            mSportShow3.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void parseSnapShotDataByResult(String result) {
+        if (Sport2Utils.getIntFromResult(result, "code") == 0) {
+            mSportData.clear();
+            mSportData.putAll(Sport2Utils.parseSportSnapListByResult(result));
+        } else {
+//            Toast.makeText(this,R.string.ximalaya_story_data_delay,Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
+    private void initListener() {
+        ((TextView) findViewById(R.id.tv_title)).setText(R.string.sport_move_title);
+        findViewById(R.id.iv_title_back).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                finish();
+            }
+        });
+
+        layout_sport_step.setOnClickListener(this);
+        layout_sport_time.setOnClickListener(this);
+        layout_sport_rank.setOnClickListener(this);
+        layout_sport_sport.setOnClickListener(this);
+        layout_sport_chall.setOnClickListener(this);
+        ib_menu.setOnClickListener(this);
+    }
+
+    private void initView() {
+        layout_sport_step = findViewById(R.id.layout_cur_sport);
+        layout_sport_time = findViewById(R.id.layout_time);
+        layout_sport_rank = findViewById(R.id.layout_rank);
+        layout_sport_sport = findViewById(R.id.layout_sport);
+        layout_sport_chall = findViewById(R.id.layout_chall);
+
+        if (myApp.getCurUser().getFocusWatch().isDevice707_H01() || myApp.getCurUser().getFocusWatch().isDevice709_H01()) {
+            layout_sport_sport.setVisibility(View.GONE);
+        }
+
+        mCurStepProgress = findViewById(R.id.round_progressbar_value);
+        mChart = findViewById(R.id.chart);
+
+        ib_menu = findViewById(R.id.iv_title_menu);
+        mSportTarget = findViewById(R.id.sport_target);
+        mSportCurStep = findViewById(R.id.sport_cur_step);
+        mSportUpdateTime = findViewById(R.id.sport_update_time);
+        mSportShow1 = findViewById(R.id.time_show_info1);
+        mSportShow2 = findViewById(R.id.time_show_info2);
+        mSportShow3 = findViewById(R.id.time_show_info3);
+        mRankInfo1 = findViewById(R.id.time_rank_info1);
+        mRankInfo2 = findViewById(R.id.time_rank_info2);
+        mSportInfo1 = findViewById(R.id.time_sport_info1);
+        mSportInfo2 = findViewById(R.id.time_sport_info2);
+        mSportInfo3 = findViewById(R.id.time_sport_info3);
+        mChallInfo1 = findViewById(R.id.time_chall_info1);
+        mChallInfo2 = findViewById(R.id.time_chall_info2);
+
+        String noRankStrArea = getString(R.string.ranks_area) + ":" + getString(R.string.sport_step_no_rank);
+        String noRankStrCoun = getString(R.string.ranks_country) + ":" + getString(R.string.sport_step_no_rank);
+        mRankInfo1.setText(noRankStrArea);
+        mRankInfo2.setText(noRankStrCoun);
+        ib_menu.setBackgroundResource(R.drawable.btn_steps_setting_selector);
+
+        if (myApp.getCurUser().isMeAdminByWatch(mCurWatch)) {
+            ib_menu.setVisibility(View.VISIBLE);
+        } else {
+            ib_menu.setVisibility(View.GONE);
+        }
+
+        //刷新适配 快照和分时数据分别刷新
+        myHandler.sendEmptyMessage(MyHandler.CHANGE_ITEM_VIEW_FLAG);
+        myHandler.sendEmptyMessage(MyHandler.CHANGE_VIEW_FLAG);
+        layout_sport_chall.setVisibility(View.GONE);
+
+    }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.iv_title_menu: {
+                Intent _intent = new Intent(SportActivity.this, SportSettingActivity.class);
+                _intent.putExtra(CloudBridgeUtil.STEPS_TARGET_LEVEL, target);
+                _intent.putExtra(Constants.WATCH_EID_DATA, mCurWatch.getEid());
+                startActivity(_intent);
+            }
+            break;
+            case R.id.layout_cur_sport:
+            case R.id.layout_time: {
+                Intent _intent = new Intent(SportActivity.this, SportStepsActivity.class);
+                _intent.putExtra(CloudBridgeUtil.STEPS_TARGET_LEVEL, target);
+                _intent.putExtra(Constants.WATCH_EID_DATA, mCurWatch.getEid());
+                startActivity(_intent);
+            }
+            break;
+            case R.id.layout_rank: {
+                String rank_0 = mSportData.get(Constants.SPORT_LAST_RANK_0);
+                String rank_1 = mSportData.get(Constants.SPORT_LAST_RANK_1);
+                if (rank_0 == null || rank_1 == null) {
+                    ToastUtil.show(this, getString(R.string.steps_get_no_ranks));
+                    return;
+                }
+                Intent _intent = new Intent(SportActivity.this, SportRankActivity.class);
+                _intent.putExtra(Constants.SPORT_LAST_RANK, mSportData.get(Constants.SPORT_LAST_RANK));
+                _intent.putExtra(Constants.WATCH_EID_DATA, mCurWatch.getEid());
+                startActivity(_intent);
+            }
+            break;
+            case R.id.layout_sport: {
+                Intent _intent = new Intent(SportActivity.this, SportRunningActivity.class);
+                _intent.putExtra(Constants.WATCH_EID_DATA, mCurWatch.getEid());
+                startActivity(_intent);
+            }
+            break;
+            case R.id.layout_chall: {
+                Intent _intent = new Intent(SportActivity.this, SportChallActivity.class);
+                _intent.putExtra(Constants.WATCH_EID_DATA, mCurWatch.getEid());
+                startActivity(_intent);
+            }
+            break;
+        }
+    }
+
+    @Override
+    public void doCallBack(JSONObject reqMsg, JSONObject respMsg) {
+        int cid = (Integer) respMsg.get(CloudBridgeUtil.KEY_NAME_CID);
+        int mapRc = CloudBridgeUtil.getCloudMsgRC(respMsg);
+        switch (cid) {
+            case CloudBridgeUtil.CID_DEVICE_GET_RESP:
+                if (mapRc == CloudBridgeUtil.RC_SUCCESS) {
+                    JSONObject devicePl = CloudBridgeUtil.getCloudMsgPL(respMsg);
+                    myApp.parseDevicePl(mCurWatch, devicePl);
+                    LogUtil.i("devicepl" + devicePl.toJSONString());
+                    WatchDAO.getInstance(getApplicationContext()).addWatch(mCurWatch);
+                }
+                break;
+            case CloudBridgeUtil.CID_E2E_DOWN:
+                //{"Version":"00290000","SN":-371603868,"SEID":"CA7B4BB269D253999408105A5FF52150","PL":{"sub_action":334,"cur_hourSteps":[{"v":0,"k":"00"},{"v":0,"k":"01"},{"v":0,"k":"02"},{"v":0,"k":"03"},{"v":0,"k":"04"},{"v":0,"k":"05"},{"v":0,"k":"06"},{"v":0,"k":"07"},{"v":0,"k":"08"},{"v":0,"k":"09"},{"v":55,"k":"10"},{"v":0,"k":"11"},{"v":0,"k":"12"},{"v":0,"k":"13"},{"v":34,"k":"14"},{"v":0,"k":"15"},{"v":0,"k":"16"},{"v":0,"k":"17"},{"v":0,"k":"18"},{"v":0,"k":"19"},{"v":0,"k":"20"},{"v":0,"k":"21"},{"v":0,"k":"22"},{"v":0,"k":"23"}]},"CID":30012}
+
+                try {
+                    JSONObject jsonObject = new JSONObject(respMsg);
+                    JSONObject pl = (JSONObject) jsonObject.get("PL");
+                    JSONArray dataList = (JSONArray) pl.get("cur_hourSteps");
+                    mSportKiloCalData.put(Constants.SPORT_TOTAL_CALOR, Sport2Utils.getStringFromResult(pl.toString(), Constants.SPORT_TOTAL_CALOR));
+                    mSportKiloCalData.put(Constants.SPORT_TOTAL_METER, Sport2Utils.getStringFromResult(pl.toString(), Constants.SPORT_TOTAL_METER));
+
+                    Sport2Utils.parseCurDaysData(mSportCurDaysData, dataList.toString());
+                    mNetUpdateTime = TimeUtil.getTimeStampLocal();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                //更新当前UI,数据绑定视图
+                myHandler.sendEmptyMessage(MyHandler.CHANGE_ITEM_VIEW_FLAG);
+                break;
+            case CloudBridgeUtil.CID_MAPGET_RESP:
+                if (mapRc == CloudBridgeUtil.RC_SUCCESS) {
+                    JSONObject pl = (JSONObject) respMsg.get(CloudBridgeUtil.KEY_NAME_PL);
+                    String targetLevel = (String) pl.get(CloudBridgeUtil.STEPS_TARGET_LEVEL);
+                    if (targetLevel != null && !targetLevel.equals("")) {
+                        target = targetLevel;
+                        updateRoundViewByTarget();
+                    }
+                }
+                break;
+        }
+    }
+}

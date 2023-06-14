@@ -1,0 +1,10 @@
+package com.xiaoxun.xun.networkv2.beans;
+
+public class UpTaskDetailRequestInfo extends BaseRequestInfo{
+    TaskDetailInfo task;
+
+    public UpTaskDetailRequestInfo(String eid, TaskDetailInfo task) {
+        super(eid);
+        this.task = task;
+    }
+}

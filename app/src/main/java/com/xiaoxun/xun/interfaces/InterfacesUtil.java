@@ -1,0 +1,30 @@
+package com.xiaoxun.xun.interfaces;
+
+import android.view.View;
+
+/**
+ * Created by zhangjun5 on 2017/3/17.
+ */
+
+public class InterfacesUtil {
+    public interface OnRefreshItemListener {
+        void onRefreshItem(int page);
+    }
+
+    public interface OnRecyclerViewItemClickListener {
+        void onItemClick(View view, int position);
+    }
+
+    public interface OnRecyclerViewItemLongClickListener {
+        void onItemLongClick(View view, int position);
+    }
+
+    public interface UpdateView {
+        void UpdateView(int position);
+    }
+
+    public interface UpdateViewData {
+        void UpdateView(View view, String resq);
+    }
+
+}

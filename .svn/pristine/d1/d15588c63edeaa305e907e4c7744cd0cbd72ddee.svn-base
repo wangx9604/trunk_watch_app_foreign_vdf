@@ -1,0 +1,407 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:android_custom="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    tools:context="com.xiaoxun.xun.activitys.SportActivity">
+
+    <include
+        android:id="@+id/title"
+        layout="@layout/activity_title"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:scrollbars="none"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/title">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/bg_grey">
+            <!-- 首页背景模块
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="158.5dp"
+                android:background="@color/bg_color_orange"/>
+             -->
+            <!-- 计步模块 -->
+            <RelativeLayout
+                android:id="@+id/layout_cur_sport"
+                android:layout_width="match_parent"
+                android:layout_height="450.33dp"
+                android:layout_marginLeft="15dp"
+                android:layout_marginTop="16.5dp"
+                android:layout_marginRight="15dp"
+                android:background="@drawable/rectangle_shape">
+
+                <TextView
+                    android:id="@+id/sport_target"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginTop="55dp"
+                    android:text="@string/steps_target_step"
+                    android:textSize="12.33dp" />
+
+                <TextView
+                    android:id="@+id/sport_cur_step"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/sport_target"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginTop="22dp"
+                    android:text="0"
+                    android:textSize="33.33sp" />
+
+                <TextView
+                    android:id="@+id/sport_update_time"
+                    android:layout_width="80dp"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/sport_cur_step"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginTop="12.5dp"
+                    android:gravity="center"
+                    android:text="@string/sport_e2e_no_data"
+                    android:textSize="8.33dp"
+                    android:visibility="visible" />
+
+                <com.xiaoxun.xun.views.RoundProgressBar
+                    android:id="@+id/round_progressbar_value"
+                    android:layout_width="167.6dp"
+                    android:layout_height="167.6dp"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginTop="25dp"
+                    android_custom:max="100"
+                    android_custom:roundColor="@color/bg_grey"
+                    android_custom:roundProgressColor="@color/bg_color_orange"
+                    android_custom:roundWidth="4dip"
+                    android_custom:textIsDisplayable="false" />
+
+                <com.github.mikephil.charting.charts.BarChart
+                    android:id="@+id/chart"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/round_progressbar_value"
+                    android:layout_marginTop="17dp" />
+
+            </RelativeLayout>
+            <!-- 步数 -->
+            <RelativeLayout
+                android:id="@+id/layout_time"
+                android:layout_width="match_parent"
+                android:layout_height="140dp"
+                android:layout_below="@+id/layout_cur_sport"
+                android:layout_marginLeft="15dp"
+                android:layout_marginTop="25dp"
+                android:layout_marginRight="15dp"
+                android:background="@drawable/rectangle_shape">
+
+                <ImageView
+                    android:id="@+id/iv_time_icon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="11dp"
+                    android:layout_marginTop="7dp"
+                    android:background="@drawable/sport_step" />
+
+                <TextView
+                    android:id="@+id/tv_time_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginTop="10.5dp"
+                    android:layout_toEndOf="@+id/iv_time_icon"
+                    android:text="@string/sport_step_name" />
+
+                <ImageView
+                    android:layout_width="9dp"
+                    android:layout_height="16dp"
+                    android:layout_alignParentRight="true"
+                    android:layout_marginTop="11dp"
+                    android:layout_marginRight="18dp"
+                    android:background="@drawable/next" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="1px"
+                    android:layout_marginTop="43.5dp"
+                    android:background="@color/bg_grey" />
+
+                <TextView
+                    android:id="@+id/time_show_info1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="63.5dp"
+                    android:layout_marginTop="80dp"
+                    android:text="@string/unit_kilometer_with_number"
+                    android:textSize="16.33dp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/time_show_info2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_marginTop="80dp"
+                    android:layout_marginRight="63.5dp"
+                    android:text="@string/unit_kiloCard_with_num"
+                    android:textSize="16.33dp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/time_show_info3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginTop="80dp"
+                    android:text="@string/sport_step_no_data"
+                    android:textColor="@color/txt_grey"
+                    android:textSize="16.33dp" />
+            </RelativeLayout>
+            <!-- 昨日排名 -->
+            <RelativeLayout
+                android:id="@+id/layout_rank"
+                android:layout_width="match_parent"
+                android:layout_height="140dp"
+                android:layout_below="@+id/layout_time"
+                android:layout_marginLeft="15dp"
+                android:layout_marginTop="25dp"
+                android:layout_marginRight="15dp"
+                android:background="@drawable/rectangle_shape">
+
+                <ImageView
+                    android:id="@+id/iv_rank_icon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="11dp"
+                    android:layout_marginTop="7dp"
+                    android:background="@drawable/sport_rank" />
+
+                <TextView
+                    android:id="@+id/tv_rank_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginTop="10.5dp"
+                    android:layout_toEndOf="@+id/iv_rank_icon"
+                    android:text="@string/sport_rank_title" />
+
+                <ImageView
+                    android:layout_width="9dp"
+                    android:layout_height="16dp"
+                    android:layout_alignParentRight="true"
+                    android:layout_marginTop="11dp"
+                    android:layout_marginRight="18dp"
+                    android:background="@drawable/next" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="1px"
+                    android:layout_marginTop="43.5dp"
+                    android:background="@color/bg_grey" />
+
+                <TextView
+                    android:id="@+id/time_rank_info1_0"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="23.5dp"
+                    android:layout_marginTop="60dp"
+                    android:text="@string/sport_local"
+                    android:textColor="@color/title_grey"
+                    android:textSize="12.33dp" />
+
+                <TextView
+                    android:id="@+id/time_rank_info1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="23.5dp"
+                    android:layout_marginTop="85dp"
+                    android:ellipsize="end"
+                    android:maxWidth="150dp"
+                    android:maxLines="1"
+                    android:text="@string/sport_step_area_data"
+                    android:textSize="16.33dp" />
+
+                <TextView
+                    android:id="@+id/time_rank_info2_0"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignLeft="@+id/time_rank_info2"
+                    android:layout_marginTop="60dp"
+                    android:text="@string/sport_country"
+                    android:textColor="@color/title_grey"
+                    android:textSize="12.33dp" />
+
+                <TextView
+                    android:id="@+id/time_rank_info2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_marginTop="85dp"
+                    android:layout_marginRight="23.5dp"
+                    android:ellipsize="end"
+                    android:maxWidth="150dp"
+                    android:maxLines="1"
+                    android:text="@string/sport_step_count_data"
+                    android:textSize="16.33dp" />
+
+            </RelativeLayout>
+            <!-- 运动 -->
+            <RelativeLayout
+                android:id="@+id/layout_sport"
+                android:layout_width="match_parent"
+                android:layout_height="210dp"
+                android:layout_below="@+id/layout_rank"
+                android:layout_marginLeft="15dp"
+                android:layout_marginTop="25dp"
+                android:layout_marginRight="15dp"
+                android:background="@drawable/rectangle_shape">
+
+                <ImageView
+                    android:id="@+id/iv_sport_icon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="11dp"
+                    android:layout_marginTop="7dp"
+                    android:background="@drawable/sport_motion" />
+
+                <TextView
+                    android:id="@+id/tv_sport_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginTop="10.5dp"
+                    android:layout_toEndOf="@+id/iv_sport_icon"
+                    android:text="@string/sport_record_title" />
+
+                <ImageView
+                    android:layout_width="9dp"
+                    android:layout_height="16dp"
+                    android:layout_alignParentRight="true"
+                    android:layout_marginTop="11dp"
+                    android:layout_marginRight="18dp"
+                    android:background="@drawable/next" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="1px"
+                    android:layout_marginTop="43.5dp"
+                    android:background="@color/bg_grey" />
+
+                <TextView
+                    android:id="@+id/time_sport_info1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="15.5dp"
+                    android:layout_marginTop="78dp"
+                    android:text="@string/unit_kilometer_with_number"
+                    android:textSize="16.33dp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/time_sport_info2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/time_sport_info1"
+                    android:layout_marginLeft="15.5dp"
+                    android:layout_marginTop="22.5dp"
+                    android:text="@string/unit_kiloCard_with_num"
+                    android:textSize="16.33dp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/time_sport_info3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/time_sport_info1"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginLeft="15.5dp"
+                    android:layout_marginTop="88dp"
+                    android:text="@string/sport_step_hint"
+                    android:textColor="@color/txt_grey"
+                    android:textSize="16.33dp"
+                    android:visibility="visible" />
+
+            </RelativeLayout>
+            <!-- 最近挑战 -->
+            <RelativeLayout
+                android:id="@+id/layout_chall"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:layout_below="@+id/layout_sport"
+                android:layout_marginLeft="15dp"
+                android:layout_marginTop="25dp"
+                android:layout_marginRight="15dp"
+                android:background="@drawable/rectangle_shape">
+
+                <ImageView
+                    android:id="@+id/iv_chall_icon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="11dp"
+                    android:layout_marginTop="7dp"
+                    android:background="@drawable/sport_chall" />
+
+                <TextView
+                    android:id="@+id/tv_chall_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginTop="10.5dp"
+                    android:layout_toEndOf="@+id/iv_chall_icon"
+                    android:text="@string/sport_challenge_title" />
+
+                <ImageView
+                    android:layout_width="9dp"
+                    android:layout_height="16dp"
+                    android:layout_alignParentRight="true"
+                    android:layout_marginTop="11dp"
+                    android:layout_marginRight="18dp"
+                    android:background="@drawable/next" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="1px"
+                    android:layout_marginTop="43.5dp"
+                    android:background="@color/bg_grey" />
+
+                <TextView
+                    android:id="@+id/time_chall_info1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="63.5dp"
+                    android:layout_marginTop="80dp"
+                    android:text="@string/unit_kilometer_with_number"
+                    android:textSize="16.33dp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/time_chall_info2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginTop="80dp"
+                    android:text="@string/sport_chall_hint1"
+                    android:textColor="@color/txt_grey"
+                    android:textSize="16.33dp" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="20dp" />
+        </RelativeLayout>
+    </ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>
+

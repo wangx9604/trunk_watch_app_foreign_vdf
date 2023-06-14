@@ -1,0 +1,247 @@
+package com.xiaoxun.xun.views;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Rect;
+import android.graphics.drawable.ColorDrawable;
+import android.os.Handler;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
+import android.widget.TextView;
+import android.widget.ViewFlipper;
+
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.activitys.OperationMode;
+import com.xiaoxun.xun.activitys.SecurityZoneActivity;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.utils.DensityUtil;
+
+
+/**
+ * Created by huangyouyang on 2017/5/31.
+ */
+
+public class ItemListPopUpWindow extends PopupWindow {
+
+    private LinearLayout mWatchList;
+    private View mMenuView;
+    private ViewFlipper flipper;
+    private ImibabyApp mApp;
+    private WatchData focusWatch;
+
+    public static final int MESSAGE_MORE_FUCTION_CHANGE_MAP = 0;
+    public static final int MESSAGE_MORE_FUCTION_CALL = 4;
+    public final static int FUNCTION_VIDEO_CALL = 9;
+
+    public ItemListPopUpWindow(final Activity context, View.OnClickListener itemsOnClick, final View view, final Handler handler) {
+        super(context);
+
+        mApp = (ImibabyApp) context.getApplication();
+        focusWatch = mApp.getCurUser().getFocusWatch();
+        LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        mMenuView = inflater.inflate(R.layout.pop_item_list, null);
+        flipper = mMenuView.findViewById(R.id.flipper);
+        mWatchList = mMenuView.findViewById(R.id.item_list);
+        //rectify_location_map_select
+        String[] textlist = new String[]{
+                context.getString(R.string.security_zone), context.getString(R.string.operation_mode_setting), context.getString(R.string.phone_call), context.getString(R.string.listen)};
+        int[] drawlist = new int[]{
+                R.drawable.moreico_safezone,
+                R.drawable.moreico_mode, R.drawable.moreico_call, R.drawable.moreico_monitor};
+        if (focusWatch.isDevice710_A03() || focusWatch.isDevice706_A02() || focusWatch.isDevice900_A03()
+                || focusWatch.isDevice707() || focusWatch.isDevice708() || focusWatch.isDevice900() || focusWatch.isDevice708_A06()
+                || focusWatch.isDevice709_A03() || focusWatch.isDevice708_A07() || focusWatch.isDevice709_A05()) {
+            if(focusWatch.isDevice707_A05()){
+                textlist = new String[]{context.getString(R.string.security_zone), context.getString(R.string.phone_call), context.getString(R.string.videocall)};
+                drawlist = new int[]{
+                        R.drawable.moreico_safezone, R.drawable.moreico_call,
+                        R.drawable.moreico_videocall};
+            }else {
+                textlist = new String[]{context.getString(R.string.security_zone), context.getString(R.string.operation_mode_setting), context.getString(R.string.phone_call), context.getString(R.string.videocall)};
+                drawlist = new int[]{
+                        R.drawable.moreico_safezone,
+                        R.drawable.moreico_mode, R.drawable.moreico_call,
+                        R.drawable.moreico_videocall};
+            }
+        }
+
+        if (focusWatch.isDevice306_A03() || focusWatch.isDevice203_A03()) {
+            textlist = new String[]{
+                    context.getString(R.string.map_3d),
+                    context.getString(R.string.security_zone),
+                    context.getString(R.string.operation_mode_setting),
+                    context.getString(R.string.phone_call)};
+            drawlist = new int[]{
+                    R.drawable.moreico_3dmap,
+                    R.drawable.moreico_safezone,
+                    R.drawable.moreico_mode,
+                    R.drawable.moreico_call};
+
+        }
+
+        if (focusWatch.isDevice203_A03()) {
+            textlist = new String[]{
+                    context.getString(R.string.map_3d),
+                    context.getString(R.string.security_zone),
+                    context.getString(R.string.operation_mode_setting)
+            };
+            drawlist = new int[]{
+                    R.drawable.moreico_3dmap,
+                    R.drawable.moreico_safezone,
+                    R.drawable.moreico_mode
+            };
+        }
+
+        if (focusWatch.isDevice206_A02()) {
+            textlist = new String[]{
+                    context.getString(R.string.security_zone),
+                    context.getString(R.string.operation_mode_setting)
+            };
+            drawlist = new int[]{
+                    R.drawable.moreico_safezone,
+                    R.drawable.moreico_mode
+            };
+
+        }
+
+        FrameLayout.LayoutParams layoutParams= (FrameLayout.LayoutParams) mWatchList.getLayoutParams();
+        layoutParams.height = DensityUtil.dip2px(context, 45f * textlist.length);
+        layoutParams.topMargin = DensityUtil.dip2px(context, 18f);
+        mWatchList.setLayoutParams(layoutParams);
+
+        for (int i = 0; i < textlist.length; i++) {
+            View item = inflater.inflate(R.layout.pop_item_list_layout, null);
+            TextView textView = item.findViewById(R.id.item_list_textview);
+            textView.setText(textlist[i]);
+            ImageView imageView = item.findViewById(R.id.item_list_imageview);
+            imageView.setBackgroundResource(drawlist[i]);
+            if (textlist[i].equals(context.getString(R.string.security_zone))) {
+                item.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        context.startActivity(new Intent(context, SecurityZoneActivity.class));
+                        dismissPopWindow(view);
+                    }
+                });
+            } else if (textlist[i].equals(context.getString(R.string.operation_mode_setting))) {
+                item.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        context.startActivity(new Intent(context, OperationMode.class));
+                        dismissPopWindow(view);
+                    }
+                });
+            } else if (textlist[i].equals(context.getString(R.string.map_3d))) {
+                int mapSatellite = mApp.getIntValue(Const.SHARE_PREF_FIELD_IS_SHOW_SATELLITE, 0);
+                if (mapSatellite == 1) {
+                    textView.setText(context.getString(R.string.map_2d));
+                    imageView.setBackgroundResource(R.drawable.moreico_2dmap);
+                }
+                item.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        handler.sendEmptyMessage(MESSAGE_MORE_FUCTION_CHANGE_MAP);
+                        dismissPopWindow(view);
+                    }
+                });
+            } else if (textlist[i].equals(context.getString(R.string.phone_call))) {
+                item.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        handler.sendEmptyMessage(MESSAGE_MORE_FUCTION_CALL);
+                        dismissPopWindow(view);
+                    }
+                });
+            }else if (context.getString(R.string.videocall).equals(textlist[i])) {
+                item.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        handler.sendEmptyMessage(FUNCTION_VIDEO_CALL);
+                        dismissPopWindow(view);
+                    }
+                });
+            }
+            mWatchList.addView(item);
+        }
+        flipper.setDisplayedChild(1);
+        flipper.showNext();
+
+        //设置PopupWindow的View
+        this.setContentView(mMenuView);
+//        //设置PopupWindow弹出窗体的宽
+        this.setWidth(ViewGroup.LayoutParams.MATCH_PARENT);
+//        //设置PopupWindow弹出窗体的高
+        this.setHeight(ViewGroup.LayoutParams.MATCH_PARENT);
+        //设置PopupWindow弹出窗体可点击，默认true
+        this.setTouchable(true);
+        // 设置PopupWindow具备获取焦点能力，默认false
+        this.setFocusable(true);
+//        // 设置外部点击有效
+//        this.setOutsideTouchable(true);
+        //实例化一个ColorDrawable颜色为透明
+        ColorDrawable dw = new ColorDrawable(0x00000000);
+        //设置ChatPopupWindow弹出窗体的背景
+        this.setBackgroundDrawable(dw);
+
+        //mMenuView添加OnTouchListener监听判断获取触屏位置如果在选择框外面则销毁弹出框
+        mMenuView.setOnTouchListener(new View.OnTouchListener() {
+
+            public boolean onTouch(View v, MotionEvent event) {
+
+                int height_top = mMenuView.findViewById(R.id.item_list).getTop();
+                int height_bottom = mMenuView.findViewById(R.id.item_list).getBottom();
+                int width_left = mMenuView.findViewById(R.id.item_list).getLeft();
+                int width_right = mMenuView.findViewById(R.id.item_list).getRight();
+                int y = (int) event.getY();
+                int x = (int) event.getX();
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+                    if (y < height_top || y > height_bottom || x < width_left || x > width_right) {
+                        dismissPopWindow(view);
+                    }
+                }
+                return true;
+            }
+        });
+
+        this.setOnDismissListener(new OnDismissListener() {
+            @Override
+            public void onDismiss() {
+                flipper.showPrevious();
+                view.setBackgroundResource(R.drawable.img_more_func);
+            }
+        });
+    }
+
+    private void dismissPopWindow(View view) {
+
+        flipper.showPrevious();
+        view.setBackgroundResource(R.drawable.img_more_func);
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                dismiss();
+            }
+        }, 10);
+    }
+
+    // showAsDropDown重写
+    @Override
+    public void showAsDropDown(View anchor) {
+//        if (Build.VERSION.SDK_INT == 24) {
+        Rect rect = new Rect();
+        anchor.getGlobalVisibleRect(rect);
+        int h = anchor.getResources().getDisplayMetrics().heightPixels - rect.bottom;
+        setHeight(h);
+//        }
+        super.showAsDropDown(anchor);
+    }
+}

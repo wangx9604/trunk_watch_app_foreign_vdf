@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:android_custom="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical"
+    tools:context="com.xiaoxun.xun.activitys.FlowStatiticsActivity">
+
+    <include
+        android:id="@+id/title"
+        layout="@layout/activity_title" />
+
+    <RelativeLayout
+        android:id="@+id/round_progressbar_view"
+        android:layout_width="match_parent"
+        android:layout_height="306dp">
+
+        <TextView
+            android:id="@+id/tv_select_date"
+            android:layout_width="88.6dp"
+            android:layout_height="28.3dp"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="15dp"
+            android:layout_marginTop="14.3dp"
+            android:background="@drawable/flow_border"
+            android:gravity="center"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:text="2018.05"
+            android:textColor="#333333"
+            android:textSize="13.33dp" />
+
+        <com.xiaoxun.xun.views.RoundProgressBar
+            android:id="@+id/round_progressbar_value"
+            android:layout_width="143.6dp"
+            android:layout_height="143.6dp"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="58dp"
+            android_custom:max="100"
+            android_custom:roundColor="#e3e3e3"
+            android_custom:roundProgressColor="#f56c31"
+            android_custom:roundWidth="4dip"
+            android_custom:textIsDisplayable="false" />
+
+        <TextView
+            android:id="@+id/watch_status"
+            android:layout_width="166.6dp"
+            android:layout_height="25.3dp"
+            android:layout_below="@+id/round_progressbar_value"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="29.3dp"
+            android:background="@drawable/flow_setting_btn"
+            android:gravity="center"
+            android:text="@string/flow_statistics_setting_title"
+            android:textColor="@color/white"
+            android:textSize="13.33sp" />
+
+        <TextView
+            android:id="@+id/flow_statistics_cur_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="91.66dp"
+            android:text="@string/flow_statistics_item_cur_value"
+            android:textColor="#333333"
+            android:textSize="33.33sp" />
+
+        <TextView
+            android:id="@+id/tv_flow_unit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="100dp"
+            android:layout_toEndOf="@+id/flow_statistics_cur_value"
+            android:text="@string/flow_statistics_unit"
+            android:textColor="#333333"
+            android:textSize="12.66sp" />
+
+        <TextView
+            android:id="@+id/flow_statistics_cur_percent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/flow_statistics_cur_value"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="12.66dp"
+            android:text="@string/flow_statistics_item_cur_percent"
+            android:textColor="#aaaaaa"
+            android:textSize="16sp" />
+    </RelativeLayout>
+
+    <com.github.mikephil.charting.charts.LineChart
+        android:id="@+id/chart2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp" />
+
+</LinearLayout>

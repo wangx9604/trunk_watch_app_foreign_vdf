@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">CameraLibrary</string>
+    <string name="camera_prompt">Click to take a picture, long press to take a picture</string>
+</resources>

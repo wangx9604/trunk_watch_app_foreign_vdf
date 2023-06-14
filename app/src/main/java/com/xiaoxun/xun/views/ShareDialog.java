@@ -1,0 +1,96 @@
+package com.xiaoxun.xun.views;
+
+import android.app.Dialog;
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.os.Bundle;
+import android.text.TextUtils;
+import android.view.View;
+import android.widget.ImageView;
+
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.utils.BitmapUtil;
+import com.xiaoxun.xun.utils.ShareUtil;
+
+/**
+ * @author cuiyufeng
+ * @Description: ShareDialog
+ * @date 2018/7/27 9:16
+ */
+public class ShareDialog extends Dialog implements View.OnClickListener {
+    private Context context;
+    private String title, description, actionUrl, imgurl, localFileName;
+    private byte[] bytesimg = null;
+    private ImageView iv_share_weixin, iv_share_pengyouquan, iv_share_qzone;
+    private ShareUtil shareutil;
+    private boolean isLocalImg = false;
+
+    public ShareDialog(Context context, String title, String description, String actionUrl, String imgurl) {
+        super(context, R.style.Theme_DataSheet);
+        this.context = context;
+        this.title = title;
+        this.description = description;
+        this.actionUrl = actionUrl;
+        this.imgurl = imgurl;
+    }
+
+    public ShareDialog(Context context, String title, String actionUrl, String localFile) {
+        super(context, R.style.Theme_DataSheet);
+        this.context = context;
+        this.title = title;
+        this.actionUrl = actionUrl;
+        this.localFileName = localFile;
+        this.isLocalImg = true;
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.xiaomi_dialog_share);
+        new Thread() {
+            @Override
+            public void run() {
+                if (!TextUtils.isEmpty(imgurl)) {
+                    Bitmap bitmap = BitmapUtil.getbitmap(imgurl);
+                    bytesimg = BitmapUtil.bmpToByteArray(bitmap, false);
+                }
+            }
+        }.start();
+
+        shareutil = new ShareUtil(context);
+        iv_share_weixin = (ImageView) findViewById(R.id.iv_share_weixin);
+        iv_share_pengyouquan = (ImageView) findViewById(R.id.iv_share_pengyouquan);
+        iv_share_qzone = (ImageView) findViewById(R.id.iv_share_qzone);
+        iv_share_weixin.setOnClickListener(this);
+        iv_share_pengyouquan.setOnClickListener(this);
+        iv_share_qzone.setOnClickListener(this);
+    }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.iv_share_weixin:
+                if (isLocalImg) {
+                    shareutil.sharewx(false, title, "", localFileName);
+                } else {
+                    shareutil.sharewx(false, title, "", actionUrl, bytesimg, imgurl);
+                }
+                break;
+            case R.id.iv_share_pengyouquan:
+                if (isLocalImg) {
+                    shareutil.sharewx(true, title, "", localFileName);
+                } else {
+                    shareutil.sharewx(true, title, "", actionUrl, bytesimg, imgurl);
+                }
+                break;
+            case R.id.iv_share_qzone:
+                if (isLocalImg) {
+                    shareutil.shareToQzone(title, description, actionUrl, localFileName);
+                } else {
+                    shareutil.shareToQzone(title, description, actionUrl, imgurl);
+                }
+                break;
+
+        }
+    }
+}

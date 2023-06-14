@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".dialBg.DialBgActivity">
+
+    <include
+        android:id="@+id/title"
+        layout="@layout/activity_title" />
+
+    <RelativeLayout
+        android:id="@+id/no_data_ly"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true">
+
+        <ImageView
+            android:id="@+id/sketch"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="144dp"
+            android:src="@drawable/albumdial"/>
+
+        <TextView
+            android:id="@+id/intro_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/sketch"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="10dp"
+            android:text="@string/dial_bg_txt"
+            android:textSize="26sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/intro_name"
+            android:layout_centerHorizontal="true"
+            android:text="@string/dial_bg_intro_inf_txt"
+            android:textSize="20sp" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/list_ly"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/title"
+        android:layout_above="@+id/btn_ly"
+        android:visibility="gone">
+
+        <com.xiaoxun.xun.gallary.swiplayout.SHSwipeRefreshLayout
+            android:id="@+id/fresh_ly"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/white"
+            app:guidance_text_color="@color/txt_grey"
+            app:guidance_view_bg_color="@color/transparent"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"
+            app:load_text="@string/dial_bg_load_more_txt"
+            app:progress_bar_color="@color/bg_color_orange"
+            app:refresh_text="@string/dial_bg_refresh_txt">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/dial_bg_list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/dial_bg_list_bg"/>
+
+        </com.xiaoxun.xun.gallary.swiplayout.SHSwipeRefreshLayout>
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/btn_ly"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_alignParentBottom="true"
+        android:background="@android:color/white">
+
+        <Button
+            android:id="@+id/add_new"
+            android:layout_width="300dp"
+            android:layout_height="40dp"
+            android:layout_centerInParent="true"
+            android:textSize="18sp"
+            android:text="@string/dial_bg_btn_txt"
+            android:background="@drawable/btn_dialgo_one_button"/>
+
+    </RelativeLayout>
+
+</RelativeLayout>

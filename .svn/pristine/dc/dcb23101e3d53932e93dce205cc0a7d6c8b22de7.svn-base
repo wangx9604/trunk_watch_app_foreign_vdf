@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/setting_item_selector"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="72dp"
+        android:background="@drawable/setting_item_selector"
+        android:clickable="true"
+        android:gravity="center_vertical"
+        android:orientation="vertical"
+        android:paddingLeft="@dimen/divideleftandright"
+        android:paddingRight="@dimen/divideleftandright">
+
+        <ImageView
+            android:id="@+id/setting_icon"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_centerVertical="true" />
+
+        <TextView
+            android:id="@+id/sport_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="15.66dp"
+            android:layout_toEndOf="@+id/setting_icon"
+            android:layout_alignTop="@+id/setting_icon"
+            android:text="@string/sport_steps_running_hint0"
+            android:textColor="@color/txt_grey"
+            android:textSize="12sp"
+            />
+
+        <TextView
+            android:id="@+id/sport_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:gravity="end"
+            android:layout_marginEnd="@dimen/watchSettingState"
+            android:text="@string/performance_mode_setting"
+            android:textSize="12sp"
+            android:maxLines="1"
+            android:layout_toEndOf="@id/setting_text"
+            android:layout_alignTop="@+id/setting_icon"
+            android:layout_marginStart="8.66dp"
+            android:textColor="@color/txt_grey"
+            android:visibility="visible"
+            android:layout_alignParentRight="true"/>
+        <TextView
+            android:id="@+id/tv_sport_data"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="15.66dp"
+            android:layout_below="@+id/sport_text"
+            android:layout_toEndOf="@+id/setting_icon"
+            android:text="@string/health_steps"
+            android:textSize="12sp"
+            android:layout_marginTop="1.5dp"/>
+        <TextView
+            android:id="@+id/tv_sport_dura"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="105.66dp"
+            android:layout_below="@+id/sport_text"
+            android:layout_toEndOf="@+id/setting_icon"
+            android:text="@string/health_steps"
+            android:textSize="12sp"
+            android:layout_marginTop="1.5dp"/>
+
+    </RelativeLayout>
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:paddingLeft="@dimen/divideleftandright"
+        android:paddingRight="@dimen/divideleftandright"
+        android:src="@color/line_grey" />
+
+</LinearLayout>

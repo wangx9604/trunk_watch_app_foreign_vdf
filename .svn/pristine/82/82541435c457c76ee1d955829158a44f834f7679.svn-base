@@ -1,0 +1,188 @@
+package com.xiaoxun.xun.ScheduleCard.activitys;
+
+import android.app.Dialog;
+import android.content.Intent;
+import androidx.appcompat.app.AppCompatActivity;
+import android.os.Bundle;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import android.view.View;
+import android.widget.RelativeLayout;
+import android.widget.Toast;
+
+import com.xiaoxun.xun.Constants;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.ScheduleCard.Views.SimpleDecoration;
+import com.xiaoxun.xun.ScheduleCard.adapters.ScheduleWeekSetAdapter;
+import com.xiaoxun.xun.ScheduleCard.beans.ScheduleCardBean;
+import com.xiaoxun.xun.ScheduleCard.beans.ScheduleTimeBean;
+import com.xiaoxun.xun.ScheduleCard.beans.ScheduleWeekBean;
+import com.xiaoxun.xun.activitys.NormalActivity;
+import com.xiaoxun.xun.interfaces.MsgCallback;
+import com.xiaoxun.xun.utils.DialogUtil;
+import com.xiaoxun.xun.utils.LogUtil;
+import com.xiaoxun.xun.utils.ToastUtil;
+
+import java.util.ArrayList;
+import java.util.Collections;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+
+public class ScheduleWeekSettingActivity extends NormalActivity {
+
+    private static final String TAG = ScheduleWeekSettingActivity.class.getSimpleName();
+    private ArrayList<ScheduleWeekBean> mWeekArray;
+    private ArrayList<ScheduleWeekBean> mWeekOldArray;
+    private ScheduleCardBean cardBean;
+    private String mScheduleInfo;
+    private ScheduleWeekSetAdapter mWeekSetAdapter;
+
+    @BindView(R.id.week_show_view)
+    RecyclerView mWeekSetLayout;
+    @BindView(R.id.layout_time_select)
+    RelativeLayout mTimeSelectLayout;
+
+    @OnClick(R.id.iv_back)
+    public void onBackAction(){
+        //1:检查是否修改
+        if(isInfoHasChange()){
+            //1：弹窗提醒用户，是否保存
+            DialogUtil.ShowCustomSystemDialog(getApplicationContext(),
+                    getString(R.string.prompt),
+                    getString(R.string.schedule_edit_exit),
+                    new DialogUtil.OnCustomDialogListener() {
+                        @Override
+                        public void onClick(View v) {
+                            finish();
+                        }
+                    },
+                    getText(R.string.schedule_edit_exit_yes).toString(),
+                    new DialogUtil.OnCustomDialogListener() {
+                        @Override
+                        public void onClick(View v) {
+                        }
+                    },
+                    getText(R.string.schedule_edit_exit_no).toString());
+        }else {
+            finish();
+        }
+    }
+
+
+    @OnClick(R.id.iv_commit)
+    public void onCommitAction(){
+        if(isInfoHasChange()){
+            //1:检查每节课的课程名是否填写
+            if(!ScheduleCardUtils.checkWeekClassHasName(mWeekArray)){
+                ToastUtil.showMyToast(this,getString(R.string.schedule_week_name_not_null), Toast.LENGTH_SHORT);
+                return;
+            }
+
+            //2：检查周六每节课的时间是否冲突&&不同课时是否冲突
+            ArrayList<ScheduleTimeBean> mTimeArray = new ArrayList<>();
+            ScheduleCardUtils.onTranWeekClassBeanToTimeBean(mWeekArray,mTimeArray,6);
+            Collections.sort(mTimeArray);
+            if(ScheduleCardUtils.checkClassTimeConflict(
+                    ScheduleWeekSettingActivity.this, mTimeArray)) return;
+
+            //3:检查周日每节课的时间是否冲突&&不同课时是否冲突
+            mTimeArray = new ArrayList<>();
+            ScheduleCardUtils.onTranWeekClassBeanToTimeBean(mWeekArray,mTimeArray,7);
+            Collections.sort(mTimeArray);
+            if(ScheduleCardUtils.checkClassTimeConflict(
+                    ScheduleWeekSettingActivity.this, mTimeArray)) return;
+
+            //4：数据正常，排序后上传数据
+            ArrayList<ScheduleWeekBean> mSam = ScheduleCardUtils.getWeekListByWeekType(mWeekArray, 6);
+            Collections.sort(mSam);
+            ArrayList<ScheduleWeekBean> mSun = ScheduleCardUtils.getWeekListByWeekType(mWeekArray, 7);
+            Collections.sort(mSun);
+            mWeekArray.clear();
+            mWeekArray.addAll(mSam);
+            mWeekArray.addAll(mSun);
+
+            cardBean.setOthers(ScheduleCardUtils.transWeekClassArrayToWeekList(mWeekArray));
+            cardBean.setOptype(1);
+            mScheduleInfo = ScheduleCardUtils.transScheInfoByCardBean(cardBean);
+
+            ScheduleCardUtils.updateScheduleCardInfo(getMyApp(), mScheduleInfo, new MsgCallback() {
+                @Override
+                public void doCallBack(net.minidev.json.JSONObject reqMsg, net.minidev.json.JSONObject respMsg) {
+                    LogUtil.e(TAG + "respMsg"+":"+respMsg.toJSONString());
+                    ToastUtil.showMyToast(ScheduleWeekSettingActivity.this,getString(R.string.phone_set_success).toString(),Toast.LENGTH_SHORT);
+                    if(getMyApp().getCurUser().getFocusWatch() != null) {
+                        ScheduleCardUtils.SaveScheduleInfoToLocal(getMyApp(), getMyApp().getCurUser().getFocusWatch().getEid(), mScheduleInfo);
+                    }
+                }
+            });
+
+            //5：返回数据，刷新视图
+            Intent intent = new Intent();
+            intent.putExtra(Constants.SCHEDULE_CARD_INFO, mScheduleInfo);
+            setResult(1, intent);
+            finish();
+        }else{
+            finish();
+        }
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_schedule_week_setting);
+
+        ButterKnife.bind(this);
+        initActManage();
+        initAdapter();
+        initData();
+    }
+
+    private void initData() {
+        //1:设置默认数据
+        if(mWeekArray.size() == 0){
+            mWeekArray.add(new ScheduleWeekBean(6,"","0800","1000",1));
+            mWeekArray.add(new ScheduleWeekBean(-1,"","","",2));
+            mWeekOldArray.add(new ScheduleWeekBean(6,"","0800","1000",1));
+            mWeekOldArray.add(new ScheduleWeekBean(-1,"","","",2));
+        }else{
+            mWeekArray.add(new ScheduleWeekBean(-1,"","","",2));
+            mWeekOldArray.add(new ScheduleWeekBean(-1,"","","",2));
+        }
+
+        //2:刷新视图数据
+        mWeekSetAdapter.notifyDataSetChanged();
+    }
+
+    private void initActManage() {
+        mScheduleInfo = getIntent().getStringExtra(Constants.SCHEDULE_CARD_INFO);
+        cardBean = ScheduleCardUtils.transCardBeanByScheInfo(mScheduleInfo);
+        mWeekArray = ScheduleCardUtils.getScheduleWeekListByWeekList(cardBean.getOthers());
+        mWeekOldArray = ScheduleCardUtils.getScheduleWeekListByWeekList(cardBean.getOthers());
+    }
+
+    private boolean isInfoHasChange() {
+        if(mWeekOldArray.size() != mWeekArray.size())  return true;
+        for (ScheduleWeekBean scheduleWeekBean : mWeekOldArray) {
+            Boolean isSame = false;
+            for (ScheduleWeekBean weekBean : mWeekArray) {
+                if(scheduleWeekBean.onIsSameForSilenceList(weekBean)){
+                    isSame = true;
+                    break;
+                }
+            }
+            if(!isSame) return true;
+        }
+        return false;
+    }
+
+    private void initAdapter() {
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
+        mWeekSetLayout.setLayoutManager(linearLayoutManager);
+        SimpleDecoration mDecoration = new SimpleDecoration(16);
+        mWeekSetLayout.addItemDecoration(mDecoration);
+        mWeekSetAdapter = new ScheduleWeekSetAdapter(this, mWeekArray, mTimeSelectLayout);
+        mWeekSetLayout.setAdapter(mWeekSetAdapter);
+    }
+}

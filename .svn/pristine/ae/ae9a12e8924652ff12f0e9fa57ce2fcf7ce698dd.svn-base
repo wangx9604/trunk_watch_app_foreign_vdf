@@ -1,0 +1,53 @@
+package com.xiaoxun.xun.networkv2.beans;
+
+public class BaseRcResponse {
+    int RC;
+    PLResponse PL;
+
+    public BaseRcResponse(int RC) {
+        this.RC = RC;
+    }
+
+    public int getRC() {
+        return RC;
+    }
+
+    public void setRC(int RC) {
+        this.RC = RC;
+    }
+
+    public PLResponse getPL() {
+        return PL;
+    }
+
+    public void setPL(PLResponse PL) {
+        this.PL = PL;
+    }
+
+    public class PLResponse{
+        int val;
+
+        public int getVal() {
+            return val;
+        }
+
+        public void setVal(int val) {
+            this.val = val;
+        }
+
+        @Override
+        public String toString() {
+            return "PLResponse{" +
+                    "val=" + val +
+                    '}';
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "BaseRcResponse{" +
+                "RC=" + RC +
+                ", PL=" + PL +
+                '}';
+    }
+}

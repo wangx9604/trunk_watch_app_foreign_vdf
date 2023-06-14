@@ -1,0 +1,193 @@
+package com.xiaoxun.xun.focustime;
+
+import static com.blankj.utilcode.util.StringUtils.getString;
+
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.ViewModel;
+
+import com.xiaoxun.xun.Constants;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.interfaces.MsgCallback;
+import com.xiaoxun.xun.utils.CloudBridgeUtil;
+import com.xiaoxun.xun.utils.LogUtil;
+
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
+import net.minidev.json.JSONValue;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class FocustimeViewModel extends ViewModel {
+    public final static int ACTIVITY_REQUEST_CODE_ADD = 1;
+    public final static int ACTIVITY_REQUEST_CODE_EDIT = 2;
+    public final static int ACTIVITY_RESULT_CODE_ADD_OR_EDIT = 10;
+    public final static int ACTIVITY_RESULT_CODE_DEL = 11;
+
+    private MutableLiveData<Boolean> focusTimeOnOff;
+    private MutableLiveData<Boolean> festivalOnOff;
+    private MutableLiveData<Boolean> parentMsgOnOff;
+    private MutableLiveData<List<FocusTimeBean>> focusTimeList;
+    private MutableLiveData<String> result;
+
+    public FocustimeViewModel(){
+        focusTimeOnOff = new MutableLiveData<>();
+        focusTimeOnOff.setValue(false);
+        festivalOnOff = new MutableLiveData<>();
+        festivalOnOff.setValue(false);
+        parentMsgOnOff = new MutableLiveData<>();
+        parentMsgOnOff.setValue(false);
+        focusTimeList = new MutableLiveData<>();
+        List<FocusTimeBean> list = new ArrayList<>();
+        focusTimeList.setValue(list);
+        result = new MutableLiveData<>();
+    }
+
+    public void setFocusTimeOnOff(boolean focusTimeOnOff) {
+        this.focusTimeOnOff.postValue(focusTimeOnOff);
+    }
+
+    public MutableLiveData<Boolean> getFocusTimeOnOff() {
+        return focusTimeOnOff;
+    }
+
+    public void setFestivalOnOff(boolean festivalOnOff){
+        this.festivalOnOff.postValue(festivalOnOff);
+    }
+
+    public MutableLiveData<Boolean> getFestivalOnOff() {
+        return festivalOnOff;
+    }
+    public void setParentMsgOnOff(boolean parentMsgOnOff){
+        this.parentMsgOnOff.postValue(parentMsgOnOff);
+    }
+
+    public MutableLiveData<Boolean> getParentMsgOnOff() {
+        return parentMsgOnOff;
+    }
+
+    public void setFocusTimeList(List<FocusTimeBean> focusTimeList) {
+        this.focusTimeList.postValue(focusTimeList);
+    }
+
+    public MutableLiveData<List<FocusTimeBean>> getFocusTimeList() {
+        return focusTimeList;
+    }
+
+    public MutableLiveData<String> getResult() {
+        return result;
+    }
+
+    public void initData(ImibabyApp mApp,String eid){
+        getDataFromCloud(mApp,eid);
+    }
+
+    public void getDataFromCloud(ImibabyApp mApp, String eid){
+        mApp.getNetService().sendMapMGetMsg(eid, new String[]{CloudBridgeUtil.KEY_FOCUS_TIME_SETTING}, new MsgCallback() {
+            @Override
+            public void doCallBack(JSONObject reqMsg, JSONObject respMsg) {
+                int rc = CloudBridgeUtil.getCloudMsgRC(respMsg);
+                if(rc == CloudBridgeUtil.RC_SUCCESS){
+                    analysData(respMsg);
+                }else{
+                    result.postValue(mApp.getString(R.string.focustime_setting_get_failed));
+                }
+                initManageData();
+            }
+        });
+    }
+
+    private void initManageData() {
+        if (getFocusTimeList().getValue() == null || getFocusTimeList().getValue().isEmpty()) {
+            FocusTimeBean focusTimeBean1 = new FocusTimeBean(getString(R.string.device_lesson_morning), 1, "09", "00", "11",
+                    "30", "0111110", "0", Constants.SILENCE_TIME_MORNING_TIMEID);
+            FocusTimeBean focusTimeBean2 = new FocusTimeBean(getString(R.string.device_lesson_afternoon), 1, "13", "00", "16",
+                    "00", "0111110", "0", Constants.SILENCE_TIME_AFTERNOON_TIMEID);
+            FocusTimeBean focusTimeBean3 = new FocusTimeBean(getString(R.string.refuse_disturb_night_class), 1, "18", "00", "20",
+                    "00", "0111110", "0", Constants.SILENCE_TIME_MORNING_TIMEID);
+            List<FocusTimeBean> list = getFocusTimeList().getValue();
+            list.add(focusTimeBean1);
+            list.add(focusTimeBean2);
+            list.add(focusTimeBean3);
+            setFocusTimeList(list);
+        }
+    }
+
+    public void sendDataToCloud(ImibabyApp mApp,String eid){
+        JSONObject pl = new JSONObject();
+        String onoff = getFocusTimeOnOff().getValue() ? "1" : "0";
+        String hollidayOnoff = getFestivalOnOff().getValue() ? "1" : "0";
+        String callOnoff = getParentMsgOnOff().getValue() ? "1" : "0";
+        List<FocusTimeBean> list = getFocusTimeList().getValue();
+        JSONArray array = new JSONArray();
+        for(int i = 0; i< (list != null ? list.size() : 0); i++){
+            JSONObject object =  new JSONObject();
+            FocusTimeBean bean = list.get(i);
+            String timeOnoff = bean.onoff;
+            String name = bean.getName();
+            String def = String.valueOf(bean.getType());
+            String id = bean.timeStampId;
+            String days = bean.days;
+            String start = bean.starthour + ":" + bean.startmin;
+            String end = bean.endhour + ":" + bean.endmin;
+            object.put(CloudBridgeUtil.KEY_NAME_CONTACT_ID,id);
+            object.put(CloudBridgeUtil.KEY_FOCUS_TIME_START,start);
+            object.put(CloudBridgeUtil.KEY_FOCUS_TIME_END,end);
+            object.put(CloudBridgeUtil.FUNCTION_NAME,name);
+            object.put(CloudBridgeUtil.DAYS,days);
+            object.put(CloudBridgeUtil.ONOFF,timeOnoff);
+            object.put(CloudBridgeUtil.KEY_FOCUS_TIME_DEF,def);
+            array.add(object);
+        }
+        pl.put(CloudBridgeUtil.ONOFF,onoff);
+        pl.put(CloudBridgeUtil.KEY_NAME_SCHOOL_GUARD_HOLIDAY_ONOFF,hollidayOnoff);
+        pl.put(CloudBridgeUtil.KEY_FOCUS_TIME_CALL_ONOFF,callOnoff);
+        pl.put(CloudBridgeUtil.KEY_FOCUS_TIME_TIMES,array);
+        LogUtil.e("xxxx focustime array : " + array.toJSONString());
+
+        mApp.getNetService().sendMapSetMsg(eid, mApp.getCurUser().getFocusWatch().getFamilyId()
+                , CloudBridgeUtil.KEY_FOCUS_TIME_SETTING, pl.toJSONString(), new MsgCallback() {
+            @Override
+            public void doCallBack(JSONObject reqMsg, JSONObject respMsg) {
+                int rc = CloudBridgeUtil.getCloudMsgRC(respMsg);
+                if(rc == CloudBridgeUtil.RC_SUCCESS){
+                    result.postValue(mApp.getString(R.string.focustime_setting_send_success));
+                }else{
+                    result.postValue(mApp.getString(R.string.focustime_setting_send_failed));
+                }
+            }
+        });
+    }
+
+    private void analysData(JSONObject resp){
+        JSONObject pl = (JSONObject)resp.get(CloudBridgeUtil.KEY_NAME_PL);
+        String focusTimeSettingStr = (String) pl.get(CloudBridgeUtil.KEY_FOCUS_TIME_SETTING);
+        if(focusTimeSettingStr != null && !focusTimeSettingStr.equals("")) {
+            JSONObject focusTimeSetting = (JSONObject) JSONValue.parse(focusTimeSettingStr);
+            String onoff = (String) focusTimeSetting.get(CloudBridgeUtil.ONOFF);
+            String holidayOnoff = (String) focusTimeSetting.get(CloudBridgeUtil.KEY_NAME_SCHOOL_GUARD_HOLIDAY_ONOFF);
+            String callOnoff = (String) focusTimeSetting.get(CloudBridgeUtil.KEY_FOCUS_TIME_CALL_ONOFF);
+            List<FocusTimeBean> list = getFocusTimeList().getValue();
+            JSONArray array = (JSONArray) focusTimeSetting.get(CloudBridgeUtil.KEY_FOCUS_TIME_TIMES);
+            for (int i = 0; i < (array != null ? array.size() : 0); i++) {
+                JSONObject timeJson = (JSONObject) array.get(i);
+                String id = (String) timeJson.get(CloudBridgeUtil.KEY_NAME_CONTACT_ID);
+                String start = (String) timeJson.get(CloudBridgeUtil.KEY_FOCUS_TIME_START);
+                String end = (String) timeJson.get(CloudBridgeUtil.KEY_FOCUS_TIME_END);
+                String name = (String) timeJson.get(CloudBridgeUtil.FUNCTION_NAME);
+                String days = (String) timeJson.get(CloudBridgeUtil.DAYS);
+                String timeOnoff = (String) timeJson.get(CloudBridgeUtil.ONOFF);
+                String def = (String) timeJson.get(CloudBridgeUtil.KEY_FOCUS_TIME_DEF);
+                String[] startTemp = start.split(":");
+                String[] endTemp = end.split(":");
+                FocusTimeBean bean = new FocusTimeBean(name, Integer.parseInt(def), startTemp[0], startTemp[1], endTemp[0], endTemp[1], days, timeOnoff, id);
+                list.add(bean);
+            }
+            getFocusTimeOnOff().postValue(onoff != null && onoff.equals("1"));
+            getFestivalOnOff().postValue(holidayOnoff != null && holidayOnoff.equals("1"));
+            getParentMsgOnOff().postValue(callOnoff != null && callOnoff.equals("1"));
+            getFocusTimeList().postValue(list);
+        }
+    }
+}

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/SingleItemHeight"
+        android:background="@drawable/setting_item_selector"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/bell_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="23.33dp"
+            android:text="@string/alarm_bell_1"
+            android:textColor="@color/dark_grey"
+            android:textSize="@dimen/xiaomiMyTextSize1" />
+
+        <ImageView
+            android:id="@+id/select_img"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="23.33dp"
+            android:src="@drawable/select_00"
+            android:visibility="invisible" />
+    </RelativeLayout>
+
+</RelativeLayout>

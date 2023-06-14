@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <include
+        android:id="@+id/security_warnning_title"
+        layout="@layout/activity_title" />
+
+    <fragment
+        android:id="@+id/googlemap"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/bottomtitle"
+        android:layout_below="@+id/security_warnning_title"
+        android:name="com.google.android.gms.maps.SupportMapFragment"/>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="13dp"
+        android:layout_below="@id/security_warnning_title"
+        android:layout_marginTop="185dp"
+        android:orientation="vertical">
+
+        <ImageButton
+            android:id="@+id/zoomout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/btn_zoomout_selector" />
+
+        <ImageButton
+            android:id="@+id/zoomin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/btn_zoomin_selector" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/bottomtitle"
+        android:layout_width="match_parent"
+        android:layout_height="79.66dp"
+        android:layout_alignParentBottom="true"
+        android:background="@drawable/bottom_navigation_bar">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="79dp">
+
+            <ImageView
+                android:id="@+id/iv_secutity_warnning_head"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginBottom="19.33dp"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="19.33dp"
+                android:background="@drawable/location_0" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="15dp"
+                android:layout_marginEnd="23.33dp"
+                android:layout_toEndOf="@id/iv_secutity_warnning_head"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_bottom_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/color_7"
+                    android:textSize="@dimen/xiaomiMyTextSize2" />
+
+                <TextView
+                    android:id="@+id/tv_bottom_address"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="@string/address"
+                    android:textColor="@color/color_5"
+                    android:textSize="@dimen/xiaomiMyTextSize4" />
+
+                <TextView
+                    android:id="@+id/tv_bottom_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:textColor="@color/color_5"
+                    android:textSize="@dimen/xiaomiMyTextSize8" />
+            </LinearLayout>
+
+        </RelativeLayout>
+    </FrameLayout>
+</RelativeLayout>

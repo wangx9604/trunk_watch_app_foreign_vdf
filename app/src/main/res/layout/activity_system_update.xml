@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:android_custom="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:gravity="center_horizontal"
+    android:orientation="vertical">
+
+    <include
+        android:id="@+id/title"
+        layout="@layout/activity_title" />
+
+    <LinearLayout
+        android:id="@+id/system_update_ui"
+        android:layout_width="match_parent"
+        android:layout_height="237.33dp"
+        android:gravity="center_horizontal"
+        android:background="@color/bg_color_orange"
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:layout_width="173.3dp"
+            android:layout_height="173.3dp"
+            android:layout_marginTop="11.33dp">
+
+            <com.xiaoxun.xun.views.RoundProgressBar
+                android:id="@+id/round_progressbar_1"
+                android:layout_width="173.3dp"
+                android:layout_height="173.3dp"
+                android_custom:max="100"
+                android_custom:roundColor="#80ffffff"
+                android_custom:roundProgressColor="#ffffffff"
+                android_custom:roundWidth="2dip"
+                android_custom:textIsDisplayable="false" />
+
+            <ImageView
+                android:id="@+id/iv_state"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/up_mark" />
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/tv_state"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="10dp"
+            android:gravity="center_horizontal"
+            android:text="@string/is_update_ing"
+            android:textColor="@color/m_a_watch_nice_name_c"
+            android:textSize="@dimen/xiaomiMyTextSize1" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="fill_parent"
+        android:layout_height="match_parent"
+        android:scrollbars="vertical">
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/white"
+            android:orientation="vertical">
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/TitleItemHeight"
+                android:background="@drawable/setting_item_selector"
+                android:paddingLeft="@dimen/divideleftandright"
+                android:paddingRight="@dimen/divideleftandright"
+                android:visibility="visible">
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentBottom="true"
+                    android:layout_alignParentStart="true"
+                    android:layout_marginBottom="6dp"
+                    android:gravity="center_vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/setting_app_update"
+                        android:textColor="@color/color_7"
+                        android:textSize="@dimen/xiaomiMyTextSize3" />
+                    <Button
+                        android:visibility="gone"
+                        android:id="@+id/btn_app_have_update"
+                        android:layout_width="wrap_content"
+                        android:layout_height="13.3dp"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/system_update_mark"
+                        android:text="@string/have_new_version"
+                        android:textColor="@color/white"
+                        android:textSize="@dimen/xiaomiMyTextSize6" />
+                </LinearLayout>
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="1px"
+                    android:layout_alignParentBottom="true"
+                    android:src="@color/line_grey" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/SingleItemHeight"
+                android:background="@drawable/setting_item_selector"
+                android:paddingLeft="@dimen/divideleftandright"
+                android:paddingRight="@dimen/divideleftandright"
+                android:visibility="visible">
+                <TextView
+                    android:id="@+id/tv_app_version"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginTop="1.66dp"
+                    android:text="@string/current_version"
+                    android:textColor="@color/color_5"
+                    android:textSize="@dimen/xiaomiMyTextSize1" />
+
+                <Button
+                    android:visibility="visible"
+                    android:id="@+id/btn_app_update"
+                    android:paddingStart="@dimen/dimen5"
+                    android:paddingEnd="@dimen/dimen5"
+                    android:layout_width="wrap_content"
+                    android:layout_height="24dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:background="@drawable/btn_system_update_selector"
+                    android:text="@string/app_update"
+                    android:textColor="@color/color_13"
+                    android:textSize="@dimen/xiaomiMyTextSize4" />
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="1px"
+                    android:layout_alignParentBottom="true"
+                    android:src="@color/line_grey" />
+            </RelativeLayout>
+
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/TitleItemHeight"
+                android:background="@drawable/setting_item_selector"
+                android:paddingLeft="@dimen/divideleftandright"
+                android:paddingRight="@dimen/divideleftandright">
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentBottom="true"
+                    android:layout_alignParentStart="true"
+                    android:layout_marginBottom="6dp"
+                    android:gravity="center_vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/setting_watch_update"
+                        android:textColor="@color/color_7"
+                        android:textSize="@dimen/xiaomiMyTextSize3" />
+                    <Button
+                        android:id="@+id/btn_watch_have_update"
+                        android:layout_width="wrap_content"
+                        android:layout_height="13.3dp"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/system_update_mark"
+                        android:text="@string/have_new_version"
+                        android:textColor="@color/white"
+                        android:textSize="@dimen/xiaomiMyTextSize6" />
+                </LinearLayout>
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="1px"
+                    android:layout_alignParentBottom="true"
+                    android:src="@color/line_grey" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/SingleItemHeight"
+                android:background="@drawable/setting_item_selector"
+                android:paddingLeft="@dimen/divideleftandright"
+                android:paddingRight="@dimen/divideleftandright">
+                <TextView
+                    android:id="@+id/tv_watch_version"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginTop="1.66dp"
+                    android:text="@string/current_version"
+                    android:textColor="@color/color_5"
+                    android:textSize="@dimen/xiaomiMyTextSize1" />
+                <Button
+                    android:id="@+id/btn_watch_info"
+                    android:paddingStart="@dimen/dimen5"
+                    android:paddingEnd="@dimen/dimen5"
+                    android:layout_width="wrap_content"
+                    android:layout_height="24dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:background="@drawable/btn_system_update_selector"
+                    android:text="@string/version_detail"
+                    android:textColor="@color/color_13"
+                    android:textSize="@dimen/xiaomiMyTextSize4" />
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="1px"
+                    android:layout_alignParentBottom="true"
+                    android:src="@color/line_grey" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/watch_update"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/SingleItemHeight"
+                android:background="@drawable/setting_item_selector"
+                android:paddingLeft="@dimen/divideleftandright"
+                android:paddingRight="@dimen/divideleftandright"
+                android:visibility="gone">
+                <TextView
+                    android:id="@+id/tv_watch_new_version"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:text="@string/new_version"
+                    android:textColor="@color/color_5"
+                    android:textSize="@dimen/xiaomiMyTextSize1" />
+                <Button
+                    android:id="@+id/btn_watch_update"
+                    android:paddingStart="@dimen/dimen5"
+                    android:paddingEnd="@dimen/dimen5"
+                    android:layout_width="wrap_content"
+                    android:layout_height="24dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:background="@drawable/btn_system_update_selector"
+                    android:text="@string/app_update"
+                    android:textColor="@color/color_13"
+                    android:textSize="@dimen/xiaomiMyTextSize4" />
+                <ProgressBar
+                    android:id="@+id/watch_loading_bar"
+                    android:layout_width="23.33dp"
+                    android:layout_height="23.33dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:indeterminateDrawable="@drawable/system_update_load"
+                    android:indeterminateDuration="800" />
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="1px"
+                    android:layout_alignParentBottom="true"
+                    android:src="@color/line_grey" />
+            </RelativeLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="11.33dp"
+                android:layout_marginTop="11.33dp"
+                android:background="@drawable/setting_item_selector"
+                android:gravity="center_vertical"
+                android:paddingStart="@dimen/divideleftandright">
+                <TextView
+                    android:id="@+id/tv_auto_update"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/auto_update_ing"
+                    android:textColor="@color/black"
+                    android_custom:layout_constraintTop_toTopOf="parent"
+                    android_custom:layout_constraintStart_toStartOf="parent"
+                    android_custom:layout_constraintEnd_toStartOf="@id/btn_atuo_update"
+                    android:textSize="@dimen/xiaomiMyTextSize1" />
+                <ImageButton
+                    android:id="@+id/btn_atuo_update"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android_custom:layout_constraintEnd_toEndOf="parent"
+                    android_custom:layout_constraintTop_toTopOf="parent"
+                    android_custom:layout_constraintBottom_toBottomOf="parent"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="@dimen/divideleftandright"
+                    android:src="@drawable/switch_on"
+                    android:background="@color/white"/>
+                <TextView
+                    android:id="@+id/tv_atuo_update_desc"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android_custom:layout_constraintTop_toBottomOf="@id/tv_auto_update"
+                    android_custom:layout_constraintStart_toStartOf="parent"
+                    android_custom:layout_constraintEnd_toStartOf="@id/btn_atuo_update"
+                    android:layout_toStartOf="@+id/btn_atuo_update"
+                    android:text="@string/auto_update_ing_desc"
+                    android:textColor="@color/txt_grey"
+                    android:textSize="@dimen/xiaomiMyTextSize13" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="1px"
+                android:paddingLeft="@dimen/divideleftandright"
+                android:paddingRight="@dimen/divideleftandright"
+                android:src="@color/line_grey"
+                android:visibility="visible" />
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/layout_updatebin_only_wifi"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="11.33dp"
+                android:layout_marginTop="11.33dp"
+                android:background="@drawable/setting_item_selector"
+                android:gravity="center_vertical"
+                android:paddingStart="@dimen/divideleftandright">
+                <TextView
+                    android:id="@+id/tv_updatebin_only_wifi"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/update_bin_onlywifi"
+                    android:textColor="@color/black"
+                    android_custom:layout_constraintTop_toTopOf="parent"
+                    android_custom:layout_constraintStart_toStartOf="parent"
+                    android_custom:layout_constraintEnd_toStartOf="@id/btn_updatebin_only_wifi"
+                    android:textSize="@dimen/xiaomiMyTextSize1" />
+                <ImageButton
+                    android:id="@+id/btn_updatebin_only_wifi"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android_custom:layout_constraintEnd_toEndOf="parent"
+                    android_custom:layout_constraintTop_toTopOf="parent"
+                    android_custom:layout_constraintBottom_toBottomOf="parent"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="@dimen/divideleftandright"
+                    android:src="@drawable/switch_on"
+                    android:background="@color/white"/>
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android_custom:layout_constraintTop_toBottomOf="@id/tv_updatebin_only_wifi"
+                    android_custom:layout_constraintEnd_toStartOf="@id/btn_updatebin_only_wifi"
+                    android:layout_marginTop="5dp"
+                    android_custom:layout_constraintStart_toStartOf="parent"
+                    android:text="@string/update_bin_onlywifi_desc"
+                    android:textColor="@color/txt_grey"
+                    android:textSize="@dimen/xiaomiMyTextSize13" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+            <ImageView
+                android:id="@+id/iv_layout_updatebin_wifi"
+                android:layout_width="match_parent"
+                android:layout_height="1px"
+                android:paddingLeft="@dimen/divideleftandright"
+                android:paddingRight="@dimen/divideleftandright"
+                android:src="@color/line_grey"
+                android:visibility="gone" />
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

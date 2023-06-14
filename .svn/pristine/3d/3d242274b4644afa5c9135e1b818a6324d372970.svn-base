@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="63.66dp">
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true">
+
+            <TextView
+                android:id="@+id/tv_call_log_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/color_7"
+                android:textSize="@dimen/xiaomiMyTextSize1" />
+
+            <RelativeLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/tv_call_log_name">
+
+                <TextView
+                    android:id="@+id/tv_call_log_number"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="6.66dp"
+                    android:textColor="@color/color_5"
+                    android:textSize="@dimen/xiaomiMyTextSize4"
+                    android:visibility="visible" />
+
+                <TextView
+                    android:id="@+id/tv_call_log_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_toRightOf="@+id/tv_call_log_number"
+                    android:textColor="@color/color_5"
+                    android:textSize="@dimen/xiaomiMyTextSize4" />
+
+                <ImageView
+                    android:id="@+id/iv_call_log_type"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginLeft="6.66dp"
+                    android:layout_toRightOf="@+id/tv_call_log_time"
+                    android:src="@drawable/call_in_0" />
+            </RelativeLayout>
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/tv_call_log_duration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:textColor="@color/color_5"
+            android:textSize="@dimen/xiaomiMyTextSize4" />
+    </RelativeLayout>
+</RelativeLayout>

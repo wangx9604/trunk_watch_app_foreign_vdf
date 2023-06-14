@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_centerHorizontal="true"
+    android:layout_centerVertical="true">
+
+    <RelativeLayout
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true">
+
+        <ImageView
+            android:id="@+id/iv_setting_icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="9dp"
+             />
+
+        <TextView
+            android:id="@+id/tv_setting_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/iv_setting_icon"
+            android:layout_centerHorizontal="true"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:textColor="@color/setting_2C2C2C"
+            android:textSize="@dimen/xiaomiMyTextSize1"
+            android:gravity="center"
+            />
+
+        <ImageView
+            android:id="@+id/iv_redpoint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@+id/iv_setting_icon"
+            android:layout_alignTop="@+id/iv_setting_icon"
+            android:src="@drawable/point"
+            />
+    </RelativeLayout>
+</RelativeLayout>

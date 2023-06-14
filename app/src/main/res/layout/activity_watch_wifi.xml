@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <include
+        android:id="@+id/title"
+        layout="@layout/activity_title" />
+
+    <!-- 手表附近wifi -->
+    <LinearLayout
+        android:id="@+id/ll_device_current_wifilist"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/title"
+        android:orientation="vertical"
+        android:paddingLeft="@dimen/divideleftandright"
+        android:paddingRight="@dimen/divideleftandright"
+        android:layout_marginBottom="85dp"
+        android:visibility="visible">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/divideleftandright"
+            android:layout_marginTop="@dimen/divideleftandright"
+            android:text="@string/manual_add_wifi_desc"
+            android:textColor="@color/txt_grey"
+            android:textSize="@dimen/xiaomiMyTextSize1" />
+
+        <LinearLayout
+            android:id="@+id/ll_device_connect_wifi"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="37dp"
+            android:visibility="visible">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="10dp"
+                android:text="@string/setting_watch_wifi"
+                android:textColor="@color/halftrans"
+                android:textSize="@dimen/xiaomiMyTextSize3" />
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="1px"
+                android:src="@color/line_grey" />
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="49dp">
+
+                <LinearLayout
+                    android:id="@+id/layout_device_connect_wifi_state"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true">
+
+                    <TextView
+                        android:id="@+id/iv_device_connect_wifi_state"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/connected"
+                        android:textColor="@color/color_hint_4" />
+
+                    <ProgressBar
+                        android:id="@+id/anim_connect_wifi"
+                        android:layout_width="15dp"
+                        android:layout_height="15dp"
+                        android:layout_marginStart="7dp"
+                        android:indeterminateDrawable="@drawable/animation_wifi_loading"
+                        android:indeterminateDuration="1000"
+                        android:visibility="visible"/>
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tv_device_connect_wifi_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:background="@drawable/list_item_selector"
+                    android:text="wifi"
+                    android:textColor="@color/color_7"
+                    android:maxLines="1"
+                    android:layout_toStartOf="@id/layout_device_connect_wifi_state"
+                    android:layout_alignParentStart="true"
+                    android:textSize="@dimen/xiaomiMyTextSize1" />
+
+            </RelativeLayout>
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="1px"
+                android:src="@color/line_grey" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="10dp"
+            android:background="@drawable/list_item_selector"
+            android:text="@string/select_wifi_nearby_watch"
+            android:textColor="@color/halftrans"
+            android:textSize="@dimen/xiaomiMyTextSize3" />
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:src="@color/line_grey" />
+
+        <ListView
+            android:id="@+id/lv_device_current_wifi_list"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:cacheColorHint="@color/transparent"
+            android:divider="@color/divider_color"
+            android:dividerHeight="1px"
+            android:fadingEdge="none"
+            android:listSelector="#00000000"
+            android:scrollbars="none" />
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:src="@color/line_grey" />
+
+    </LinearLayout>
+
+    <!-- 保存的wifi -->
+    <LinearLayout
+        android:id="@+id/ll_device_saved_wifilist"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/title"
+        android:layout_marginBottom="@dimen/divideleftandright"
+        android:orientation="vertical"
+        android:paddingLeft="@dimen/divideleftandright"
+        android:paddingRight="@dimen/divideleftandright"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/list_item_selector"
+            android:paddingTop="37dp"
+            android:text="@string/title_saved_wifilist"
+            android:textColor="@color/halftrans"
+            android:textSize="@dimen/xiaomiMyTextSize3"
+            android:visibility="gone" />
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:src="@color/line_grey"
+            android:visibility="gone" />
+
+        <ListView
+            android:id="@+id/lv_device_saved_wifi_list"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:cacheColorHint="@color/transparent"
+            android:divider="@color/divider_color"
+            android:dividerHeight="1px"
+            android:fadingEdge="none"
+            android:scrollbars="none" />
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:src="@color/line_grey" />
+    </LinearLayout>
+
+    <!-- 底部控制 -->
+    <LinearLayout
+        android:id="@+id/ll_bottom_control"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="23dp"
+        android:background="@drawable/bar">
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="40dp">
+
+            <Button
+                android:id="@+id/iv_refresh_wifi_list"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:background="@drawable/btn_alarm_customer_week_cancel_select"
+                android:text="@string/refresh_wifi_list"
+                android:textColor="@color/color_hint_4"
+                android:textSize="@dimen/xiaomiMyTextSize9" />
+
+            <ProgressBar
+                android:id="@+id/anim_refresh_wifi"
+                android:layout_width="15dp"
+                android:layout_height="15dp"
+                android:layout_centerInParent="true"
+                android:indeterminateDrawable="@drawable/animation_wifi_loading"
+                android:indeterminateDuration="1000"
+                android:visibility="gone"/>
+        </RelativeLayout>
+
+        <Button
+            android:id="@+id/iv_saved_wifi_list"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:background="@drawable/btn_alarm_customer_week_confirm_select"
+            android:text="@string/title_saved_wifilist"
+            android:textColor="@color/color_hint_4"
+            android:textSize="@dimen/xiaomiMyTextSize9" />
+    </LinearLayout>
+
+</RelativeLayout>

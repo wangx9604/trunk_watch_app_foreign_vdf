@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:id="@+id/time_ly"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2px"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="23.33dp"
+            android:layout_marginRight="13dp"
+            android:layout_weight="1"
+            android:background="@color/msg_line_color" />
+
+        <TextView
+            android:id="@+id/time_txt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="2016.7.25"
+            android:textColor="@color/color_14"
+            android:textSize="@dimen/xiaomiMyTextSize7" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2px"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="13dp"
+            android:layout_marginRight="23.33dp"
+            android:layout_weight="1"
+            android:background="@color/msg_line_color" />
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <View
+            android:id="@+id/view_t"
+            android:layout_width="1dp"
+            android:layout_height="10dp"
+            android:layout_marginLeft="35dp"
+            android:background="@color/msg_line_color" />
+
+        <View
+            android:id="@+id/view_m"
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:layout_alignBottom="@+id/content"
+            android:layout_alignTop="@+id/content"
+            android:layout_marginLeft="35dp"
+            android:background="@color/msg_line_color" />
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="27dp"
+            android:layout_below="@+id/view_m"
+            android:layout_marginLeft="35dp"
+            android:background="@color/msg_line_color" />
+
+        <ImageView
+            android:id="@+id/icon_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/view_t"
+            android:layout_marginLeft="16.66dp"
+            android:background="@drawable/ranks_icon" />
+
+        <LinearLayout
+            android:id="@+id/content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="14dp"
+            android:layout_marginTop="10dp"
+            android:layout_toRightOf="@+id/icon_view"
+            android:background="@drawable/rank_push_bg"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:id="@+id/ll_steps_ranks"
+                android:layout_width="237.3dp"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/steps_sport_ranks"
+                    android:textSize="7sp"
+                    android:textColor="#81511c"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginLeft="16dp"/>
+
+                <TextView
+                    android:id="@+id/tv_ranks_champoin"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="#81511c"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginLeft="16dp"/>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginLeft="23dp"
+                    android:layout_marginTop="13dp"
+                    android:orientation="horizontal">
+
+                    <RelativeLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+                        <ImageView
+                            android:id="@+id/head_imge_no1"
+                            android:layout_width="45dp"
+                            android:layout_height="45dp"
+                            android:layout_marginLeft="9.99dp"
+                            android:layout_marginTop="9dp"
+                            android:background="@drawable/rank_other_mask"
+                            />
+                        <ImageView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/rank_no1"
+                            />
+
+                    </RelativeLayout>
+                    <RelativeLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+                        <ImageView
+                            android:id="@+id/head_imge_no2"
+                            android:layout_width="45dp"
+                            android:layout_height="45dp"
+                            android:layout_marginLeft="9.99dp"
+                            android:layout_marginTop="9dp"
+                            android:background="@drawable/rank_other_mask"
+                            />
+                        <ImageView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/rank_no2"
+                            android:layout_marginLeft="1dp"/>
+                    </RelativeLayout>
+                    <RelativeLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+                        <ImageView
+                            android:id="@+id/head_imge_no3"
+                            android:layout_width="45dp"
+                            android:layout_height="45dp"
+                            android:layout_marginLeft="9.99dp"
+                            android:layout_marginTop="9dp"
+                            android:background="@drawable/rank_other_mask"
+                            />
+                        <ImageView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/rank_no3"
+                            android:layout_marginLeft="1dp"/>
+                    </RelativeLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+        <TextView
+            android:id="@+id/time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/content"
+            android:layout_marginLeft="14dp"
+            android:layout_marginTop="6dp"
+            android:layout_toRightOf="@+id/icon_view"
+            android:text="15:18"
+            android:textColor="@color/color_14"
+            android:textSize="@dimen/xiaomiMyTextSize8" />
+    </RelativeLayout>
+</LinearLayout>

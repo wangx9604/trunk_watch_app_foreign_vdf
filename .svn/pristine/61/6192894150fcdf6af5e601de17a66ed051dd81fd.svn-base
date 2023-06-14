@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/xiaomi_bg_grey"
+    android:orientation="vertical">
+
+    <include layout="@layout/activity_title" />
+
+    <LinearLayout
+        android:id="@+id/light_title"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:layout_gravity="center_vertical"
+        android:layout_marginTop="10dp"
+        android:background="@color/xiaomi_bg_grey"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="22dp"
+            android:layout_marginTop="3dp"
+            android:text="@string/watch_light"
+            android:textColor="@color/dark_grey"
+            android:textSize="@dimen/xiaomiMyTextSize1" />
+
+        <com.xiaoxun.xun.views.CustomConfigSeekbar
+            android:id="@+id/myCustomConfigSeekBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="14.33dp"
+            android:layout_marginRight="10.33dp" />
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:layout_marginTop="10dp"
+            android:layout_marginLeft="23.33dp"
+            android:layout_marginRight="23.33dp"
+            android:background="@color/divider_color" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:layout_gravity="center_vertical"
+        android:layout_marginTop="10dp"
+        android:background="@color/xiaomi_bg_grey"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="22dp"
+            android:layout_marginTop="3dp"
+            android:text="@string/watch_volume"
+            android:textColor="@color/dark_grey"
+            android:textSize="@dimen/xiaomiMyTextSize1" />
+
+        <com.xiaoxun.xun.views.CustomConfigSeekbar
+            android:id="@+id/myCustomSeekBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="14.33dp"
+            android:layout_marginRight="10.33dp" />
+    </LinearLayout>
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:layout_marginLeft="23.33dp"
+        android:layout_marginRight="23.33dp"
+        android:background="@color/divider_color" />
+
+    <RelativeLayout
+        android:id="@+id/watch_notice_view"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/DoubleLineItemHeight"
+        android:background="@drawable/setting_item_selector"
+        android:clickable="true"
+        android:gravity="center">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="21dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:text="@string/watch_notice_method"
+                android:textColor="@color/black"
+                android:textSize="@dimen/xiaomiMyTextNickname" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:singleLine="false"
+                android:text="@string/watch_notice_method_detail2"
+                android:textColor="@color/txt_grey"
+                android:textSize="@dimen/xiaomiMyTextSize3" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/volume_result_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="13.33dp"
+            android:layout_toLeftOf="@+id/next_img"
+            android:singleLine="true"
+            android:textColor="@color/txt_grey"
+            android:textSize="@dimen/xiaomiMyTextSize4" />
+
+        <ImageView
+            android:id="@+id/next_img"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="21dp"
+            android:background="@drawable/btn_next_selector"
+            android:focusable="false" />
+    </RelativeLayout>
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:layout_marginLeft="23.33dp"
+        android:layout_marginRight="23.33dp"
+        android:background="@color/divider_color" />
+</LinearLayout>

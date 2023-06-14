@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_grey"
+    android:fitsSystemWindows="true">
+
+    <View
+        android:id="@+id/title_background"
+        android:layout_width="fill_parent"
+        android:layout_height="@dimen/fragment_title_height"
+        android:background="@color/welcome_bg_color"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/iv_back"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:layout_marginStart="16dp"
+        android:background="@drawable/btn_title_back_selector"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="@+id/title_background"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/title_background" />
+    <ImageView
+        android:id="@+id/iv_menu"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:layout_marginEnd="13.3dp"
+        android:background="@drawable/schedule_save"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="@+id/title_background"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/title_background" />
+    <TextView
+        android:id="@+id/tv_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:textColor="@color/white"
+        android:text="@string/schedule_time"
+        android:textSize="@dimen/xiaomiMyTextSize1"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@+id/title_background"
+        app:layout_constraintEnd_toEndOf="@+id/title_background"
+        app:layout_constraintStart_toStartOf="@+id/title_background"
+        app:layout_constraintTop_toTopOf="@+id/title_background" />
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/schedule_show_view"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="13dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/title_background"
+        app:layout_constraintBottom_toTopOf="@+id/layout_save"
+        />
+    <RelativeLayout
+        android:id="@+id/layout_save_1"
+        android:layout_width="match_parent"
+        android:layout_height="180dp"
+        android:visibility="visible"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+        <android.support.v7.widget.CardView
+            android:layout_width="54dp"
+            android:layout_height="54dp"
+            android:layout_marginLeft="100dp"
+            android:layout_marginBottom="81dp"
+            android:layout_alignParentBottom="true"
+            app:cardElevation="4dp"
+            app:cardCornerRadius="20dp">
+        <ImageView
+            android:id="@+id/iv_time_delete"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+        </android.support.v7.widget.CardView>
+        <android.support.v7.widget.CardView
+            android:layout_width="54dp"
+            android:layout_height="54dp"
+            android:layout_marginRight="100dp"
+            android:layout_marginBottom="81dp"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="true"
+            app:cardElevation="4dp"
+            app:cardCornerRadius="20dp">
+        <ImageView
+            android:id="@+id/iv_time_add"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+        </android.support.v7.widget.CardView>
+
+        <TextView
+            android:id="@+id/iv_save_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/schedule_next_to"
+            android:layout_marginBottom="24dp"
+            android:text="@string/save_edit"
+            android:textSize="16sp"
+            android:textColor="@color/white"
+            android:gravity="center"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentBottom="true"
+            android:visibility="visible"/>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/layout_save"
+        android:layout_width="match_parent"
+        android:layout_height="180dp"
+        android:visibility="visible"
+        android:background="@color/transparent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+    </RelativeLayout>
+
+</android.support.constraint.ConstraintLayout>

@@ -1,0 +1,413 @@
+package com.xiaoxun.xun.activitys;
+
+import android.content.Context;
+import android.content.Intent;
+import android.net.wifi.ScanResult;
+import android.net.wifi.WifiManager;
+import android.os.Build;
+import android.os.Bundle;
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import android.text.TextUtils;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.xiaoxun.xun.Constants;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.beans.DeviceWifiBean2;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.services.NetService;
+import com.xiaoxun.xun.utils.PermissionUtils;
+import com.xiaoxun.xun.utils.PersonalAuth;
+import com.xiaoxun.xun.utils.ToastUtil;
+import com.xiaoxun.xun.utils.WatchWifiUtils;
+
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class HomeWiFiSettingActivity extends NormalActivity implements View.OnClickListener{
+
+    public static final String HOMEWIFI_SSID = "home_wifi_ssid";
+    public static final String HOMEWIFI_BSSID = "home_wifi_bssid";
+
+    private Context context;
+    private WatchData curWatch;
+    private NetService mNetService;
+    private TextView ivRefreshWifiList;
+    private ProgressBar animWifilist;
+    private TextView btnBack;
+    private TextView btnTItleConfirm;
+
+    private boolean getWifiFlag  =false;
+    private String ssid="",bssid="";
+    private boolean selectFlag = false; // 判断是否有wifi被选中
+    private RecyclerView mLayoutViewWifiList;
+    private WifiListAdapter mWifiListAdapter;
+    private List<DeviceWifiBean2> mWifiBeanList;
+    private List<DeviceWifiBean2> mLocalWifiBeanList;
+    private List<DeviceWifiBean2> mWatchWifiBeanList;
+    private DeviceWifiBean2 settedWifiBean;
+
+    public static final int PERMISSION_RESULT_LOCATION = 1;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_home_wi_fi_setting);
+        context = this;
+        curWatch = myApp.getCurUser().getFocusWatch();
+        mNetService = myApp.getNetService();
+        ((TextView) findViewById(R.id.tv_title)).setText(getText(R.string.home_wifi_name));
+        initViews();
+
+        initData();
+        initListener();
+
+        ivRefreshWifiList.setText(getString(R.string.refresh_wifi_list_ing));
+        ivRefreshWifiList.setClickable(false);
+        animWifilist.setVisibility(View.VISIBLE);
+        reqLocalWifiList();
+
+        PersonalAuth.getAuthResultFromCloud(curWatch.getEid(), Constants.KEY_NAME_AUTHORISE_WIFI, myApp, new PersonalAuth.AuthResultListener() {
+            @Override
+            public void onResult(int code, String msg) {
+                if(!PersonalAuth.isWifiAuthorised(myApp,curWatch.getEid())){
+                    if(myApp.isMeAdmin(curWatch)){
+                        PersonalAuth.showWifiAuthorisedDialog(HomeWiFiSettingActivity.this, myApp,
+                                myApp.getCurUser().getEid(), curWatch.getEid(), new PersonalAuth.DialogClickListener() {
+                                    @Override
+                                    public void onClick(int status) {
+                                        if(status == 1){
+                                            reqWatchWifilist();
+                                        }else{
+                                            finish();
+                                        }
+                                    }
+                                });
+                    }else{
+                        PersonalAuth.showWifiAuthorisedNotAdminDialog(HomeWiFiSettingActivity.this,myApp);
+                    }
+                }else{
+                    reqWatchWifilist();
+                }
+            }
+        });
+    }
+
+    private void reqWatchWifilist() {
+
+        WatchWifiUtils.reqWatchWifilistFromWatch(curWatch.getEid(), mNetService, new WatchWifiUtils.OperationCallback() {
+            @Override
+            public void onSuccess(Object result) {
+                JSONArray jsonArray = (JSONArray) result;
+                mWatchWifiBeanList.clear();
+                for (int i = 0; i < jsonArray.size(); i++) {
+                    JSONObject wifi = (JSONObject) jsonArray.get(i);
+                    DeviceWifiBean2 wifiBean2 = DeviceWifiBean2.convertWatchWifiToWifiBean(getString(R.string.select_wifi_watch), wifi);
+                    if (wifiBean2.isShow && !TextUtils.isEmpty(wifiBean2.ssid))
+                        mWatchWifiBeanList.add(wifiBean2);
+                }
+                if (mWatchWifiBeanList.size() <= 1)
+                    mWatchWifiBeanList.add(DeviceWifiBean2.createWifiErrorDesc(getString(R.string.select_wifi_watch), getString(R.string.search_wifi_none_watch)));
+                updateWifiList();
+
+                ivRefreshWifiList.setText(getString(R.string.refresh_wifi_list));
+                ivRefreshWifiList.setClickable(true);
+                animWifilist.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onFail(String error) {
+                mWatchWifiBeanList.clear();
+                mWatchWifiBeanList.add(DeviceWifiBean2.createWifiErrorDesc(getString(R.string.select_wifi_watch), getString(R.string.search_wifi_none_watch)));
+                updateWifiList();
+
+                ivRefreshWifiList.setText(getString(R.string.refresh_wifi_list));
+                ivRefreshWifiList.setClickable(true);
+                animWifilist.setVisibility(View.GONE);
+            }
+        });
+    }
+
+    private void updateWifiList() {
+
+        mWifiBeanList.clear();
+        mWifiBeanList.add(DeviceWifiBean2.createWifiTitle(getString(R.string.select_wifi_watch)));
+        mWifiBeanList.addAll(mWatchWifiBeanList);
+        mWifiBeanList.add(DeviceWifiBean2.createWifiTitle(getString(R.string.select_wifi_phone)));
+        mWifiBeanList.addAll(mLocalWifiBeanList);
+        mWifiListAdapter.notifyDataSetChanged();
+    }
+
+    private void reqLocalWifiList() {
+
+        if (Build.VERSION.SDK_INT >= 23 && !PermissionUtils.hasPermissions(this, PermissionUtils.locationPermissions)) {
+            ActivityCompat.requestPermissions(this, PermissionUtils.locationPermissions, PERMISSION_RESULT_LOCATION);
+            return;
+        }
+
+        WifiManager mWifiManager = (WifiManager) getApplication().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        if (mWifiManager == null)
+            return;
+
+        if (!mWifiManager.isWifiEnabled()) {
+            mWifiManager.setWifiEnabled(true);
+        }
+
+        mWifiManager.startScan();
+        List<ScanResult> mWifiList = mWifiManager.getScanResults();
+        mLocalWifiBeanList.clear();
+        if (mWifiList != null) {
+            for (ScanResult scanResult : mWifiList) {
+                //LogUtil.i(TAG + "scanResult = " + scanResult.toString());
+                DeviceWifiBean2 wifiBean2 = DeviceWifiBean2.convertLocalWifiToWifiBean(getString(R.string.select_wifi_phone),scanResult);
+                if (wifiBean2.isShow && !TextUtils.isEmpty(wifiBean2.ssid) && (wifiBean2.frequency>2400 && wifiBean2.frequency<2500)) //过滤5G
+                    mLocalWifiBeanList.add(wifiBean2);
+            }
+        }
+        if (mLocalWifiBeanList.size() <= 1)
+            mLocalWifiBeanList.add(DeviceWifiBean2.createWifiErrorDesc(getString(R.string.select_wifi_phone), getString(R.string.search_wifi_none_phone)));
+        updateWifiList();
+    }
+
+    private void initListener() {
+        btnBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+        btnTItleConfirm.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!TextUtils.isEmpty(ssid) && !TextUtils.isEmpty(bssid) && selectFlag){
+                    WatchWifiUtils.setFamilyWifi(HomeWiFiSettingActivity.this,curWatch.getEid(),ssid,bssid,mNetService, new WatchWifiUtils.OperationCallback() {
+                        @Override
+                        public void onSuccess(Object result) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Intent data = new Intent();
+                                    data.putExtra("ssid", ssid);
+                                    data.putExtra("bssid",bssid);
+                                    setResult(RESULT_OK, data);
+                                    finish();
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void onFail(final String error) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    ToastUtil.show(HomeWiFiSettingActivity.this, error);
+                                }
+                            });
+                        }
+                    });
+                }else {
+                    ToastUtil.show(context, getString(R.string.no_select_wifi));
+                }
+
+            }
+        });
+        ivRefreshWifiList.setOnClickListener(this);
+
+        setOnItemClickLitener(new OnItemClickListener() {
+            @Override
+            public void onItemClick(int position) {
+                ssid = mWifiBeanList.get(position).ssid;
+                bssid = mWifiBeanList.get(position).bssid;
+
+                mWifiListAdapter.notifyDataSetChanged();
+            }
+        });
+
+    }
+
+
+    private void initData() {
+
+        ssid = getIntent().getStringExtra("ssid");
+        bssid = getIntent().getStringExtra("bssid");
+
+
+
+        mWifiBeanList = new ArrayList<>();
+        mLocalWifiBeanList = new ArrayList<>();
+        mWatchWifiBeanList = new ArrayList<>();
+        mWifiListAdapter = new WifiListAdapter(this);
+
+        mWifiBeanList.add(DeviceWifiBean2.createWifiTitle(getString(R.string.select_wifi_watch)));
+        mWifiBeanList.add(DeviceWifiBean2.createWifiTitle(getString(R.string.select_wifi_phone)));
+
+        LinearLayoutManager mLinearLayoutManager = new LinearLayoutManager(this);
+        mLayoutViewWifiList.setLayoutManager(mLinearLayoutManager);
+        mWifiListAdapter = new WifiListAdapter(this);
+        mLayoutViewWifiList.setAdapter(mWifiListAdapter);
+
+        mWifiListAdapter.notifyDataSetChanged();
+    }
+
+    private void initViews() {
+        btnBack = (TextView) findViewById(R.id.iv_title_back);
+        btnTItleConfirm = (TextView) findViewById(R.id.iv_title_menu);
+        btnTItleConfirm.setVisibility(View.VISIBLE);
+
+        mLayoutViewWifiList = (RecyclerView) findViewById(R.id.recycler_wifi_list);
+
+
+        ivRefreshWifiList = (TextView) findViewById(R.id.iv_refresh_wifi_list);
+        animWifilist = (ProgressBar) findViewById(R.id.anim_refresh_wifi);
+
+
+    }
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (PERMISSION_RESULT_LOCATION == requestCode) {
+            if (PermissionUtils.hasPermissions(this, PermissionUtils.locationPermissions)) {
+                reqLocalWifiList();
+            } else {
+                Toast.makeText(this, getString(R.string.locations_premission_tips), Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.iv_refresh_wifi_list:
+
+                getWifiFlag = true;
+                reqWatchWifilist();
+                reqLocalWifiList();
+                ivRefreshWifiList.setText(getString(R.string.refresh_wifi_list_ing));
+                ivRefreshWifiList.setClickable(false);
+                animWifilist.setVisibility(View.VISIBLE);
+                break;
+        }
+    }
+
+
+
+
+    class WifiListAdapter extends RecyclerView.Adapter<WifiViewHolder> {
+
+        Context context;
+
+        WifiListAdapter(Context context) {
+            this.context = context;
+        }
+
+        @Override
+        public int getItemCount() {
+            return mWifiBeanList.size();
+        }
+
+        @NonNull
+        @Override
+        public WifiViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+            View view = View.inflate(context, R.layout.item_home_wifi, null);
+            return new WifiViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull final WifiViewHolder viewHolder, final int i) {
+
+            DeviceWifiBean2 wifiBean = mWifiBeanList.get(i);
+            if (wifiBean.type == DeviceWifiBean2.TYPE_TITLE){
+                viewHolder.layout_title.setVisibility(View.VISIBLE);
+                viewHolder.layoutWifiItem.setVisibility(View.GONE);
+                viewHolder.layoutWiFiTitle.setVisibility(View.GONE);
+
+                viewHolder.wifi_title.setText(wifiBean.title);
+            } else if (wifiBean.type == DeviceWifiBean2.TYPE_WIFI) {
+                viewHolder.layoutWifiItem.setVisibility(View.VISIBLE);
+                viewHolder.layoutWiFiTitle.setVisibility(View.GONE);
+                viewHolder.layout_title.setVisibility(View.GONE);
+
+                viewHolder.tvWifiName.setText(wifiBean.ssid);
+                viewHolder.tvWifiName.setTextColor(getResources().getColor(R.color.black));
+
+                WatchWifiUtils.showWifiStrength(viewHolder.ivWifiStrength, wifiBean.strength);
+
+
+                if (bssid != null && bssid.equals(wifiBean.bssid)) {
+                    viewHolder.ivSelect.setVisibility(View.VISIBLE);
+                    selectFlag = true;
+                } else {
+                    viewHolder.ivSelect.setVisibility(View.GONE);
+                }
+            } else if (wifiBean.type == DeviceWifiBean2.TYPE_ERROR_DESC) {
+                viewHolder.layoutWifiItem.setVisibility(View.GONE);
+                viewHolder.layout_title.setVisibility(View.GONE);
+                viewHolder.layoutWiFiTitle.setVisibility(View.VISIBLE);
+                viewHolder.tvWifiTitle.setText(wifiBean.errorDesc);
+            }
+
+            viewHolder.layoutWifiItem.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (mOnItemClickLitener != null) {
+                        mOnItemClickLitener.onItemClick(i);
+                    }
+                }
+            });
+        }
+    }
+
+    class WifiViewHolder extends RecyclerView.ViewHolder {
+
+        View layoutWifiItem,layout_title;
+        TextView tvWifiName,wifi_title;
+        ImageView ivWifiStrength,ivSelect;
+
+        View layoutWiFiTitle;
+        TextView tvWifiTitle;
+
+        WifiViewHolder(@NonNull View itemView) {
+            super(itemView);
+
+            layoutWifiItem = itemView.findViewById(R.id.layout_wifi_item);
+            layout_title = itemView.findViewById(R.id.layout_title);
+            wifi_title = (TextView) itemView.findViewById(R.id.wifi_title);
+            tvWifiName = (TextView) itemView.findViewById(R.id.tv_device_wifi_name);
+            ivWifiStrength = (ImageView) itemView.findViewById(R.id.iv_device_wifi_strength);
+            ivSelect = (ImageView) itemView.findViewById(R.id.iv_select_wifi);
+
+            layoutWiFiTitle = itemView.findViewById(R.id.layout_wifi_title);
+            tvWifiTitle = itemView.findViewById(R.id.tv_wifi_title);
+        }
+    }
+
+    private OnItemClickListener mOnItemClickLitener;
+
+    public void setOnItemClickLitener(OnItemClickListener mOnItemClickLitener) {
+        this.mOnItemClickLitener = mOnItemClickLitener;
+    }
+
+    interface OnItemClickListener {
+        void onItemClick(int position);
+    }
+
+}

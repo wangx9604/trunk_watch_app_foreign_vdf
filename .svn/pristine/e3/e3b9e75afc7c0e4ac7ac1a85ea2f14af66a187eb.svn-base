@@ -1,0 +1,636 @@
+package com.xiaoxun.xun.views;
+
+import android.annotation.SuppressLint;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.Group;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.Constants;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.activitys.ErrorPromptActivity;
+import com.xiaoxun.xun.activitys.NewMainActivity;
+import com.xiaoxun.xun.adapter.AllMessageAdapter;
+import com.xiaoxun.xun.adapter.AllWatchAdapter;
+import com.xiaoxun.xun.beans.ChatMsgEntity;
+import com.xiaoxun.xun.beans.MessageItemData;
+import com.xiaoxun.xun.beans.NoticeMsgData;
+import com.xiaoxun.xun.beans.PhoneNumber;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.beans.WatchDownloadBean;
+import com.xiaoxun.xun.db.ChatHisDao;
+import com.xiaoxun.xun.db.NoticeMsgHisDAO;
+import com.xiaoxun.xun.interfaces.OnWatchItemClick;
+import com.xiaoxun.xun.message.MessageUtils;
+import com.xiaoxun.xun.utils.CloudBridgeUtil;
+import com.xiaoxun.xun.utils.StrUtil;
+import com.xiaoxun.xun.utils.TimeUtil;
+import com.xiaoxun.xun.utils.WatchFunctionUtils;
+
+import net.minidev.json.JSONObject;
+import net.minidev.json.JSONValue;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
+/**
+ * Created by guxiaolong on 2016/12/13.
+ */
+
+public class AllMessageFragment extends Fragment {
+    private String TAG = "AllMessageFragment";
+    private ImibabyApp mApp;
+    private View mNetworkLayout;
+    private Group groupNetwork;
+    private TextView tvErrorPrompt;
+    private RecyclerView mAllMessageList;
+    private Context mContext;
+    private AllMessageAdapter mAllMessageAdapter;
+    private List<MessageItemData> mMessageList = new ArrayList<MessageItemData>();
+    private BroadcastReceiver mBroadcastReceiver;
+    private BroadcastReceiver mReceiver;
+    private AllWatchAdapter allWatchAdapter;
+    private RecyclerView allWatchRecyclerView;
+    private AsyncTask<Boolean, Void, Void> mUpdateDataTask;
+
+    private OnWatchItemClick onWatchItemClick;
+
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_all_message, container, false);
+        mContext = getActivity();
+        mApp = (ImibabyApp) getActivity().getApplication();
+        return view;
+    }
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        groupNetwork = (Group) view.findViewById(R.id.group_network_error);
+        tvErrorPrompt = (TextView) view.findViewById(R.id.tv_network_error);
+        mNetworkLayout = view.findViewById(R.id.layout_network_error);
+        updateTitleNetworkState();
+        mNetworkLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (tvErrorPrompt.getText().equals(getString(R.string.network_error_prompt))) {
+                    Intent intent = new Intent(mContext, ErrorPromptActivity.class);
+                    intent.putExtra("type", "neterror");
+                    mContext.startActivity(intent);
+                } else if (tvErrorPrompt.getText().equals(getString(R.string.receive_msg_error_prompt))) {
+                    Intent intent = mApp.getHelpMsg(mContext, "msg_notification");
+                    mContext.startActivity(intent);
+                    groupNetwork.setVisibility(View.GONE);
+                    MessageUtils.clearOfflineMsgCount(mApp);
+                }
+            }
+        });
+
+        allWatchRecyclerView = (RecyclerView) view.findViewById(R.id.all_watch_recyclerview);
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(mContext);
+        linearLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
+        allWatchRecyclerView.setLayoutManager(linearLayoutManager);
+        allWatchAdapter = new AllWatchAdapter(getActivity());
+        allWatchRecyclerView.setAdapter(allWatchAdapter);
+        initOnWatchItemClick();
+
+        mAllMessageList = (RecyclerView) view.findViewById(R.id.all_message_list);
+        mAllMessageList.setLayoutManager(new LinearLayoutManager(mContext));
+        initMessageList();
+        //sortMessageList();
+        mAllMessageAdapter = new AllMessageAdapter(getActivity(), mMessageList);
+
+        mAllMessageList.setAdapter(mAllMessageAdapter);
+        //mAllMessageAdapter.notifyDataSetChanged();
+
+        mBroadcastReceiver = new BroadcastReceiver() {
+
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                // TODO Auto-generated method stub
+                String action = intent.getAction();
+                if (action.equals(Const.ACTION_PROCESSED_NOTIFY_OK)) {
+                    updateDataTask(true, true, false, false);
+                } else if (action.equals(Const.ACTION_RECEIVE_NOTICE_MSG) || action.equals(Const.ACTION_CLEAR_NOTICE_MESSAGE)) {
+                    updateDataTask(false, false, true, false);
+                } else if (action.equals(Const.ACTION_BIND_NEW_WATCH) || action.equals(Const.ACTION_BIND_RESULT_END)) {
+                    updateWatchRecyclerView();
+                    initMessageList();
+                    updateDataTask(true, true, true, true);
+                } else if (action.equals(Const.ACTION_REFRESH_ALL_GROUPS_DATA_NOW)) {
+                    updateWatchRecyclerView();
+                    initMessageList();
+                    updateDataTask(true, true, true, true);
+                } else if (action.equals(Const.ACTION_RECEIVE_GET_DEVICE_INFO) ||
+                        action.equals(Const.ACTION_RECEIVE_SET_DEVICE_INFO_CHANGE)) {
+                    updateWatchRecyclerView();
+                    updateDataTask(true, true, true, true);
+                } else if (action.equals(Const.ACTION_DOWNLOAD_HEADIMG_OK)) {
+                    updateWatchRecyclerView();
+                    updateDataTask(true, true, false, false);
+                } else if (action.equals(Const.ACTION_GET_CONTACT_SUCCESS)) {
+
+                } else if (action.equals(Const.ACTION_REFRESH_MESSAGE_LIST)) {
+                    updateWatchRecyclerView();
+                    updateMessageTop();
+                    sortMessageList();
+                    updateAllMessageRecyclerView();
+                } else if (action.equals(Const.ACTION_CLOUD_BRIDGE_STATE_CHANGE)
+                        || action.equals(Const.ACTION_BAND_NETSERVICE_IS_OK)
+                        || action.equals(Const.ACTION_MESSAGE_CONUNT_CHANGE)) {
+                    updateTitleNetworkState();
+                } else if (action.equals(Constants.ACTION_GROUP_SEND_MESSAGE_NOTIFY) || action.equals(Constants.ACTION_RECEIVE_GROUP_MESSAGE_NOTIFY)) {
+                    updateDataTask(true, false, false, false);
+                } else if (action.equals(Constants.ACTION_PRIVATE_SEND_MESSAGE_NOTIFY) || action.equals(Constants.ACTION_RECEIVE_PRIVATE_MESSAGE_NOTIFY)) {
+                    updateDataTask(false, true, false, false);
+                } else if (action.equals(Constants.ACTION_UPDATE_NEW_MESSAGE_NOTICE)) {
+                    updateAllMessageRecyclerView();
+                } else if (action.equals(Const.ACTION_CLEAR_MESSAGE)) {
+                    updateDataTask(true, true, false, false);
+                }
+            }
+        };
+        IntentFilter filter = new IntentFilter();
+        //filter.addAction(Const.ACTION_PROCESSED_NOTIFY_OK);
+        filter.addAction(Const.ACTION_RECEIVE_NOTICE_MSG);
+        filter.addAction(Const.ACTION_GET_CONTACT_SUCCESS);
+        filter.addAction(Const.ACTION_RECEIVE_GET_DEVICE_INFO);
+        filter.addAction(Const.ACTION_RECEIVE_SET_DEVICE_INFO_CHANGE);
+        filter.addAction(Const.ACTION_DOWNLOAD_HEADIMG_OK);
+        filter.addAction(Const.ACTION_BIND_NEW_WATCH);
+        filter.addAction(Const.ACTION_REFRESH_ALL_GROUPS_DATA_NOW);
+        filter.addAction(Const.ACTION_REFRESH_MESSAGE_LIST);
+        filter.addAction(Const.ACTION_CLOUD_BRIDGE_STATE_CHANGE);
+        filter.addAction(Const.ACTION_BAND_NETSERVICE_IS_OK);
+        filter.addAction(Constants.ACTION_GROUP_SEND_MESSAGE_NOTIFY);
+        filter.addAction(Constants.ACTION_PRIVATE_SEND_MESSAGE_NOTIFY);
+        filter.addAction(Constants.ACTION_RECEIVE_GROUP_MESSAGE_NOTIFY);
+        filter.addAction(Constants.ACTION_RECEIVE_PRIVATE_MESSAGE_NOTIFY);
+        filter.addAction(Constants.ACTION_UPDATE_NEW_MESSAGE_NOTICE);
+        filter.addAction(Const.ACTION_CLEAR_NOTICE_MESSAGE);
+        filter.addAction(Const.ACTION_CLEAR_MESSAGE);
+        filter.addAction(Const.ACTION_BIND_RESULT_END);
+        mContext.registerReceiver(mBroadcastReceiver, filter);
+
+        mReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (intent.getAction().equals(Const.ACTION_UNBIND_RESET_FOCUS_WATCH) ||
+                        intent.getAction().equals(Const.ACTION_UNBIND_OTHER_WATCH)) {
+                    initMessageList();
+                    updateDataTask(true, true, true, true);
+                }
+            }
+        };
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(Const.ACTION_UNBIND_RESET_FOCUS_WATCH);
+        intentFilter.addAction(Const.ACTION_UNBIND_OTHER_WATCH);
+        mApp.getLocalBroadcastManager().registerReceiver(mReceiver, intentFilter);
+
+        updateDataTask(true, true, true, true);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        mContext.unregisterReceiver(mBroadcastReceiver);
+        mApp.getLocalBroadcastManager().unregisterReceiver(mReceiver);
+        if (mUpdateDataTask != null) {
+            mUpdateDataTask.cancel(true);
+        }
+    }
+
+    private synchronized void initMessageList() {
+        mMessageList.clear();
+        for (int i = 0; i < mApp.getCurUser().getWatchList().size(); i++) {
+            WatchData watch = mApp.getCurUser().getWatchList().get(i);
+
+            if (watch.isSupportGroupMessage()) {
+                MessageItemData groupItem = getGroupItemData(watch);
+                mMessageList.add(groupItem);
+            }
+
+            if (watch.isSupportPrivateMessage()) {
+                MessageItemData privateItem = getPrivateItemData(watch);
+                mMessageList.add(privateItem);
+            }
+
+            MessageItemData noticeItem = getNoticeItemData(watch);
+            mMessageList.add(noticeItem);
+        }
+        updateMessageTop();
+    }
+
+    private MessageItemData getGroupItemData(WatchData watch) {
+        MessageItemData item = new MessageItemData();
+        item.setWatchEid(watch.getEid());
+        item.setType(AllMessageAdapter.MESSAGE_TYPE_GROUP);
+        item.setTitle(mContext.getString(R.string.group_message, watch.getNickname()));
+        return item;
+    }
+
+    private MessageItemData getNoticeItemData(WatchData watch) {
+        MessageItemData item = new MessageItemData();
+        item.setWatchEid(watch.getEid());
+        item.setType(AllMessageAdapter.MESSAGE_TYPE_NOTICE);
+        item.setTitle(mContext.getString(R.string.notice_message, watch.getNickname()));
+        return item;
+    }
+
+    private MessageItemData getPrivateItemData(WatchData watch) {
+        MessageItemData item = new MessageItemData();
+        item.setWatchEid(watch.getEid());
+        item.setType(AllMessageAdapter.MESSAGE_TYPE_PRIVATE);
+        item.setTitle(watch.getNickname());
+        return item;
+    }
+
+    private void updateMessageItem(boolean updateGroup, boolean updatePrivate, boolean updateNotice) {
+        for (int i = 0; i < mMessageList.size(); i++) {
+            if (updateGroup && mMessageList.get(i).getType() == AllMessageAdapter.MESSAGE_TYPE_GROUP) {
+                updateGroupData(mMessageList.get(i));
+            } else if (updatePrivate && mMessageList.get(i).getType() == AllMessageAdapter.MESSAGE_TYPE_PRIVATE) {
+                updatePrivateData(mMessageList.get(i));
+            } else if (updateNotice && mMessageList.get(i).getType() == AllMessageAdapter.MESSAGE_TYPE_NOTICE) {
+                updateNoticeData(mMessageList.get(i));
+            }
+        }
+    }
+
+    private void updateGroupData(MessageItemData messageItemData) {
+
+        WatchData watch = mApp.getCurUser().queryWatchDataByEid(messageItemData.getWatchEid());
+        messageItemData.setContent(getString(R.string.no_notice_message));
+        messageItemData.setTime(null);
+        messageItemData.setTitle(mContext.getString(R.string.group_message, watch.getNickname()));
+        ChatMsgEntity chat = ChatHisDao.getInstance(mApp.getApplicationContext()).getLatestMessage(watch.getFamilyId());
+        if (chat != null) {
+            String nickname;
+            if (chat.getmSrcId().equals(mApp.getCurUser().getEid())) {
+                nickname = "";
+            } else {
+                if (chat.getmSrcId().equals(watch.getEid())) {
+                    nickname = watch.getNickname() + ":";
+                } else {
+                    PhoneNumber phoneNumber = mApp.getPhoneNumberByEid(chat.getmSrcId(), watch.getEid());
+                    if (phoneNumber != null && phoneNumber.nickname != null && phoneNumber.nickname.length() > 0) {
+                        nickname = phoneNumber.nickname + ":";
+                    } else {
+                        nickname = getString(R.string.default_relation_text) + ":";
+                    }
+                }
+            }
+            if (chat.getmType() == ChatMsgEntity.CHAT_MESSAGE_TYPE_VOICE ||
+                    chat.getmType() == ChatMsgEntity.CHAT_MESSAGE_TYPE_SOS ||
+                    chat.getmType() == ChatMsgEntity.CHAT_MESSAGE_TYPE_RECORD) {
+                messageItemData.setContent(nickname + mContext.getString(R.string.voice));
+            } else if (chat.getmType() == ChatMsgEntity.CHAT_MESSAGE_TYPE_TEXT) {
+                messageItemData.setContent(nickname + chat.getmAudioPath());
+            } else if (chat.getmType() == ChatMsgEntity.CHAT_MESSAGE_TYPE_IMAGE || chat.getmType() == ChatMsgEntity.CHAT_MESSAGE_TYPE_PHOTO) {
+                messageItemData.setContent(nickname + mContext.getString(R.string.image));
+            } else if (chat.getmType() == ChatMsgEntity.CHAT_MESSAGE_TYPE_VIDEO) {
+                messageItemData.setContent(nickname + mContext.getString(R.string.video));
+            } else if (chat.getmType() == ChatMsgEntity.CHAT_MESSAGE_TYPE_EMOJI) {
+                messageItemData.setContent(chat.getmAudioPath());
+            }
+            messageItemData.setTime(chat.getmDate());
+        }
+
+    }
+
+    private void updatePrivateData(MessageItemData messageItemData) {
+
+        WatchData watch = mApp.getCurUser().queryWatchDataByEid(messageItemData.getWatchEid());
+
+        messageItemData.setContent(getString(R.string.no_private_messge));
+        messageItemData.setTime(null);
+        messageItemData.setTitle(watch.getNickname());
+        ChatMsgEntity chat = ChatHisDao.getInstance(mApp.getApplicationContext()).getLatestMessage(mApp.getWatchPrivateGid(watch.getEid()));
+        if (chat != null) {
+            String nickname;
+            if (chat.getmSrcId().equals(mApp.getCurUser().getEid())) {
+                nickname = "";
+            } else {
+                nickname = watch.getNickname() + ":";
+            }
+            if (chat.getmType() == ChatMsgEntity.CHAT_MESSAGE_TYPE_VOICE ||
+                    chat.getmType() == ChatMsgEntity.CHAT_MESSAGE_TYPE_SOS ||
+                    chat.getmType() == ChatMsgEntity.CHAT_MESSAGE_TYPE_RECORD) {
+                messageItemData.setContent(nickname + mContext.getString(R.string.voice));
+            } else if (chat.getmType() == ChatMsgEntity.CHAT_MESSAGE_TYPE_TEXT) {
+                messageItemData.setContent(nickname + chat.getmAudioPath());
+            } else if (chat.getmType() == ChatMsgEntity.CHAT_MESSAGE_TYPE_IMAGE || chat.getmType() == ChatMsgEntity.CHAT_MESSAGE_TYPE_PHOTO) {
+                messageItemData.setContent(nickname + mContext.getString(R.string.image));
+            } else if (chat.getmType() == ChatMsgEntity.CHAT_MESSAGE_TYPE_VIDEO) {
+                messageItemData.setContent(nickname + mContext.getString(R.string.video));
+            } else if (chat.getmType() == ChatMsgEntity.CHAT_MESSAGE_TYPE_EMOJI) {
+                messageItemData.setContent(chat.getmAudioPath());
+            }
+            messageItemData.setTime(chat.getmDate());
+        }
+
+    }
+
+    private void updateNoticeData(MessageItemData messageItemData) {
+
+        WatchData watch = mApp.getCurUser().queryWatchDataByEid(messageItemData.getWatchEid());
+        messageItemData.setContent(getString(R.string.no_notice_message));
+        messageItemData.setTime(null);
+        messageItemData.setTitle(mContext.getString(R.string.notice_message, watch.getNickname()));
+        NoticeMsgData notice = NoticeMsgHisDAO.getInstance(
+                mApp.getApplicationContext()).getLatestMessage(watch.getFamilyId(), mApp.getCurUser().getEid());
+        if (notice != null) {
+            messageItemData.setTime(notice.getmTimeStamp());
+            String messageContent = "";
+            switch (notice.getmType()) {
+                case NoticeMsgData.MSG_TYPE_FAMILY_CHANGE:
+                    String name = notice.getmContent().substring(0, notice.getmContent().lastIndexOf("_"));
+                    String type = notice.getmContent().substring(notice.getmContent().lastIndexOf("_") + 1);
+                    if (type.equals("1")) {
+                        messageContent = mContext.getString(R.string.join_family, name);
+                    } else if (type.equals("2")) {
+                        messageContent = mContext.getString(R.string.quit_from_family, name);
+                    } else if (type.equals("4")) {
+                        messageContent = mContext.getString(R.string.become_family_admin, name);
+                    }
+                    break;
+                case NoticeMsgData.MSG_TYPE_SAFE_AREA:
+                    JSONObject content = (JSONObject) JSONValue.parse(notice.getmContent());
+                    JSONObject efence = (JSONObject) content.get("EFence");
+                    String locTimestamp = (String) ((JSONObject) content.get("Location")).get("timestamp");
+                    int efType = (Integer) efence.get("Type");
+                    String efname = (String) efence.get("Name");
+                    StringBuilder msg = new StringBuilder();
+                    if (efType == 1) {
+                        if (locTimestamp == null) {
+                            msg.append(getString(R.string.watch_already_arrive_safe_area, watch.getNickname(), efname));
+                        } else {
+                            msg.append(getString(R.string.watch_at_time_arrive_safe_area, watch.getNickname(), TimeUtil.getTimeHHMM(locTimestamp), efname));
+                        }
+                    } else if (efType == 2) {
+                        if (locTimestamp == null) {
+                            msg.append(getString(R.string.watch_already_leave_safe_area, watch.getNickname(), efname));
+                        } else {
+                            msg.append(getString(R.string.watch_at_time_leave_safe_area, watch.getNickname(), TimeUtil.getTimeHHMM(locTimestamp), efname));
+                        }
+                    }
+                    messageContent = msg.toString();
+                    break;
+                case NoticeMsgData.MSG_TYPE_SOS_LOCATION:
+                    messageContent = mContext.getString(R.string.ask_for_help, watch.getNickname());
+                    break;
+                case NoticeMsgData.MSG_TYPE_BATTERY_WARNNING:
+                    if (watch.isWatch()) {
+                        messageContent = getString(R.string.battery_notification, watch.getNickname(), notice.getmContent() + "%");
+                    } else {
+                        messageContent = getString(R.string.battery_notification_device, watch.getNickname(), notice.getmContent() + "%");
+                    }
+                    break;
+                case NoticeMsgData.MSG_TYPE_STAEPS:
+                    int curSteps = Integer.valueOf(notice.getmContent().substring(0, notice.getmContent().indexOf("_")));
+                    int targetSteps = Integer.valueOf(notice.getmContent().substring(notice.getmContent().indexOf("_") + 1));
+                    if (curSteps > targetSteps / 2 && curSteps < targetSteps) {
+                        messageContent = mContext.getString(R.string.steps_notice_half_end, watch.getNickname(), curSteps);
+                    } else {
+                        messageContent = mContext.getString(R.string.steps_notice_finish_end, watch.getNickname(), curSteps);
+                    }
+                    break;
+                case NoticeMsgData.MSG_TYPE_CHANGE_SIM:
+                    JSONObject con = (JSONObject) JSONValue.parse(notice.getmContent());
+                    if (con.get("SimNo") != null && con.get("SimNo").toString().length() > 0) {
+                        if (watch.isWatch()) {
+                            messageContent = mContext.getString(R.string.sim_changed, watch.getNickname(), con.get("SimNo").toString());
+                        } else {
+                            messageContent = mContext.getString(R.string.device_sim_changed, watch.getNickname(), con.get("SimNo").toString());
+                        }
+                    } else {
+                        if (watch.isWatch()) {
+                            messageContent = mContext.getString(R.string.sim_changed, watch.getNickname(), "");
+                        } else {
+                            messageContent = mContext.getString(R.string.device_sim_changed, watch.getNickname(), "");
+                        }
+                    }
+                    break;
+                case NoticeMsgData.MSG_TYPE_STAEPSRANKS:
+                    messageContent = mContext.getString(R.string.ranks_notice_msg) + mContext.getString(R.string.ranks_notice_content);
+                    break;
+                case NoticeMsgData.MSG_TYPE_SMS:
+                    messageContent = notice.getmContent();
+                    break;
+                case NoticeMsgData.MSG_TYPE_DOWNLOAD:
+                    JSONObject downloadContent = (JSONObject) JSONValue.parse(notice.getmContent());
+                    String file = (String) (downloadContent.get("file"));
+                    int status = (Integer) downloadContent.get("status");
+                    if (status == WatchDownloadBean.DOWNLOAD_STATUS_SUCCESS) {
+                        messageContent = mContext.getString(R.string.download_completed, file);
+                    } else if (status == WatchDownloadBean.DOWNLOAD_STATUS_FAIL) {
+                        messageContent = mContext.getString(R.string.download_failed, file);
+                    }
+                    break;
+                case NoticeMsgData.MSG_TYPE_STORY:
+                    JSONObject storyContent = (JSONObject) JSONValue.parse(notice.getmContent());
+                    messageContent = (String) storyContent.get(CloudBridgeUtil.E2C_PL_KEY_TYPE_TEXT);
+                    break;
+                case NoticeMsgData.MSG_TYPE_CLOUD_SPACE:
+                    messageContent = getString(R.string.cloud_space_tips, notice.getmContent());
+                    break;
+                case NoticeMsgData.MSG_TYPE_FLOWMETER:
+                    String flowmeters[] = notice.getmContent().split("_");
+                    double total = Double.valueOf(flowmeters[0]);
+                    double current = Double.valueOf(flowmeters[1]);
+                    if (current < total) {
+                        messageContent = getString(R.string.flowmeter_tips, watch.getNickname(), StrUtil.flowmeterChange(current, true), StrUtil.flowmeterChange(total, false));
+                    } else {
+                        messageContent = getString(R.string.flowmeter_tips_over, watch.getNickname(), StrUtil.flowmeterChange(total, false), StrUtil.flowmeterChange(current, true));
+                    }
+                    break;
+                case NoticeMsgData.MSG_TYPE_OTA_UPGRADE:
+                    messageContent = notice.getmContent();
+                    break;
+                case NoticeMsgData.MSG_TYPE_OTA_UPGRADE_EX:
+                    JSONObject otaContent = (JSONObject) JSONValue.parse(notice.getmContent());
+                    String subType = (String) otaContent.get(CloudBridgeUtil.KEY_NAME_SUBTYPE);
+                    messageContent = notice.getmContent();
+                    if (subType.equals("1")) {
+                        messageContent = (String) otaContent.get(CloudBridgeUtil.E2C_PL_KEY_TYPE_TEXT);
+                    }
+                    break;
+                case NoticeMsgData.MSG_TYPE_APPMANAGER:
+                    messageContent = notice.getmContent();
+                    break;
+                case NoticeMsgData.MSG_TYPE_NAVIGATION:
+                    messageContent = getString(R.string.navigation_title, watch.getNickname());
+                    break;
+                default:
+                    break;
+            }
+            messageItemData.setContent(messageContent);
+        }
+
+    }
+
+    private synchronized void sortMessageList() {
+        Collections.sort(mMessageList, new Comparator<MessageItemData>() {
+            @Override
+            public int compare(MessageItemData messageItemData, MessageItemData t1) {
+                int result = 0;
+                if (t1.getTop() > messageItemData.getTop()) {
+                    result = 1;
+                } else if (t1.getTop() < messageItemData.getTop()) {
+                    result = -1;
+                } else if (messageItemData.getTime() != null && t1.getTime() != null) {
+                    result = t1.getTime().compareTo(messageItemData.getTime());
+                } else if (messageItemData.getTime() != null) {
+                    result = -1;
+                } else if (t1.getTime() != null) {
+                    result = 1;
+                } else {
+                    result = 0;
+                }
+                return result;
+            }
+        });
+    }
+
+    private void updateMessageTop() {
+        for (MessageItemData item : mMessageList) {
+            int top = mApp.getIntValue(Const.SHARE_PREF_TOP_MESSAGE_INFO + mApp.getCurUser().getEid() + item.getWatchEid() + item.getType(), 0);
+            item.setTop(top);
+        }
+    }
+
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (isVisibleToUser && mAllMessageAdapter != null) {
+            mApp.setIsMsgPage(true);
+            if (mApp != null) {
+                Log.e("visible", "allmessageFragment");
+                WatchData focusWatch = mApp.getCurUser().getFocusWatch();
+            }
+        }
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    @Override
+    public void onResume() {
+        mAllMessageAdapter.notifyDataSetChanged();
+        super.onResume();
+    }
+
+    private void updateDataTask(final boolean updateGroup, final boolean updatePrivate, final boolean updateNotice, boolean updateCallLog) {
+
+        if (mUpdateDataTask != null) {
+            mUpdateDataTask.cancel(true);
+            mUpdateDataTask = null;
+            updateAllMessageRecyclerView();
+        }
+        mUpdateDataTask = new AsyncTask<Boolean, Void, Void>() {
+            @Override
+            protected Void doInBackground(Boolean... params) {
+                try {
+                    updateMessageItem(updateGroup, updatePrivate, updateNotice);
+                    sortMessageList();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void aVoid) {
+                super.onPostExecute(aVoid);
+                updateAllMessageRecyclerView();
+                mAllMessageList.scrollToPosition(0);
+            }
+        }.execute(updateGroup, updatePrivate, updateNotice, updateCallLog);
+    }
+
+    private void updateTitleNetworkState() {
+        if (mNetworkLayout == null || !isAdded()) return;
+        if (mApp.getNetService() == null || !mApp.getNetService().isNetworkOK()) {
+            groupNetwork.setVisibility(View.VISIBLE);
+            tvErrorPrompt.setText(R.string.network_error_prompt);
+        } else if (MessageUtils.getOfflineMsgCount(mApp) >= Constants.OFFLINE_MESSAGE_COUNT_MAX) {
+            groupNetwork.setVisibility(View.VISIBLE);
+            tvErrorPrompt.setText(R.string.receive_msg_error_prompt);
+        } else {
+            groupNetwork.setVisibility(View.GONE);
+        }
+    }
+
+
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (mUpdateDataTask != null) {
+            mUpdateDataTask.cancel(true);
+        }
+    }
+
+    private void initOnWatchItemClick() {
+        onWatchItemClick = new OnWatchItemClick() {
+            @Override
+            public void onCall(WatchData watch, int itemIndex) {
+                WatchFunctionUtils.call(mApp, getActivity(), watch, NewMainActivity.PERMISSION_RESULT_CALL_PHONE);
+            }
+
+            @Override
+            public void onVideoCall(WatchData watch, int itemIndex) {
+                WatchFunctionUtils.clickVideoCall(mApp, getActivity(), watch);
+            }
+
+            @Override
+            public void onListen(WatchData watch, int itemIndex) {
+                WatchFunctionUtils.listen(mApp, getActivity(), watch, NewMainActivity.GET_MONITOR_NUMBER_REQUEST);
+            }
+
+            @Override
+            public void onFindWatch(WatchData watch, int itemIndex) {
+                WatchFunctionUtils.findWatch(mApp, getActivity(), watch);
+            }
+        };
+        allWatchAdapter.setOnWatchItemClick(onWatchItemClick);
+    }
+
+    private void updateWatchRecyclerView() {
+        if (allWatchAdapter != null && allWatchRecyclerView != null) {
+            allWatchAdapter.sortWatchList();
+            allWatchRecyclerView.post(new Runnable() {
+                @Override
+                public void run() {
+                    allWatchAdapter.notifyDataSetChanged();
+                }
+            });
+        }
+    }
+
+    private void updateAllMessageRecyclerView() {
+        if (mAllMessageAdapter != null && mAllMessageList != null) {
+            mAllMessageList.post(new Runnable() {
+                @Override
+                public void run() {
+                    mAllMessageAdapter.notifyDataSetChanged();
+                }
+            });
+        }
+    }
+}

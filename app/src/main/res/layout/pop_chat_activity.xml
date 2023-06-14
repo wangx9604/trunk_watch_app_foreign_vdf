@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/halftrans">
+
+    <RelativeLayout
+        android:id="@+id/pop_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <RelativeLayout
+                android:id="@+id/layout_use_call"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="1px"
+                    android:background="@color/color_11"/>
+
+                <ImageButton
+                    android:id="@+id/use_call"
+                    android:layout_width="match_parent"
+                    android:layout_height="49.66dp"
+                    android:layout_centerInParent="true"
+                    android:background="@drawable/btn_chat_long_click_item"/>
+
+                <TextView
+                    android:id="@+id/use_call_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginLeft="23.3dp"
+                    android:text="@string/use_call"
+                    android:textColor="@color/dark_grey"
+                    android:textSize="@dimen/xiaomiMyTextSize3"/>
+            </RelativeLayout>
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="1px"
+                android:background="@color/color_11"/>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <ImageButton
+                    android:id="@+id/deleteitem"
+                    android:layout_width="match_parent"
+                    android:layout_height="49.66dp"
+                    android:layout_centerInParent="true"
+                    android:background="@drawable/btn_chat_long_click_item"/>
+
+                <TextView
+                    android:id="@+id/tv_delete_item"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginLeft="23.3dp"
+                    android:text="@string/delete_msg"
+                    android:textColor="@color/dark_grey"
+                    android:textSize="@dimen/xiaomiMyTextSize3"/>
+            </RelativeLayout>
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="1px"
+                android:background="@color/color_11"/>
+
+            <RelativeLayout
+                android:id="@+id/layout_output_item"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <ImageButton
+                    android:id="@+id/outputitem"
+                    android:layout_width="match_parent"
+                    android:layout_height="49.66dp"
+                    android:layout_centerInParent="true"
+                    android:background="@drawable/btn_chat_long_click_item"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginLeft="23.3dp"
+                    android:text="@string/output"
+                    android:textColor="@color/dark_grey"
+                    android:textSize="@dimen/xiaomiMyTextSize3"/>
+            </RelativeLayout>
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="1px"
+                android:background="@color/color_11"/>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <ImageButton
+                    android:id="@+id/alldelete"
+                    android:layout_width="match_parent"
+                    android:layout_height="49.66dp"
+                    android:layout_centerInParent="true"
+                    android:background="@drawable/btn_chat_long_click_item"/>
+
+                <TextView
+                    android:id="@+id/tv_delete_all"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginLeft="23.3dp"
+                    android:text="@string/clear_messge_title"
+                    android:textColor="@color/dark_grey"
+                    android:textSize="@dimen/xiaomiMyTextSize3"/>
+            </RelativeLayout>
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="1px"
+                android:background="@color/color_11"/>
+
+            <RelativeLayout
+                android:id="@+id/layout_copy_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone">
+
+                <ImageButton
+                    android:id="@+id/copy_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="49.66dp"
+                    android:layout_centerInParent="true"
+                    android:background="@drawable/btn_chat_long_click_item"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginLeft="23.3dp"
+                    android:text="@string/copy_text"
+                    android:textColor="@color/dark_grey"
+                    android:textSize="@dimen/xiaomiMyTextSize3"/>
+            </RelativeLayout>
+        </LinearLayout>
+    </RelativeLayout>
+</RelativeLayout>

@@ -1,0 +1,323 @@
+package com.xiaoxun.xun.communityTopics.activitys;
+
+import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ObjectAnimator;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Environment;
+import android.provider.Settings;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.appcompat.app.AppCompatActivity;
+import android.os.Bundle;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.xiaomi.phonenum.Constant;
+import com.xiaoxun.xun.Constants;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.activitys.NormalAppCompatActivity;
+import com.xiaoxun.xun.communityTopics.adapters.FolderAdapter;
+import com.xiaoxun.xun.communityTopics.adapters.ImageAdapter;
+import com.xiaoxun.xun.communityTopics.adapters.ImagePreViewAdapter;
+import com.xiaoxun.xun.communityTopics.beans.Folder;
+import com.xiaoxun.xun.communityTopics.beans.Image;
+import com.xiaoxun.xun.communityTopics.model.ImageModel;
+import com.xiaoxun.xun.utils.StatusBarUtil;
+
+import java.util.ArrayList;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+
+public class ImageSelectorActivity extends NormalAppCompatActivity {
+
+    private int mMaxCount = 9;
+    private static final int PERMISSION_WRITE_EXTERNAL_REQUEST_CODE = 0x00000011;
+
+    private ArrayList<Folder> mFolders;
+    private Folder mFolder;
+    private ImageAdapter mAdapter;
+
+    private ImagePreViewAdapter mPreViewAdapter;
+    private ArrayList<Image> mPreViewDataSource;
+
+    private boolean applyLoadImage = false;
+    private boolean isOpenFolder;
+    private boolean isInitFolder;
+
+    @BindView(R.id.iv_allow)
+    public ImageView mIvAllow;
+    @BindView(R.id.rv_image)
+    public RecyclerView mRvIamge;
+    @BindView(R.id.layout_select_image)
+    public ConstraintLayout mLayoutSelectImage;
+    @BindView(R.id.image_select_list)
+    public RecyclerView mSelectList;
+    @BindView(R.id.tv_select_num)
+    public TextView mTvSelectNum;
+    @BindView(R.id.rv_folder)
+    public RecyclerView mRvFloder;
+    @BindView(R.id.tv_title)
+    public TextView mTvTitle;
+
+
+
+    @OnClick({R.id.iv_back,R.id.tv_title,R.id.tv_select_ok,R.id.iv_allow})
+    public void onActionClickListener(View view) {
+        switch(view.getId()){
+            case R.id.iv_back:
+                finish();
+                break;
+            case R.id.tv_title:
+            case R.id.iv_allow:
+                //1:选择图片文件夹
+                if (isInitFolder) {
+                    if (isOpenFolder) {
+                        closeFolder();
+                    } else {
+                        openFolder();
+                    }
+                }
+                break;
+            case R.id.tv_select_ok:
+                //图片选择完成
+                ImagePreViewActivity.openActivity(this, mAdapter.getSelectImages());
+                break;
+        }
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_image_selector);
+        StatusBarUtil.changeStatusBarbackWordColor(this, getResources().getColor(R.color.black));
+        ButterKnife.bind(this);
+
+        initIntentData();
+        initImageList();
+        checkPermissionAndLoadImages();
+        setSelectImageCount(0);
+    }
+
+    private void initIntentData() {
+        try {
+            mMaxCount = Integer.parseInt(getIntent().getStringExtra(Constants.IMAGE_SELECT_MAX));
+        }catch (Exception e){
+            e.printStackTrace();
+            mMaxCount = 9;
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (applyLoadImage) {
+            applyLoadImage = false;
+            checkPermissionAndLoadImages();
+        }
+    }
+
+    private void setSelectImageCount(int mImageSum) {
+        if(mImageSum == 0){
+            mLayoutSelectImage.setVisibility(View.GONE);
+        }else{
+            //1:更新选择个数
+            mLayoutSelectImage.setVisibility(View.VISIBLE);
+            mTvSelectNum.setText(getString(R.string.image_select_info, mImageSum, mMaxCount));
+            //2:更新选择的图片列表
+            mPreViewDataSource.clear();
+            mPreViewDataSource.addAll(mAdapter.getSelectImages());
+            mPreViewAdapter.notifyDataSetChanged();
+        }
+    }
+
+    private void checkPermissionAndLoadImages() {
+        if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+//            Toast.makeText(this, "没有图片", Toast.LENGTH_LONG).show();
+            return;
+        }
+        int hasWriteExternalPermission = ContextCompat.checkSelfPermission(getApplication(),
+                Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        if (hasWriteExternalPermission == PackageManager.PERMISSION_GRANTED) {
+            //有权限，加载图片。
+            loadImageForSDCard();
+        } else {
+            //没有权限，申请权限。
+            ActivityCompat.requestPermissions(ImageSelectorActivity.this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_WRITE_EXTERNAL_REQUEST_CODE);
+        }
+    }
+
+    private void loadImageForSDCard() {
+        ImageModel.loadImageForSDCard(this, true, new ImageModel.DataCallback() {
+            @Override
+            public void onSuccess(ArrayList<Folder> folders) {
+                mFolders = folders;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (mFolders != null && !mFolders.isEmpty()) {
+                            initFolderList();
+                            mFolders.get(0).setUseCamera(false);
+                            setFolder(mFolders.get(0));
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    private void initFolderList() {
+        if (mFolders != null && !mFolders.isEmpty()) {
+            isInitFolder = true;
+            mRvFloder.setLayoutManager(new LinearLayoutManager(ImageSelectorActivity.this));
+            FolderAdapter adapter = new FolderAdapter(ImageSelectorActivity.this, mFolders);
+            adapter.setOnFolderSelectListener(new FolderAdapter.OnFolderSelectListener() {
+                @Override
+                public void OnFolderSelect(Folder folder) {
+                    setFolder(folder);
+                    closeFolder();
+                }
+            });
+            mRvFloder.setAdapter(adapter);
+        }
+    }
+
+    private void setFolder(Folder folder) {
+        if (folder != null && mAdapter != null && !folder.equals(mFolder)) {
+            mFolder = folder;
+            mTvTitle.setText(folder.getName());
+            mRvIamge.scrollToPosition(0);
+            mAdapter.refresh(folder.getImages(), folder.isUseCamera());
+        }
+    }
+
+    private void openFolder() {
+        if (!isOpenFolder) {
+//            ObjectAnimator animator = ObjectAnimator.ofFloat(mRvFloder, "translationY",
+//                    -mRvFloder.getHeight(), 0).setDuration(300);
+//            animator.addListener(new AnimatorListenerAdapter() {
+//                @Override
+//                public void onAnimationStart(Animator animation) {
+//                    super.onAnimationStart(animation);
+//                    mRvFloder.setVisibility(View.VISIBLE);
+//                }
+//            });
+//            animator.start();
+            mRvFloder.setVisibility(View.VISIBLE);
+            isOpenFolder = true;
+            mIvAllow.setBackgroundResource(R.drawable.community_collect);
+        }
+    }
+
+    private void closeFolder() {
+        if (isOpenFolder) {
+//            ObjectAnimator animator = ObjectAnimator.ofFloat(mRvFloder, "translationY",
+//                    0, -mRvFloder.getHeight()).setDuration(300);
+//            animator.addListener(new AnimatorListenerAdapter() {
+//                @Override
+//                public void onAnimationEnd(Animator animation) {
+//                    super.onAnimationEnd(animation);
+//                    mRvFloder.setVisibility(View.GONE);
+//                }
+//            });
+//            animator.start();
+            mRvFloder.setVisibility(View.GONE);
+            isOpenFolder = false;
+            mIvAllow.setBackgroundResource(R.drawable.community_expend);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == PERMISSION_WRITE_EXTERNAL_REQUEST_CODE) {
+            if (grantResults.length > 0
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                //允许权限，加载图片。
+                loadImageForSDCard();
+            } else {
+                //拒绝权限，弹出提示框。
+                showExceptionDialog(true);
+            }
+        }
+    }
+
+    private void showExceptionDialog(final boolean applyLoad) {
+        new AlertDialog.Builder(this)
+                .setCancelable(false)
+                .setTitle("提示")
+                .setMessage("该相册需要赋予访问存储和拍照的权限，请到“设置”>“应用”>“权限”中配置权限。")
+                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        finish();
+                    }
+                }).setPositiveButton("确定", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+                startAppSettings();
+                if (applyLoad) {
+                    applyLoadImage = true;
+                }
+            }
+        }).show();
+    }
+
+    private void startAppSettings() {
+        Intent intent = new Intent(
+                Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        intent.setData(Uri.parse("package:" + getPackageName()));
+        startActivity(intent);
+    }
+
+    private void initImageList() {
+        //1:文件夹图片列表
+        mRvIamge.setLayoutManager(new GridLayoutManager(this, 3));
+        mAdapter = new ImageAdapter(this, mMaxCount, false, false);
+        mRvIamge.setAdapter(mAdapter);
+        //2:设置默认文件夹
+        if (mFolders != null && !mFolders.isEmpty()) {
+            setFolder(mFolders.get(0));
+        }
+        mAdapter.setOnImageSelectListener(new ImageAdapter.OnImageSelectListener() {
+            @Override
+            public void OnImageSelect(Image image, boolean isSelect, int selectCount) {
+                setSelectImageCount(selectCount);
+            }
+        });
+        //3:设置预览图片界面
+        mPreViewDataSource = new ArrayList<>();
+        mSelectList.setLayoutManager(new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false));
+        mPreViewAdapter = new ImagePreViewAdapter(this, mPreViewDataSource);
+        mSelectList.setAdapter(mPreViewAdapter);
+
+        mPreViewAdapter.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //1:预览列表信息转图片展示列表信息
+                ArrayList<String> mSelectData = new ArrayList<>();
+                for (Image selectImage : mPreViewAdapter.getSelectImages()) {
+                    mSelectData.add(selectImage.getPath());
+                }
+                mAdapter.getSelectImages().clear();
+                mAdapter.setSelectedImages(mSelectData);
+                setSelectImageCount(mAdapter.getSelectImages().size());
+            }
+        });
+    }
+
+}

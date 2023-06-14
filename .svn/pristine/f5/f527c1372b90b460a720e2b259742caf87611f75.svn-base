@@ -1,0 +1,85 @@
+package com.xiaoxun.xun.networkv2;
+
+import com.xiaoxun.xun.Url;
+
+import com.xiaoxun.xun.networkv2.apis.Retrofit2Api;
+import com.xiaoxun.xun.networkv2.beans.AllPrivacysInfo;
+import com.xiaoxun.xun.networkv2.beans.BaseRcResponse;
+import com.xiaoxun.xun.networkv2.beans.PrivacyUpdateInfo;
+
+
+
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
+public class NetReqByRetrofit2 {
+
+    private static Retrofit2Api getPrivacysApiFormCloud(){
+        Retrofit retrofit= new Retrofit.Builder()
+                .baseUrl(Url.URL_APP_XUNKIDS)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        return retrofit.create(Retrofit2Api.class);
+    }
+
+    private static Retrofit2Api getRectifyRS(){
+        Retrofit retrofit= new Retrofit.Builder()
+                .baseUrl(Url.URL_RECTIFY)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        return retrofit.create(Retrofit2Api.class);
+    }
+
+    private static Retrofit2Api getAdRS(){
+        Retrofit retrofit= new Retrofit.Builder()
+                .baseUrl(Url.URL_AD)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        return retrofit.create(Retrofit2Api.class);
+    }
+
+
+    public static void getPushOnOffManager(String mParams, Callback<BaseRcResponse> mCallBack){
+        RequestBody requestBody = RequestBody.create(MediaType.parse("text/plain"), mParams);
+        Call<BaseRcResponse> mSnapshot = getAdRS().getPushManageInfo(requestBody);
+        mSnapshot.enqueue(mCallBack);
+    }
+
+    public static void setPushOnOffManager(String mParams, Callback<BaseRcResponse> mCallBack){
+        RequestBody requestBody = RequestBody.create(MediaType.parse("text/plain"), mParams);
+        Call<BaseRcResponse> mSnapshot = getAdRS().setPushManageInfo(requestBody);
+        mSnapshot.enqueue(mCallBack);
+    }
+
+    public static void getRectifyLocationOnApi(String mObtainInfo,
+                                               Callback<ResponseBody> mCallBack){
+        RequestBody requestBody = RequestBody.create(MediaType.parse("text/plain"), mObtainInfo);
+        Call<ResponseBody> mCall = getRectifyRS().getRectifyInfoOnApi(requestBody);
+        mCall.enqueue(mCallBack);
+    }
+
+
+    public static void getPrivacysOnCloud(String encryptInfo, Callback<AllPrivacysInfo> mCallBack){
+        RequestBody requestBody = RequestBody.create(MediaType.parse("text/plain"), encryptInfo);
+        Call<AllPrivacysInfo> mCall = getPrivacysApiFormCloud().getPrivacysOnCloud(requestBody);
+        mCall.enqueue(mCallBack);
+    }
+
+    public static void getPrivacyUpdateOnCloud(String encryptInfo, Callback<PrivacyUpdateInfo> mCallBack){
+        RequestBody requestBody = RequestBody.create(MediaType.parse("text/plain"), encryptInfo);
+        Call<PrivacyUpdateInfo> mCall = getPrivacysApiFormCloud().getPrivacyUpdateOnCloud(requestBody);
+        mCall.enqueue(mCallBack);
+    }
+
+    public static void getPrivacyVerOnCloud(String mRequestData, Callback<ResponseBody> mCallback) {
+        RequestBody requestBody = RequestBody.create(MediaType.parse("text/plain"), mRequestData);
+        Call<ResponseBody> mCall = getPrivacysApiFormCloud().getPrivacyVerOnCloud(requestBody);
+        mCall.enqueue(mCallback);
+    }
+
+}

@@ -1,0 +1,33 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    tools:context="com.xiaoxun.xun.activitys.SplashAdActivity">
+
+    <ImageView
+        android:id="@+id/splashAd"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/bg_color_orange"
+        android:scaleType="fitXY"
+        />
+    <RelativeLayout
+        android:id="@+id/clost_time_layer"
+        android:layout_width="80dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="15dp"
+        android:layout_marginRight="15dp"
+        android:layout_alignParentRight="true">
+        <TextView
+            android:id="@+id/closeTimer"
+            android:layout_width="60dp"
+            android:layout_height="30dp"
+            android:text="@string/adview_cancle_focus"
+            android:layout_centerInParent="true"
+            android:textColor="@color/white"
+            android:textSize="11.44sp"
+            android:gravity="center"
+            android:background="@drawable/countdown_button_0"/>
+    </RelativeLayout>
+</RelativeLayout>

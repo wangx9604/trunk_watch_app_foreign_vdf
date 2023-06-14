@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout   xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    >
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="216.66dp"
+        android:background="@drawable/securityzoneboder"
+        android:orientation="vertical"
+        android:layout_marginLeft="13.33dp"
+        android:layout_marginRight="13.33dp"
+        android:layout_marginTop="10dp">
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="150dp">
+
+            <ImageView
+                android:id="@+id/security_zone_image"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="1px"
+                android:layout_marginTop="1px"
+                android:layout_marginEnd="1px"
+                android:layout_marginBottom="1px"
+                android:background="@drawable/security_default"
+                android:scaleType="centerCrop" />
+
+            <View
+                android:layout_alignParentBottom="true"
+                android:layout_height="1px"
+                android:layout_width="match_parent"
+                android:background="#a3a4a5"/>
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="fill_parent"
+            android:layout_height="66.66dp"
+            android:descendantFocusability="blocksDescendants">
+            <ImageView
+                android:id="@+id/log_img"
+                android:layout_alignParentLeft="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="13.33dp"
+                android:layout_marginTop="16.66dp"/>
+
+            <RelativeLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_toRightOf="@id/log_img"
+                android:layout_toLeftOf="@+id/rl_settings"
+                android:layout_marginLeft="12.66dp"
+                android:layout_marginRight="12.66dp">
+                <TextView android:id="@+id/title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/black"
+                    android:singleLine="true"
+                    android:text="@string/security_zone_default_home"
+                    android:layout_centerVertical="true"
+                    android:textSize="14dp" />
+                <TextView android:id="@+id/info"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/txt_grey"
+                    android:textSize="12dp"
+                    android:visibility="gone"
+                    android:text="@string/security_zone_default_info"/>
+            </RelativeLayout>
+            <RelativeLayout
+                android:id="@+id/rl_settings"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_marginRight="13.33dp"
+                android:layout_centerVertical="true">
+            <ImageButton
+                android:id="@+id/button_img"
+                android:clickable="true"
+                android:focusable="false"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="#00000000"
+                android:visibility="gone"/>
+            <TextView
+                android:id="@+id/but_security_setting"
+                android:clickable="true"
+                android:focusable="false"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:padding="5dp"
+                android:text="@string/security_zone_default_setting"
+                android:textSize="12.66dp"
+                android:background="@drawable/btn_security_zone_setting"/>
+            </RelativeLayout>
+        </RelativeLayout>
+    </LinearLayout>
+
+</RelativeLayout>

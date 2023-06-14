@@ -1,0 +1,112 @@
+package com.xiaoxun.xun.networkv2.beans;
+
+import java.util.ArrayList;
+
+public class CloudTaskRankInfo extends BaseResponseInfo{
+
+    int selfNum;
+    int selfRank;
+    String selfEid;
+    String selfNickname;
+    ArrayList<UserRankInfo> rank;
+
+    public CloudTaskRankInfo(int code) {
+        super(code);
+    }
+
+    public CloudTaskRankInfo(int code, int selfNum, int selfRank, String selfEid, String selfNickname, ArrayList<UserRankInfo> rank) {
+        super(code);
+        this.selfNum = selfNum;
+        this.selfRank = selfRank;
+        this.selfEid = selfEid;
+        this.selfNickname = selfNickname;
+        this.rank = rank;
+    }
+
+    public int getSelfNum() {
+        return selfNum;
+    }
+
+    public void setSelfNum(int selfNum) {
+        this.selfNum = selfNum;
+    }
+
+    public int getSelfRank() {
+        return selfRank;
+    }
+
+    public void setSelfRank(int selfRank) {
+        this.selfRank = selfRank;
+    }
+
+    public String getSelfEid() {
+        return selfEid;
+    }
+
+    public void setSelfEid(String selfEid) {
+        this.selfEid = selfEid;
+    }
+
+    public String getSelfNickname() {
+        return selfNickname;
+    }
+
+    public void setSelfNickname(String selfNickname) {
+        this.selfNickname = selfNickname;
+    }
+
+    public ArrayList<UserRankInfo> getRank() {
+        return rank;
+    }
+
+    public void setRank(ArrayList<UserRankInfo> rank) {
+        this.rank = rank;
+    }
+
+    public static class UserRankInfo{
+        int rank;
+        String eid;
+        String nickName;
+        int num;
+
+        public UserRankInfo(int rank, String eid, String nickName, int num) {
+            this.rank = rank;
+            this.eid = eid;
+            this.nickName = nickName;
+            this.num = num;
+        }
+
+        public int getRank() {
+            return rank;
+        }
+
+        public void setRank(int rank) {
+            this.rank = rank;
+        }
+
+        public String getEid() {
+            return eid;
+        }
+
+        public void setEid(String eid) {
+            this.eid = eid;
+        }
+
+        public String getNickName() {
+            return nickName;
+        }
+
+        public void setNickName(String nickName) {
+            this.nickName = nickName;
+        }
+
+        public int getNum() {
+            return num;
+        }
+
+        public void setNum(int num) {
+            this.num = num;
+        }
+    }
+
+}

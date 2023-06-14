@@ -1,0 +1,323 @@
+/**
+ * Creation Date:2015-3-12
+ * <p>
+ * Copyright
+ */
+package com.xiaoxun.xun.activitys;
+
+import android.app.Dialog;
+import android.content.Intent;
+import android.os.Bundle;
+import androidx.collection.ArrayMap;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.adapter.DeviceModeAdapter;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.interfaces.MsgCallback;
+import com.xiaoxun.xun.utils.CloudBridgeUtil;
+import com.xiaoxun.xun.utils.DialogUtil;
+import com.xiaoxun.xun.utils.ToastUtil;
+
+import net.minidev.json.JSONObject;
+
+/**
+ * Description Of The Class<br>gggss
+ *
+ * @author fushiqing
+ * @version 1.000, 2015-8-26
+ *
+ */
+public class OperationMode extends NormalActivity implements MsgCallback {
+
+    private View btnBack,btnTItleConfirm;
+    private RecyclerView mModeRecyclerView;
+    private DeviceModeAdapter mModeAdapter;
+    private LinearLayoutManager mLinearLayoutManager;
+
+    private ArrayMap<Integer, String[]> modeMap;
+    private int iItemSelectPosition = 1;
+    private int iItemSelectMode = Const.DEFAULT_OPERATIONMODE_VALUE;  //模式协议值
+    private int formalSelectMode = iItemSelectMode;
+
+    private WatchData curWatch;
+    private Button btnNext;
+    private static final int DEFAULT_MODE = 4;
+    private boolean isBindState = false;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_operation_mode);
+        ((TextView) findViewById(R.id.tv_title)).setText(getText(R.string.operation_mode_setting));
+        curWatch = ((ImibabyApp) getApplication()).getCurUser().getFocusWatch();
+
+        initView();
+        initData();
+        initListener();
+        getDataFromLocal();
+        getDataFromCloudBridge();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (!isBindState) {
+            super.onBackPressed();
+        }
+    }
+
+    private void initView() {
+        btnBack= findViewById(R.id.iv_title_back);
+        btnTItleConfirm= findViewById(R.id.iv_title_menu);
+        btnBack.setBackgroundResource(R.drawable.btn_cancel_selector);
+        btnTItleConfirm.setBackgroundResource(R.drawable.btn_confirm_selector);
+        btnTItleConfirm.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //保存 调用接口chengg  finish
+                mapSetModeValue(iItemSelectMode);
+            }
+        });
+
+        mModeRecyclerView = findViewById(R.id.alarm_time_recyclerview);
+        btnNext = findViewById(R.id.btn_next_step);
+        btnNext.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mapSetModeValue(iItemSelectMode);
+
+                if (iItemSelectMode != 4) {
+                    //打开安全区域设置
+                    Intent intent = new Intent(OperationMode.this, SecurityZoneActivity.class);
+                    intent.putExtra("enter", "first_set");
+                    intent.putExtra(CloudBridgeUtil.KEY_NAME_EID, curWatch.getEid());
+                    startActivity(intent);
+                } else {
+                    finish();
+                    sendBroadcast(new Intent(Const.ACTION_SET_RELATION_END));
+                    Intent intent = new Intent(OperationMode.this, NewMainActivity.class);
+                    startActivity(intent);
+                }
+            }
+        });
+        isBindState = getIntent().getBooleanExtra("bindstate", false);
+        if (isBindState) {
+            btnNext.setVisibility(View.VISIBLE);
+            mapSetModeValue(DEFAULT_MODE);
+            iItemSelectPosition = 0;
+            btnBack.setVisibility(View.GONE);
+
+            btnTItleConfirm.setVisibility(View.GONE);
+        } else {
+            btnNext.setVisibility(View.GONE);
+            btnTItleConfirm.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void initData() {
+
+        modeMap = new ArrayMap<>();
+
+        modeMap.clear();
+        modeMap.put(0, new String[]{getString(R.string.powerSaving_mode_setting), getString(R.string.powerSaving_mode_setting_detail)});
+        modeMap.put(1, new String[]{getString(R.string.performance_mode_setting), getString(R.string.performance_mode_setting_detail)});
+        modeMap.put(2, new String[]{getString(R.string.fast_mode_setting), getString(R.string.fast_mode_setting_detail)});
+
+        mLinearLayoutManager = new LinearLayoutManager(this);
+        mModeRecyclerView.setLayoutManager(mLinearLayoutManager);
+        mModeAdapter = new DeviceModeAdapter(this, modeMap);
+        mModeRecyclerView.setAdapter(mModeAdapter);
+//        mModeRecyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL_LIST) {
+//        });
+
+        mModeAdapter.selectItem(iItemSelectPosition);
+        mModeAdapter.notifyDataSetChanged();
+    }
+
+    private void initListener() {
+
+
+        btnBack.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                OperationMode.this.finish();
+            }
+        });
+
+        mModeAdapter.setOnItemClickLitener(new DeviceModeAdapter.OnRecyclerViewItemClickListener() {
+            @Override
+            public void onItemClick(View view, int position) {
+                iItemSelectPosition = position;
+                iItemSelectMode=getModeFromPosition(iItemSelectPosition);
+                if (formalSelectMode != iItemSelectMode){
+                    if (iItemSelectMode==4){
+                        openPromptDialog(iItemSelectMode);
+                    }else{
+                        //更新状态 点击保存调用接口
+                        //mapSetModeValue(iItemSelectMode);
+                        updateLoacListState(iItemSelectMode);
+                    }
+                }
+            }
+        });
+    }
+
+    private void openPromptDialog(final int iItemSelectMode){
+
+        Dialog dlg = DialogUtil.CustomNormalDialog(OperationMode.this,
+                getString(R.string.start_powerSaving_mode_setting),
+                getString(R.string.start_powerSaving_mode_setting_desc),
+                new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        OperationMode.this.iItemSelectMode = formalSelectMode;
+                    }
+                }, getString(R.string.cancel),
+                new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        //弹框提示 更新状态
+                        //mapSetModeValue(iItemSelectMode);
+                        updateLoacListState(iItemSelectMode);
+                    }
+                }, getString(R.string.confirm));
+        dlg.show();
+    }
+
+    private void getDataFromLocal() {
+
+        iItemSelectMode = myApp.getIntValue(curWatch.getEid() + CloudBridgeUtil.OPERATION_MODE_VALUE,
+                Const.DEFAULT_OPERATIONMODE_VALUE);
+        formalSelectMode=iItemSelectMode;
+
+        iItemSelectPosition = getPositionFromMode(iItemSelectMode);
+        mModeAdapter.selectItem(iItemSelectPosition);
+        mModeAdapter.notifyDataSetChanged();
+    }
+
+    private void getDataFromCloudBridge() {
+
+        String[] keys = new String[1];
+        keys[0] = CloudBridgeUtil.OPERATION_MODE_VALUE;
+        if (myApp.getNetService() != null) {
+            myApp.getNetService().sendMapMGetMsg(curWatch.getEid(), keys, OperationMode.this);
+        }
+    }
+
+    private void mapSetModeValue(int mode) {
+
+        if (myApp.getNetService() != null) {
+            myApp.getNetService().sendMapSetMsg(curWatch.getEid(), curWatch.getFamilyId(), CloudBridgeUtil.OPERATION_MODE_VALUE, Integer.toString(mode), OperationMode.this);
+        }
+    }
+
+    private void updateLoacListState(int iItemSelectMode){
+        formalSelectMode = iItemSelectMode;
+        iItemSelectPosition = getPositionFromMode(iItemSelectMode);
+        mModeAdapter.selectItem(iItemSelectPosition);
+        mModeAdapter.notifyDataSetChanged();
+        if (iItemSelectMode == 4) {
+            btnNext.setText(R.string.security_finish_next);
+        } else {
+            btnNext.setText(R.string.security_zone_next);
+        }
+    }
+    private void updateAutoOperationState(String mapvalue) {
+
+        curWatch.setOperationMode(iItemSelectMode);//增加状态同步
+        formalSelectMode = iItemSelectMode;
+        iItemSelectPosition = getPositionFromMode(iItemSelectMode);
+        mModeAdapter.selectItem(iItemSelectPosition);
+        mModeAdapter.notifyDataSetChanged();
+        myApp.setValue(curWatch.getEid() + CloudBridgeUtil.OPERATION_MODE_VALUE, iItemSelectMode);
+        if (iItemSelectMode == 4) {
+            btnNext.setText(R.string.security_finish_next);
+        } else {
+            btnNext.setText(R.string.security_zone_next);
+        }
+
+        if(mapvalue.equals("set") ){
+            if(!isBindState){
+                //手表管理界面入口 保存直接finish
+                finish();
+            }
+        }
+    }
+
+    @Override
+    public void doCallBack(JSONObject reqMsg, JSONObject respMsg) {
+
+        int cid = (Integer) respMsg.get(CloudBridgeUtil.KEY_NAME_CID);
+        switch (cid) {
+            case CloudBridgeUtil.CID_MAPSET_RESP:
+                int rc = CloudBridgeUtil.getCloudMsgRC(respMsg);
+                if (rc > 0) {
+                    updateAutoOperationState("set");
+                } else if (rc == CloudBridgeUtil.RC_TIMEOUT) {
+                    ToastUtil.showMyToast(this, getString(R.string.phone_set_timeout), Toast.LENGTH_SHORT);
+                } else if (rc == CloudBridgeUtil.RC_NETERROR || rc == CloudBridgeUtil.RC_SOCKET_NOTREADY) {
+                    ToastUtil.showMyToast(this, getString(R.string.network_error_prompt), Toast.LENGTH_SHORT);
+                } else if (rc == CloudBridgeUtil.ERROR_CODE_COMMOM_GENERAL_EXCEPTION) {
+                    ToastUtil.showMyToast(this, getString(R.string.set_error), Toast.LENGTH_SHORT);
+                }
+                break;
+
+            case CloudBridgeUtil.CID_MAPGET_MGET_RESP:
+                int mapRc = CloudBridgeUtil.getCloudMsgRC(respMsg);
+                if (mapRc == CloudBridgeUtil.RC_SUCCESS) {
+                    JSONObject maggetPl = (JSONObject) respMsg.get(CloudBridgeUtil.KEY_NAME_PL);
+                    String sTmp = (String) maggetPl.get(CloudBridgeUtil.OPERATION_MODE_VALUE);
+                    if (sTmp != null && sTmp.length() > 0) {
+                        iItemSelectMode = Integer.parseInt(sTmp);
+                        updateAutoOperationState("get");
+                    }
+                } else {
+                    ToastUtil.showMyToast(this, getString(R.string.network_error_prompt), Toast.LENGTH_SHORT);
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
+     * 根据各个模式协议值获取对应的position
+     */
+    private int getPositionFromMode(int iItemSelectMode) {
+
+        switch (iItemSelectMode) {
+            case 3:
+                return 1;
+            case 4:
+                return 0;
+            case 5:
+                return 2;
+            default:
+                return 1;
+        }
+    }
+    /**
+     * 根据position获取对应的各个模式协议值
+     */
+    private int getModeFromPosition(int iItemSelectPosition) {
+
+        switch (iItemSelectPosition) {
+            case 0:
+                return 4;
+            case 1:
+                return 3;
+            case 2:
+                return 5;
+            default:
+                return 3;
+        }
+    }
+}

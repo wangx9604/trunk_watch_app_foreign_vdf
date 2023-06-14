@@ -1,0 +1,327 @@
+package com.xiaoxun.xun.receivers;
+
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Handler;
+import android.os.Message;
+import android.text.TextUtils;
+
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.Constants;
+import com.xiaoxun.xun.FunctionUrl;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.activitys.AdWebViewActivity;
+import com.xiaoxun.xun.activitys.VideoCallActivity;
+import com.xiaoxun.xun.activitys.NewLoginActivity;
+import com.xiaoxun.xun.activitys.VideoCallActivity2;
+import com.xiaoxun.xun.activitys.VideoCallActivity3;
+import com.xiaoxun.xun.activitys.stepsRankActivity;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.utils.CloudBridgeUtil;
+import com.xiaoxun.xun.utils.LogUtil;
+import com.xiaomi.mipush.sdk.ErrorCode;
+import com.xiaomi.mipush.sdk.MiPushClient;
+import com.xiaomi.mipush.sdk.MiPushCommandMessage;
+import com.xiaomi.mipush.sdk.MiPushMessage;
+import com.xiaomi.mipush.sdk.PushMessageReceiver;
+import com.xiaoxun.xun.utils.TimeUtil;
+
+import net.minidev.json.JSONObject;
+import net.minidev.json.JSONValue;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Created by guxiaolong on 2015/11/10.
+ */
+public class MiPushMessageReceiver extends PushMessageReceiver {
+
+    private String mRegId;
+    private long mResultCode = -1;
+    private String mReason;
+    private String mCommand;
+    private String mMessage;
+    private String mTopic;
+    private String mAlias;
+    private String mAccount;
+    private String mStartTime;
+    private String mEndTime;
+    private boolean isVideoCallMsg = false;
+
+    private static ImibabyApp mApp;
+
+    private static final String TAG = "MiPushMessageReceiver";
+
+    @Override
+    public void onReceivePassThroughMessage(Context context, MiPushMessage miPushMessage) {
+        super.onReceivePassThroughMessage(context, miPushMessage);
+        LogUtil.v(TAG +
+                "onReceivePassThroughMessage is called. " + miPushMessage.toString());
+
+        if (!TextUtils.isEmpty(miPushMessage.getTopic())) {
+            mTopic = miPushMessage.getTopic();
+        } else if (!TextUtils.isEmpty(miPushMessage.getAlias())) {
+            mAlias = miPushMessage.getAlias();
+        }
+
+        Message msg = Message.obtain();
+        msg.obj = miPushMessage.toString();
+        ImibabyApp.getMiPushHandler().sendMessage(msg);
+
+    }
+
+    @Override
+    public void onReceiveRegisterResult(Context context, MiPushCommandMessage message) {
+        super.onReceiveRegisterResult(context, message);
+        LogUtil.v(TAG +
+                "onReceiveRegisterResult is called. " + message.toString());
+        String command = message.getCommand();
+        List<String> arguments = message.getCommandArguments();
+        String cmdArg1 = ((arguments != null && arguments.size() > 0) ? arguments.get(0) : null);
+        String log;
+        if (MiPushClient.COMMAND_REGISTER.equals(command)) {
+            if (message.getResultCode() == ErrorCode.SUCCESS) {
+                mRegId = cmdArg1;
+                mApp.setMiPushRegister(true);
+                if (mApp.getCurUser().getEid() != null && mApp.getCurUser().getEid().length() > 0) {
+                    mApp.setMiPushAlias();
+                }
+                LogUtil.e("mipush app region1234:"+ MiPushClient.getAppRegion(context));
+                log = "Register push success.  " + mRegId;
+            } else {
+                log = "Register push fail.";
+            }
+        } else {
+            log = message.getReason();
+        }
+
+        Message msg = Message.obtain();
+        msg.obj = log;
+        ImibabyApp.getMiPushHandler().sendMessage(msg);
+    }
+
+    @Override
+    public void onNotificationMessageArrived(Context context, MiPushMessage miPushMessage) {
+        super.onNotificationMessageArrived(context, miPushMessage);
+        LogUtil.v(TAG +
+                "onNotificationMessageArrived is called. " + miPushMessage.toString());
+
+        if (!TextUtils.isEmpty(miPushMessage.getTopic())) {
+            mTopic = miPushMessage.getTopic();
+        } else if (!TextUtils.isEmpty(miPushMessage.getAlias())) {
+            mAlias = miPushMessage.getAlias();
+        }
+
+        Message msg = Message.obtain();
+        msg.obj = miPushMessage.toString();
+        ImibabyApp.getMiPushHandler().sendMessage(msg);
+    }
+
+    @Override
+    public void onNotificationMessageClicked(Context context, MiPushMessage miPushMessage) {
+        super.onNotificationMessageClicked(context, miPushMessage);
+        LogUtil.v(TAG +
+                "onNotificationMessageClicked is called. " + miPushMessage.toString());
+
+        if (!TextUtils.isEmpty(miPushMessage.getTopic())) {
+            mTopic = miPushMessage.getTopic();
+        } else if (!TextUtils.isEmpty(miPushMessage.getAlias())) {
+            mAlias = miPushMessage.getAlias();
+        }
+
+        Message msg = Message.obtain();
+        if (miPushMessage.isNotified()) {
+            msg.obj = miPushMessage.toString();
+        }
+        ImibabyApp.getMiPushHandler().sendMessage(msg);
+        if (miPushMessage.getContent() != null && miPushMessage.getContent().length() > 0) {
+            JSONObject respMsg = (JSONObject) JSONValue.parse(miPushMessage.getContent());
+            if (respMsg != null) {
+                JSONObject content = (JSONObject) respMsg.get(CloudBridgeUtil.KEY_NAME_PL);
+                if (content != null) {
+                    JSONObject pl = (JSONObject) content.get(CloudBridgeUtil.KEY_NAME_PL);
+                    if (pl != null) {
+                        Integer type = (Integer) pl.get(CloudBridgeUtil.KEY_NAME_LOCAITON_TYPE);
+                        if (type != null && (type == 0x1001 || type == 0x1004)) {
+                            return;
+                        }
+                    }
+
+                    if (content.containsKey(CloudBridgeUtil.KEY_NAME_VIDEOCALL_CHANNELNAME)) {
+                        // 检查下websocket连接状态
+                        mApp.sendBroadcast(new Intent(Const.ACTION_CHECK_WEBSOCKET_STATE));
+                        // 检查呼叫请求是否超时
+                        String timeStamp = (String) respMsg.get("TimeStamp");
+                        long reqTime = Long.parseLong(timeStamp);
+                        String currentTimeString = TimeUtil.getTimeStampLocal();
+                        long currentTime = Long.parseLong(currentTimeString);
+                        LogUtil.i(TAG + " currentTime-reqTime = " + (currentTime - reqTime));
+                        if ((currentTime - reqTime) > 30 * 1000) {
+                            isVideoCallMsg = true;
+//                            ToastUtil.show(mApp, mApp.getString(R.string.videocall_request_is_unavailable));
+                        } else {
+                            // 进入通话页面
+                            String eid = (String) content.get(CloudBridgeUtil.KEY_NAME_SEID);
+                            WatchData focusWatch = mApp.getCurUser().queryWatchDataByEid(eid);
+                            Intent mIntent = new Intent();
+                            ComponentName componet = new ComponentName(Const.PACKAGE_NAME, VideoCallActivity.class.getName());
+                            if (WatchData.getVideoCallVersion(focusWatch) == 2) {
+                                componet = new ComponentName(Const.PACKAGE_NAME, VideoCallActivity2.class.getName());
+                            }else if (WatchData.getVideoCallVersion(focusWatch) == 3){
+                                componet = new ComponentName(Const.PACKAGE_NAME, VideoCallActivity3.class.getName());
+                            }
+                            mIntent.setComponent(componet);
+                            mIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+                            mIntent.putExtra(Const.VIDEOCALL_TYPE, 1);
+                            mIntent.putExtra(CloudBridgeUtil.KEY_NAME_EID, eid);
+                            mIntent.putExtra(Constants.VIDEOCALL_PARAMS, content.toJSONString());
+                            mApp.startActivity(mIntent);
+                            mApp.setFocusWatch(focusWatch);
+                            mApp.videoCallEid = eid;
+                            mApp.videoCallSn = (int) content.get(CloudBridgeUtil.KEY_NAME_SN);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        //处理推送自定义消息
+        try {
+            Map<String, String> mapPush = miPushMessage.getExtra();
+            String eventType = mapPush.get("event_type");
+            String eventName = mapPush.get("event_name");
+            String handUrl = mapPush.get("url");
+
+            if(eventType != null && !eventType.equals("") && eventType.equals("event_url")){
+                Intent _intent = new Intent(context, AdWebViewActivity.class);
+                if(handUrl == null || handUrl.equals("")){
+                    _intent.putExtra("targetUrl", FunctionUrl.AD_DEFAULT_URL);
+                }else {
+                    _intent.putExtra("targetUrl", handUrl);
+                }
+                _intent.putExtra("activityType", 0);
+                context.startActivity(_intent);
+            }else if(eventType != null && eventType.equals("stepRank")){
+                Intent _intent = new Intent(context, stepsRankActivity.class);
+                context.startActivity(_intent);
+            }else{
+                Intent mIntent = new Intent();
+                mIntent.setAction(Intent.ACTION_MAIN);
+                mIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+                ComponentName componet = new ComponentName(Const.PACKAGE_NAME, NewLoginActivity.class.getName());
+                mIntent.setComponent(componet);
+                mIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+                mIntent.putExtra(Const.KEY_JSON_MSG, miPushMessage.getContent());
+                mIntent.putExtra(Const.VIDEO_CALL_PUSH_MESSAGE, isVideoCallMsg);
+                mApp.startActivity(mIntent);
+            }
+        }catch(Exception e){
+            LogUtil.e(e.toString());
+        }
+    }
+
+
+    @Override
+    public void onCommandResult(Context context, MiPushCommandMessage message) {
+        super.onCommandResult(context, message);
+
+        LogUtil.v(TAG + "  " +
+                "onCommandResult is called. " + message.toString());
+        String command = message.getCommand();
+        List<String> arguments = message.getCommandArguments();
+        String cmdArg1 = ((arguments != null && arguments.size() > 0) ? arguments.get(0) : null);
+        String cmdArg2 = ((arguments != null && arguments.size() > 1) ? arguments.get(1) : null);
+        String log = "";
+        if (MiPushClient.COMMAND_REGISTER.equals(command)) {
+            if (message.getResultCode() == ErrorCode.SUCCESS) {
+                mRegId = cmdArg1;
+                log = "Register push success. " + mRegId;
+            } else {
+                log = "Register push fail.";
+            }
+        } else if (MiPushClient.COMMAND_SET_ALIAS.equals(command)) {
+            if (message.getResultCode() == ErrorCode.SUCCESS) {
+                mAlias = cmdArg1;
+                mApp.setMiPushSetAlias(true);
+                log = "Set alias " + mAlias + " success.";
+            } else {
+                log = "Set alias fail for " + message.getReason();
+            }
+        } else if (MiPushClient.COMMAND_UNSET_ALIAS.equals(command)) {
+            if (message.getResultCode() == ErrorCode.SUCCESS) {
+                mAlias = cmdArg1;
+                log = "UnSet alias " + mAlias + " success.";
+            } else {
+                log = "UnSet alias fail for " + message.getReason();
+            }
+        } else if (MiPushClient.COMMAND_SET_ACCOUNT.equals(command)) {
+            if (message.getResultCode() == ErrorCode.SUCCESS) {
+                mAccount = cmdArg1;
+                log = "Set account " + mAccount + " success.";
+            } else {
+                log = "Set account fail for " + message.getReason();
+            }
+        } else if (MiPushClient.COMMAND_UNSET_ACCOUNT.equals(command)) {
+            if (message.getResultCode() == ErrorCode.SUCCESS) {
+                mAccount = cmdArg1;
+                log = "UnSet account " + mAccount + " success.";
+            } else {
+                log = "UnSet account fail for " + message.getReason();
+            }
+        } else if (MiPushClient.COMMAND_SUBSCRIBE_TOPIC.equals(command)) {
+            if (message.getResultCode() == ErrorCode.SUCCESS) {
+                mTopic = cmdArg1;
+                log = "Subscribe topic " + mTopic + " success.";
+            } else {
+                log = "Subscribe topic fail for " + message.getReason();
+            }
+        } else if (MiPushClient.COMMAND_UNSUBSCRIBE_TOPIC.equals(command)) {
+            if (message.getResultCode() == ErrorCode.SUCCESS) {
+                log = "UnSubscribe topic " + mTopic + " success.";
+            } else {
+                log = "UnSubscribe topic fail for " + message.getReason();
+            }
+        } else if (MiPushClient.COMMAND_SET_ACCEPT_TIME.equals(command)) {
+            if (message.getResultCode() == ErrorCode.SUCCESS) {
+                mStartTime = cmdArg1;
+                mEndTime = cmdArg2;
+                log = "Set accept time " + mStartTime + " - " + mEndTime + " success.";
+            } else {
+                log = "Set accept time fail for " + message.getReason();
+            }
+        } else {
+            log = message.getReason();
+        }
+
+        Message msg = Message.obtain();
+        msg.obj = log;
+        ImibabyApp.getMiPushHandler().sendMessage(msg);
+    }
+
+    private static Context mContext;
+
+    public static class MiPushHandler extends Handler {
+
+        private Context context;
+
+        public MiPushHandler(Context context, ImibabyApp app) {
+            this.context = context;
+            mApp = app;
+            mContext = context;
+
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            String s = (String) msg.obj;
+            if (!TextUtils.isEmpty(s)) {
+                //Toast.makeText(context, s, Toast.LENGTH_LONG).show();
+                mApp.sdcardLog(s);
+            }
+        }
+    }
+
+}
+

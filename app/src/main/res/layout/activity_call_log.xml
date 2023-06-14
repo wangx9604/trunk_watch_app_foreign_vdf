@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+    <include
+        android:id="@+id/title"
+        layout="@layout/activity_title"/>
+
+    <ListView
+        android:id="@+id/call_log_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/title"
+        android:layout_marginLeft="@dimen/divideleftandright"
+        android:layout_marginRight="@dimen/divideleftandright"
+        android:fadingEdge="none"
+        android:scrollbars="none"
+        android:visibility="visible" />
+
+    <RelativeLayout
+        android:id="@+id/layout_no_call_log"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/title"
+        android:visibility="gone">
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true">
+
+            <ImageView
+                android:id="@+id/iv_no_call_log"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:background="@drawable/no_call_log"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/iv_no_call_log"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="5.66dp"
+                android:text="@string/no_call_log"
+                android:textColor="@color/color_10"
+                android:textSize="@dimen/xiaomiMyTextSize3"/>
+        </RelativeLayout>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/layout_refresh"
+        android:layout_width="match_parent"
+        android:layout_height="95dp"
+        android:layout_alignParentBottom="true"
+        android:background="@drawable/bottom_navigation_bar"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/iv_buttomtitle_err"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="23.33dp"
+            android:layout_marginRight="23.33dp"
+            android:gravity="start|center_vertical"
+            android:maxLines="1"
+            android:text="@string/network_error_prompt"
+            android:textColor="@color/dark_grey"
+            android:textSize="@dimen/MyTextSize2"/>
+        <Button
+            android:id="@+id/btn_refresh"
+            android:layout_width="70dp"
+            android:layout_height="30dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="23.33dp"
+            android:background="@drawable/btn_trace_retry_selector"
+            android:layout_below="@+id/iv_buttomtitle_err"
+            android:text="@string/retry"
+            android:textColor="@color/dark_grey"
+            android:textSize="@dimen/MyTextSize2"/>
+
+    </RelativeLayout>
+</RelativeLayout>

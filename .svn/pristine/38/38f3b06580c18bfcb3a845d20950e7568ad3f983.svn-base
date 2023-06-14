@@ -1,0 +1,163 @@
+package com.xiaoxun.xun.ScheduleCard.adapters;
+
+import android.content.Context;
+import android.support.annotation.NonNull;
+import android.support.v7.widget.CardView;
+import android.support.v7.widget.RecyclerView;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.ScheduleCard.activitys.ScheduleCardUtils;
+import com.xiaoxun.xun.ScheduleCard.beans.ScheduleTimeBean;
+import com.xiaoxun.xun.interfaces.OnItemClickListener;
+
+import java.util.ArrayList;
+
+public class ScheduleTimeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+
+    private Context mContext;
+    private ArrayList<ScheduleTimeBean> mData;
+    private View.OnClickListener mDeleteListener;
+    private View.OnClickListener mAddListener;
+    private OnItemClickListener mItemClickListener;
+    public static final int ScheduleTimeMore = 10;
+    public static final int ScheduleTimeLower = 6;
+
+    public ScheduleTimeAdapter(Context context, ArrayList<ScheduleTimeBean> datas){
+        mContext = context;
+        mData = datas;
+    }
+
+    public void setmDeleteListener(View.OnClickListener mDeleteListener) {
+        this.mDeleteListener = mDeleteListener;
+    }
+
+    public void setmAddListener(View.OnClickListener mAddListener) {
+        this.mAddListener = mAddListener;
+    }
+
+    public void setmItemClickListener(OnItemClickListener mItemClickListener) {
+        this.mItemClickListener = mItemClickListener;
+    }
+
+    @NonNull
+    @Override
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+        if(i == 1) {
+            View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.item_schedule_time, viewGroup, false);
+            return new ScheduleTimeViewHolder(view);
+        }else if(i == 2){
+            View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.item_schedule_time_oper, viewGroup, false);
+            return new ScheduleOpraViewHolder(view);
+        }else{
+            View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.item_schedule_time, viewGroup, false);
+            return new ScheduleTimeViewHolder(view);
+        }
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder viewHolder, int i) {
+        if(getItemViewType(i)==1) {
+            ScheduleTimeBean mScheduleClassName = mData.get(i);
+
+            ((ScheduleTimeViewHolder) viewHolder).mScheduleHour.setText(mScheduleClassName.getmScheduleTimeNum());
+            ((ScheduleTimeViewHolder) viewHolder).mScheduleEndInfo.setText(
+                    ScheduleCardUtils.ScheduleGetHourFormat(mScheduleClassName.getmScheduleEndTime()));
+            ((ScheduleTimeViewHolder) viewHolder).mScheduleStartInfo.setText(
+                    ScheduleCardUtils.ScheduleGetHourFormat(mScheduleClassName.getmScheduleStartTime()));
+            if(mScheduleClassName.isSelect()){
+                ((ScheduleTimeViewHolder) viewHolder).mTimeLayout.setCardBackgroundColor(
+                        mContext.getResources().getColor(R.color.schedule_time_select));
+                ((ScheduleTimeViewHolder) viewHolder).mScheduleHour.setTextColor(
+                        mContext.getResources().getColor(R.color.white));
+                ((ScheduleTimeViewHolder) viewHolder).mScheduleEndInfo.setTextColor(
+                        mContext.getResources().getColor(R.color.schedule_time_select));
+                ((ScheduleTimeViewHolder) viewHolder).mScheduleStartInfo.setTextColor(
+                        mContext.getResources().getColor(R.color.schedule_time_select));
+                ((ScheduleTimeViewHolder) viewHolder).mScheduleDivide.setBackgroundColor(
+                        mContext.getResources().getColor(R.color.white));
+            }else{
+                ((ScheduleTimeViewHolder) viewHolder).mTimeLayout.setCardBackgroundColor(
+                        mContext.getResources().getColor(R.color.white));
+                ((ScheduleTimeViewHolder) viewHolder).mScheduleHour.setTextColor(
+                        mContext.getResources().getColor(R.color.schedule_time_text_color));
+                ((ScheduleTimeViewHolder) viewHolder).mScheduleEndInfo.setTextColor(
+                        mContext.getResources().getColor(R.color.schedule_time_text_color));
+                ((ScheduleTimeViewHolder) viewHolder).mScheduleStartInfo.setTextColor(
+                        mContext.getResources().getColor(R.color.schedule_time_text_color));
+                ((ScheduleTimeViewHolder) viewHolder).mScheduleDivide.setBackgroundColor(
+                        mContext.getResources().getColor(R.color.schedule_time_text_color));
+            }
+        }else{
+            ((ScheduleOpraViewHolder) viewHolder).mScheduleAdd.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if(mAddListener != null){
+                        mAddListener.onClick(v);
+                    }
+                }
+            });
+            ((ScheduleOpraViewHolder) viewHolder).mScheduleDelete.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if(mDeleteListener != null){
+                        mDeleteListener.onClick(v);
+                    }
+                }
+            });
+        }
+    }
+
+    @Override
+    public int getItemCount() {
+        if(mData == null) return 0;
+        else return mData.size();
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        return mData.get(position).getmHourZoneType();
+    }
+
+    class ScheduleTimeViewHolder extends RecyclerView.ViewHolder {
+
+        public TextView mScheduleHour;
+        public TextView mScheduleStartInfo;
+        public TextView mScheduleEndInfo;
+        public CardView mTimeLayout;
+        public View mScheduleDivide;
+
+        public ScheduleTimeViewHolder(@NonNull View itemView) {
+            super(itemView);
+            mScheduleHour = itemView.findViewById(R.id.tv_schedule_hour);
+            mScheduleStartInfo = itemView.findViewById(R.id.tv_start_info);
+            mScheduleEndInfo = itemView.findViewById(R.id.tv_end_info);
+            mTimeLayout = itemView.findViewById(R.id.schedule_item_time);
+            mScheduleDivide = itemView.findViewById(R.id.divide_line);
+            if(mItemClickListener != null) {
+                itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        mItemClickListener.onItemClick(v, getLayoutPosition());
+                    }
+                });
+            }
+        }
+    }
+
+    class ScheduleOpraViewHolder extends RecyclerView.ViewHolder {
+
+        public ImageView mScheduleAdd;
+        public ImageView mScheduleDelete;
+
+        public ScheduleOpraViewHolder(@NonNull View itemView) {
+            super(itemView);
+            mScheduleAdd = itemView.findViewById(R.id.add_schedule_time);
+            mScheduleDelete = itemView.findViewById(R.id.delete_schedule_time);
+        }
+    }
+}

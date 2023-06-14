@@ -1,0 +1,192 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+    <include
+        android:id="@+id/title"
+        layout="@layout/activity_title" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/title"
+        android:orientation="vertical">
+        <RelativeLayout
+            android:id="@+id/layer_steps_offon"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@drawable/setting_item_selector"
+            android:clickable="true"
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:paddingLeft="@dimen/divideleftandright"
+            android:paddingRight="@dimen/divideleftandright">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:text="@string/steps_title"
+                android:textColor="@color/black"
+                android:textSize="@dimen/xiaomiMyTextSize1" />
+
+            <ImageView
+                android:id="@+id/switch_steps_offon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:src="@drawable/switch_off" />
+        </RelativeLayout>
+        <ImageView
+            android:id="@+id/line_steps_offon"
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:paddingLeft="@dimen/divideleftandright"
+            android:paddingRight="@dimen/divideleftandright"
+            android:visibility="gone"
+            android:src="@color/line_grey" />
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@drawable/setting_item_selector"
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            android:visibility="visible"
+            android:paddingLeft="@dimen/divideleftandright"
+            android:paddingRight="@dimen/divideleftandright">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:text="@string/steps_notication_title"
+                android:textColor="@color/black"
+                android:textSize="@dimen/xiaomiMyTextSize1" />
+
+            <ImageView
+                android:id="@+id/switch_steps_notication_offon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:src="@drawable/switch_off" />
+        </RelativeLayout>
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:paddingLeft="@dimen/divideleftandright"
+            android:paddingRight="@dimen/divideleftandright"
+            android:visibility="visible"
+            android:src="@color/line_grey" />
+
+        <RelativeLayout
+            android:id="@+id/layer_steps_info"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@drawable/setting_item_selector"
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            android:paddingLeft="@dimen/divideleftandright"
+            android:paddingRight="@dimen/divideleftandright">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:text="@string/steps_people_info"
+                android:textColor="@color/black"
+                android:textSize="@dimen/xiaomiMyTextSize1" />
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:src="@drawable/btn_next_selector" />
+
+        </RelativeLayout>
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:paddingLeft="@dimen/divideleftandright"
+            android:paddingRight="@dimen/divideleftandright"
+            android:src="@color/line_grey" />
+
+        <ImageView
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:paddingLeft="@dimen/divideleftandright"
+            android:paddingRight="@dimen/divideleftandright"
+            android:src="@color/line_grey" />
+
+        <RelativeLayout
+            android:id="@+id/layer_target_steps"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@drawable/setting_item_selector"
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            android:paddingLeft="@dimen/divideleftandright"
+            android:paddingRight="@dimen/divideleftandright">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:text="@string/target_steps_title"
+                android:textColor="@color/black"
+                android:textSize="@dimen/xiaomiMyTextSize1" />
+
+            <ImageView
+                android:id="@+id/icon_right"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:src="@drawable/btn_next_selector" />
+            <TextView
+                android:id="@+id/steps_target"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toStartOf="@+id/icon_right"
+                android:layout_marginEnd="13.3dp"
+                android:layout_centerVertical="true"
+                android:text=""
+                android:textColor="@color/color_5"
+                android:textSize="@dimen/xiaomiMyTextSize1" />
+        </RelativeLayout>
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:paddingLeft="@dimen/divideleftandright"
+            android:paddingRight="@dimen/divideleftandright"
+            android:src="@color/line_grey" />
+
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:paddingLeft="@dimen/divideleftandright"
+        android:paddingRight="@dimen/divideleftandright"
+        android:layout_marginBottom="60dp"
+        android:orientation="vertical">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/prompt"
+            android:textColor="@color/color_7"
+            android:textSize="@dimen/xiaomiMyTextSize1" />
+        <TextView
+            android:layout_marginTop="10.7dp"
+            android:layout_marginBottom="8dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/steps_notice_one"
+            android:textColor="@color/color_5"
+            android:textSize="@dimen/xiaomiMyTextSize1" />
+    </LinearLayout>
+
+</RelativeLayout>

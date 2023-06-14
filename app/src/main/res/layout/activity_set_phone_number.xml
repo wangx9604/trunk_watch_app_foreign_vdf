@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@android:color/white"
+    android:orientation="vertical">
+
+    <include
+        android:id="@+id/title"
+        layout="@layout/activity_title" />
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/title"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/divideleftandright"
+            android:layout_marginRight="@dimen/divideleftandright"
+            android:layout_marginTop="45.33dp"
+            android:text="@string/phone_number"
+            android:textColor="@color/color_7"
+            android:textSize="@dimen/xiaomiMyTextSize1"
+            android:visibility="visible" />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/divideleftandright"
+            android:layout_marginRight="@dimen/divideleftandright"
+            android:layout_marginTop="12dp">
+
+            <EditText
+                android:id="@+id/et_phone_number"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/input_box"
+                android:gravity="center|left|center"
+                android:hint="@string/set_watch_number"
+                android:inputType="phone"
+                android:maxLength="18"
+                android:paddingStart="12.66dp"
+                android:singleLine="true"
+                android:textColor="@color/color_7"
+                android:textColorHint="@color/color_hint"
+                android:textSize="@dimen/xiaomiMyTextSize2" />
+
+            <ImageButton
+                android:id="@+id/delete_keyword"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="12.66dp"
+                android:background="@drawable/delete_keyword"
+                android:visibility="gone" />
+
+        </RelativeLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/divideleftandright"
+            android:layout_marginRight="@dimen/divideleftandright"
+            android:layout_marginTop="9.33dp"
+            android:text="@string/device_number_desc"
+            android:textColor="@color/color_5"
+            android:textSize="@dimen/xiaomiMyTextSize3"
+            android:visibility="visible" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btn_next_step"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="23.33dp"
+        android:background="@drawable/btn_dialgo_one_button"
+        android:text="@string/confirm"
+        android:textColor="@color/black"
+        android:textSize="@dimen/xiaomiMyTextSize1" />
+</RelativeLayout>

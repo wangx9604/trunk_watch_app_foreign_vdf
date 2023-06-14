@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/xiaomi_bg_grey"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:id="@+id/sleep_start_time_view"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/DoubleLineItemHeight"
+            android:background="@drawable/setting_item_selector"
+            android:gravity="center">
+
+            <ImageView
+                android:id="@+id/iv_select_start"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="5dp"
+                android:src="@drawable/day_select"
+                android:visibility="invisible" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="23.33dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/sleep_startime_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/start_time"
+                    android:textColor="@color/black"
+                    android:textSize="@dimen/xiaomiMyTextNickname" />
+
+                <TextView
+                    android:id="@+id/sleep_startime_title_detail"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/start_time"
+                    android:textColor="@color/txt_grey"
+                    android:textSize="@dimen/xiaomiMyTextSize3" />
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="23.33dp"
+                android:src="@drawable/btn_next_selector" />
+        </RelativeLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:layout_marginLeft="23.33dp"
+            android:layout_marginRight="23.33dp"
+            android:background="@color/divider_color" />
+
+        <RelativeLayout
+            android:id="@+id/sleep_end_time_view"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/DoubleLineItemHeight"
+            android:background="@drawable/setting_item_selector"
+            android:gravity="center">
+
+            <ImageView
+                android:id="@+id/iv_select_end"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="4dp"
+                android:src="@drawable/day_select"
+                android:visibility="invisible" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="23.33dp"
+                android:id="@+id/silence_end_time_next"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/sleep_endtime_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/end_time"
+                    android:textColor="@color/black"
+                    android:textSize="@dimen/xiaomiMyTextNickname" />
+
+                <TextView
+                    android:id="@+id/sleep_endtime_title_detail"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/end_time"
+                    android:textColor="@color/txt_grey"
+                    android:textSize="@dimen/xiaomiMyTextSize3" />
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="23.33dp"
+                android:src="@drawable/btn_next_selector" />
+        </RelativeLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:layout_marginLeft="23.33dp"
+            android:layout_marginRight="23.33dp"
+            android:background="@color/divider_color" />
+
+        <RelativeLayout
+            android:id="@+id/layout_if_poweroff"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="11.33dp"
+            android:layout_marginTop="11.33dp"
+            android:background="@drawable/setting_item_selector"
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            android:paddingLeft="@dimen/divideleftandright"
+            android:paddingRight="@dimen/divideleftandright">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/device_sleep_poweroff"
+                android:textColor="@color/black"
+                android:textSize="@dimen/xiaomiMyTextNickname" />
+
+            <ImageButton
+                android:id="@+id/btn_if_poweroff"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/switch_on" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/btn_if_poweroff"
+                android:layout_toStartOf="@+id/btn_if_poweroff"
+                android:layout_alignParentStart="true"
+                android:layout_marginEnd="22dp"
+                android:text="@string/device_sleep_poweroff_desc"
+                android:textColor="@color/txt_grey"
+                android:textSize="@dimen/xiaomiMyTextSize3" />
+
+        </RelativeLayout>
+
+        <ImageView
+            android:id="@+id/iv_watch_white_list_selector"
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:paddingLeft="@dimen/divideleftandright"
+            android:paddingRight="@dimen/divideleftandright"
+            android:src="@color/line_grey" />
+
+    </LinearLayout>
+</RelativeLayout>

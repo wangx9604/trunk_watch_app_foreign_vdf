@@ -1,0 +1,240 @@
+package com.xiaoxun.xun.presenter;
+
+import android.app.Activity;
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.view.View;
+import android.widget.TextView;
+
+import com.xiaoxun.mapadapter.MapConstant;
+import com.xiaoxun.mapadapter.XunMapManager;
+import com.xiaoxun.mapadapter.api.XunMap;
+import com.xiaoxun.mapadapter.api.XunMapFragment;
+import com.xiaoxun.mapadapter.bean.XunLatLng;
+import com.xiaoxun.mapadapter.bean.XunMarker;
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.beans.LocationData;
+import com.xiaoxun.xun.beans.MyMsgData;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.db.LocationDAO;
+import com.xiaoxun.xun.interfaces.MsgCallback;
+import com.xiaoxun.xun.utils.CloudBridgeUtil;
+import com.xiaoxun.xun.utils.ImageUtil;
+import com.xiaoxun.xun.utils.LogUtil;
+import com.xiaoxun.xun.utils.PromptUtils;
+import com.xiaoxun.xun.utils.TimeUtil;
+
+import net.minidev.json.JSONObject;
+
+import java.util.Map;
+
+public class VideoCallLocationPresenter implements MsgCallback {
+
+    private final static String TAG = "VideoCallLocationPresenter ";
+
+    private ImibabyApp mApp;
+    private Activity mActivity;
+    private WatchData focusWatch;
+
+    private boolean visibility;
+    private XunMap mXunMap;
+
+    private TextView tvLocation;
+    private View layoutMask;
+
+    public VideoCallLocationPresenter(ImibabyApp mApp, WatchData watchData, Activity mActivity) {
+        this.mApp = mApp;
+        this.mActivity = mActivity;
+        focusWatch = watchData;
+        tvLocation = mActivity.findViewById(R.id.tv_videocall_location);
+        layoutMask = mActivity.findViewById(R.id.layout_videocall_mask);
+    }
+
+    public void setMapVisibility(boolean visibility) {
+        this.visibility = visibility;
+        mActivity.findViewById(R.id.layout_videocall_location).setVisibility(visibility ? View.VISIBLE : View.GONE);
+    }
+
+    public void initMap() {
+
+        if (!visibility)
+            return;
+
+        MapConstant.MapProvider mapProvider = mApp.getIntValue(Const.SHARE_PREF_FIELD_CHANEG_MAP, 1) == 1 ? MapConstant.MapProvider.AMAP : MapConstant.MapProvider.BDMAP;
+        XunMapManager.getInstance().initActivityMapManager(mActivity, null, mapProvider);
+
+        XunMapFragment mMapFragment = XunMapManager.getInstance().getMXMapFragment(mapProvider);
+        android.app.Fragment supportMapFragment = mMapFragment.createMapFragment(mActivity);
+        mActivity.getFragmentManager().beginTransaction().add(R.id.layout_videocall_map, supportMapFragment).commit();
+//        mMapFragment.customMapStyle(mActivity);
+        mMapFragment.createMap(new XunMapFragment.OnMapReadyCallback() {
+            @Override
+            public void onMapReady(XunMap xunMap) {
+                mXunMap = xunMap;
+                mXunMap.uiSetting(mActivity);
+                layoutMask.setVisibility(View.VISIBLE);
+                showWatchMarker();
+            }
+        });
+    }
+
+    public void reqFocusWatchLocation() {
+
+        if (!visibility)
+            return;
+
+        reqHistoryLocation();
+        reqE2eLocation();
+    }
+
+    private void reqHistoryLocation() {
+
+        MyMsgData retrieve = new MyMsgData();
+        retrieve.setCallback(this);
+        JSONObject pl = new JSONObject();
+        pl.put(CloudBridgeUtil.KEY_NAME_EID, focusWatch.getEid());
+        pl.put(CloudBridgeUtil.KEY_NAME_KEY, TimeUtil.getReversedOrderTime(Const.FUTURE_TIME_KEY));
+        pl.put(CloudBridgeUtil.KEY_NAME_SIZE, 1);
+        retrieve.setReqMsg(mApp.obtainCloudMsgContent(CloudBridgeUtil.CID_RETRIEVE_TRACE_DATA, pl));
+        if (mApp.getNetService() != null) {
+            mApp.getNetService().sendNetMsg(retrieve);
+        }
+    }
+
+    private void reqE2eLocation() {
+
+        MyMsgData e2e = new MyMsgData();
+        e2e.setCallback(this);
+        e2e.setTimeout(Const.LOCATION_CLICK_CLOCK_VALUE * 1000);
+        e2e.setFinalTimeout(Const.LOCATION_CLICK_CLOCK_VALUE * 1000);
+        e2e.setNeedNetTimeout(true);
+        JSONObject pl = new JSONObject();
+        pl.put(CloudBridgeUtil.KEY_NAME_SUB_ACTION, CloudBridgeUtil.SUB_ACTION_VALUE_NAME_GET_LOCATION);
+        e2e.setReqMsg(CloudBridgeUtil.CloudE2eMsgContent(CloudBridgeUtil.CID_E2E_UP, Long.valueOf(TimeUtil.getTimeStampGMT()).intValue(),
+                mApp.getToken(), null, new String[]{focusWatch.getEid()}, pl));
+        if (mApp.getNetService() != null)
+            mApp.getNetService().sendNetMsg(e2e);
+    }
+
+    public void updateCurrentLocation(JSONObject value){
+
+        String eid = (String) value.get(CloudBridgeUtil.KEY_NAME_EID);
+        WatchData watchData = mApp.getCurUser().queryWatchDataByEid(eid);
+//        LocationData locationData = LocationData.parseLocation(mApp, value);
+        LocationData locationData = LocationData.parseLocation(mApp, value,watchData.getCurLocation());
+        watchData.setCurLocation(locationData);
+        LocationDAO.getInstance(mApp).updateLocation(watchData.getEid(), locationData);
+        showWatchMarker();
+    }
+
+    XunMarker xunMarker;
+
+    public void showWatchMarker() {
+
+        if (!visibility)
+            return;
+
+        if (focusWatch == null)
+            return;
+        if (mXunMap == null)
+            return;
+        LocationData locationData = focusWatch.getCurLocation();
+        if (locationData == null)
+            return;
+        XunLatLng xunLatLng = new XunLatLng(locationData.getLatLng().latitude,locationData.getLatLng().longitude);
+        if (xunLatLng == null)
+            return;
+
+        Bitmap markerBitmap = getMarkerBitmap(mActivity, focusWatch);
+        Bitmap[] bitmapArray = new Bitmap[]{markerBitmap};
+
+        String title = TimeUtil.getLocationTimeIntervalDesc(mActivity, locationData.getTimestamp());
+        Integer offlineState = mApp.getmWatchOfflineState().get(focusWatch.getEid());
+        if (null != offlineState && 1 == offlineState) {
+            title = PromptUtils.getOfflinePrompt5(mApp, focusWatch.getEid());
+        }
+
+        if (xunMarker != null) {
+            xunMarker.setXunLatLng(xunLatLng).setBitmap(bitmapArray[0]).setBitmapArray(bitmapArray)
+                    .setAnchor(0.5f, 0.95f).setzIndex(0f).setPeriod(10).setIsFlat(false).setTitle(title);
+            mXunMap.updateMarker(mActivity, xunMarker, false);
+        } else {
+            xunMarker = new XunMarker(mActivity).setXunLatLng(xunLatLng).setBitmap(bitmapArray[0]).setBitmapArray(bitmapArray)
+                    .setAnchor(0.5f, 0.95f).setzIndex(0f).setPeriod(10).setIsFlat(false).setTitle(title);
+            mXunMap.addMarker(mActivity, xunMarker, false);
+        }
+
+        // 精度>=100，level为17；否则，为18。如果为室内定位，为19。这里各减去1
+        int level = focusWatch.getCurLocation() != null && focusWatch.getCurLocation().getAccuracy() > 100 ? 16 : 17;
+        mXunMap.animateCamera(xunLatLng, level, 500);
+
+        // 位置描述
+        tvLocation.setText(getLocationDesc(locationData));
+        tvLocation.setSelected(true);
+    }
+
+    private Bitmap getMarkerBitmap(Context context, WatchData watchData) {
+
+        // 切成圆图
+        Bitmap markerBitmap = ImageUtil.getMaskBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.head_0),
+                mApp.getHeadDrawableByFile(context.getResources(), watchData.getHeadPath(), watchData.getEid(), R.drawable.small_default_head));
+        markerBitmap = ImageUtil.getLocationBitmap(markerBitmap, BitmapFactory.decodeResource(context.getResources(), R.drawable.watch_location_select_03));
+        return markerBitmap;
+    }
+
+    private String getLocationDesc(LocationData locationData) {
+
+        String desc = locationData.getDescription();
+        if (desc != null) {
+            String tempDesc = desc;
+            int indexBrackets = desc.indexOf("(");
+            if (indexBrackets > 0)
+                tempDesc = desc.substring(0, indexBrackets);
+
+            int indexDistrict = tempDesc.indexOf(mActivity.getString(R.string.location_district_county));
+            if (indexDistrict < 0) {
+                indexDistrict = tempDesc.indexOf(mActivity.getString(R.string.location_district_zone));
+            }
+            if (indexDistrict > 0)
+                desc = desc.substring(indexDistrict + 1).trim();
+        }
+        return desc;
+    }
+
+    @Override
+    public void doCallBack(JSONObject reqMsg, JSONObject respMsg) {
+
+        LogUtil.i(TAG + " reqMsg : " + reqMsg);
+        LogUtil.i(TAG + " respMsg : " + respMsg);
+        int cid = (Integer) respMsg.get(CloudBridgeUtil.KEY_NAME_CID);
+        int rc;
+        JSONObject pl;
+
+        switch (cid) {
+            case CloudBridgeUtil.CID_RETRIEVE_TRACE_DATA_RESP:
+                rc = CloudBridgeUtil.getCloudMsgRC(respMsg);
+                if (CloudBridgeUtil.RC_SUCCESS == rc) {
+                    pl = (JSONObject) respMsg.get(CloudBridgeUtil.KEY_NAME_PL);
+                    if (pl != null) {
+                        JSONObject list = (JSONObject) pl.get(CloudBridgeUtil.KEY_NAME_LIST);
+                        if (list != null) {
+                            for (Map.Entry<String, Object> entry : list.entrySet()) {
+                                JSONObject value = (JSONObject) entry.getValue();
+                                value.put(CloudBridgeUtil.KEY_NAME_TIMESTAMP, entry.getKey());
+                                String eid = (String) value.get(CloudBridgeUtil.KEY_NAME_EID);
+                                WatchData watchData = mApp.getCurUser().queryWatchDataByEid(eid);
+                                LocationData locationData = LocationData.parseLocation(mActivity, value,watchData.getCurLocation());
+                                watchData.setCurLocation(locationData);
+                                LocationDAO.getInstance(mApp).updateLocation(watchData.getEid(), locationData);
+                                showWatchMarker();
+                            }
+                        }
+                    }
+                }
+                break;
+        }
+    }
+}

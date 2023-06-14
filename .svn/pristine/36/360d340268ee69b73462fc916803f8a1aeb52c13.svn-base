@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/xiaomi_bg_grey"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/title"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:gravity="center"
+            android:text="@string/trace_to_title"
+            android:textColor="@color/dark_grey"
+            android:textSize="@dimen/xiaomiMyTextSize1" />
+
+        <TextView
+            android:id="@+id/prompt_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginLeft="30dp"
+            android:layout_marginRight="30dp"
+            android:clickable="true"
+            android:text="@string/trace_to_msg"
+            android:textColor="@color/color_5"
+            android:textSize="@dimen/xiaomiMyTextSize3" />
+
+        <TextView
+            android:id="@+id/warning_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginLeft="30dp"
+            android:layout_marginRight="30dp"
+            android:layout_marginTop="11.3dp"
+            android:clickable="true"
+            android:text="@string/trace_to_low_power_info"
+            android:textColor="@color/warining_red"
+            android:textSize="@dimen/xiaomiMyTextSize3"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="200dp"
+        android:layout_marginTop="23.3dp"
+        android:background="@drawable/weight_select">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_centerHorizontal="true"
+            android:layout_centerInParent="true"
+            android:background="@drawable/weight_select"
+            android:orientation="horizontal">
+
+            <com.xiaoxun.xun.views.CustomerPickerView
+                android:id="@+id/pick_tracetime_hour"
+                android:layout_width="0dp"
+                android:layout_height="200dp"
+                android:layout_weight="1" />
+
+            <com.xiaoxun.xun.views.CustomerPickerView
+                android:id="@+id/pick_tracetime_minute"
+                android:layout_width="0dp"
+                android:layout_height="200dp"
+                android:layout_weight="1" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/start_hour_pv_hour"
+            android:layout_width="wrap_content"
+            android:layout_height="200dp"
+            android:gravity="center_vertical"
+            android:text="@string/hour"
+            android:textColor="@color/black"
+            android:textSize="@dimen/xiaomiMyTextSize11" />
+
+        <TextView
+            android:id="@+id/start_min_pv_min"
+            android:layout_width="wrap_content"
+            android:layout_height="200dp"
+            android:gravity="center_vertical"
+            android:text="@string/minute"
+            android:textColor="@color/black"
+            android:textSize="@dimen/xiaomiMyTextSize11" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/pv_mask" />
+    </RelativeLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="23dp"
+        android:layout_marginTop="23dp"
+        android:gravity="center_horizontal"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/cancel_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:background="@drawable/btn_alarm_customer_week_cancel_select"
+            android:text="@string/cancel"
+            android:textColor="@color/dark_grey"
+            android:textSize="@dimen/xiaomiMyTextSize1" />
+
+        <Button
+            android:id="@+id/confirm_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:background="@drawable/btn_alarm_customer_week_confirm_select"
+            android:text="@string/confirm"
+            android:textColor="@color/dark_grey"
+            android:textSize="@dimen/xiaomiMyTextSize1" />
+    </LinearLayout>
+</LinearLayout>

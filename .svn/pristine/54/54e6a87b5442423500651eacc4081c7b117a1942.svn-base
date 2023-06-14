@@ -1,0 +1,93 @@
+package com.xiaoxun.xun.motion.activity;
+
+import android.app.Activity;
+import android.app.Fragment;
+import android.content.Context;
+import android.graphics.BitmapFactory;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+
+
+import com.xiaoxun.mapadapter.MapConstant;
+import com.xiaoxun.mapadapter.XunMapManager;
+import com.xiaoxun.mapadapter.api.XunMap;
+import com.xiaoxun.mapadapter.api.XunMapFragment;
+import com.xiaoxun.mapadapter.bean.XunLatLng;
+import com.xiaoxun.mapadapter.bean.XunMarker;
+import com.xiaoxun.mapadapter.bean.XunPolyline;
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.Constants;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.activitys.MainActivity;
+import com.xiaoxun.xun.utils.PersonalAuth;
+
+public class RecordMapFragment extends Fragment {
+    private MapConstant.MapProvider mapProvider;
+    private Context mContext;
+    private ImibabyApp mApp;
+    private XunMap mXunMap;
+    XunPolyline mPlanRouteLine;
+
+    public RecordMapFragment() {
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_record_map, container, false);
+        initData();
+        initMap();
+        return view;
+    }
+
+    private void initData() {
+        mContext = getActivity();
+        mApp = (ImibabyApp) ((Activity)mContext).getApplication();
+        mapProvider = mApp.getIntValue(Const.SHARE_PREF_FIELD_CHANEG_MAP, 1) == 1 ? MapConstant.MapProvider.AMAP : MapConstant.MapProvider.BDMAP;
+    }
+
+    private void initMap() {
+
+        XunMapManager.getInstance().initActivityMapManager(mContext, null, mapProvider);
+        XunMapFragment mMapFragment = XunMapManager.getInstance().getXunMapFragment(mapProvider);
+        android.app.Fragment supportMapFragment = mMapFragment.createMapFragment(mContext);
+        getChildFragmentManager().beginTransaction().add(R.id.layout_map_fragment, supportMapFragment).commit();
+        mMapFragment.customMapStyle(mContext);
+        mMapFragment.createMap(new XunMapFragment.OnMapReadyCallback() {
+            @Override
+            public void onMapReady(XunMap xunMap) {
+                xunMap.uiSetting(mContext);
+                mXunMap = xunMap;
+                if(mPlanRouteLine != null) {
+                    mXunMap.addPolyline(mPlanRouteLine);
+
+                    int length = mPlanRouteLine.xunLatLngList.size();
+                    XunLatLng startPoint = mPlanRouteLine.xunLatLngList.get(0);
+                    XunLatLng endPoint = mPlanRouteLine.xunLatLngList.get(length - 1);
+
+                    XunMarker mStartMarker = new XunMarker(mContext).setXunLatLng(startPoint).setBitmap(BitmapFactory.decodeResource(mContext.getResources(), R.drawable.start_point))
+                            .setAnchor(0.5f, 0.89f);
+                    mXunMap.addMarker(mContext, mStartMarker, false);
+
+                    XunMarker mEndMarker = new XunMarker(mContext).setXunLatLng(endPoint).setBitmap(BitmapFactory.decodeResource(mContext.getResources(), R.drawable.end_point))
+                            .setAnchor(0.5f, 0.89f);
+                    mXunMap.addMarker(mContext, mEndMarker, false);
+
+                    mXunMap.animateCamera(mPlanRouteLine.xunLatLngList, 100);
+                }
+            }
+        });
+    }
+
+    public void setPolyLineInfo(XunPolyline mPlanRouteLine) {
+        this.mPlanRouteLine = mPlanRouteLine;
+    }
+}

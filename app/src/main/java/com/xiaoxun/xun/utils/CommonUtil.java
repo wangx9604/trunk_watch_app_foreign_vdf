@@ -1,0 +1,340 @@
+package com.xiaoxun.xun.utils;
+
+import android.animation.ObjectAnimator;
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.media.MediaMetadataRetriever;
+import android.net.Uri;
+import android.os.Build;
+import android.provider.MediaStore;
+import androidx.core.content.FileProvider;
+import android.view.View;
+import android.webkit.ValueCallback;
+import android.widget.Toast;
+
+
+import com.google.gson.Gson;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.beans.WatchData;
+
+import net.minidev.json.JSONObject;
+import net.minidev.json.JSONValue;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+
+/**
+ * Created by zhangjun5 on 2019/6/11.
+ */
+
+public class CommonUtil {
+
+    public static void startAnimationSlipEdge(View view, String mAnimationType, int mStartAbs, int mEndAbs){
+        ObjectAnimator animator = ObjectAnimator.ofFloat(view,mAnimationType,mStartAbs, mEndAbs);
+        animator.start();
+    }
+
+    //初始化新增功能列表
+    private static void initNewFunctionInfo(String soruData, ArrayList<HashMap<String, Object>> listItem) {
+        JSONObject jsonObject = (JSONObject) JSONValue.parse(soruData);
+        net.minidev.json.JSONArray adList = (net.minidev.json.JSONArray) jsonObject.get("PL");
+        for (int i = 0; i < adList.size(); i++) {
+            JSONObject object = (JSONObject) adList.get(i);
+            HashMap<String, Object> map = new HashMap<String, Object>();
+            map.put("EID", object.get("EID"));
+            map.put("pictureUrl", object.get("pictureUrl"));
+            JSONObject showObject = (JSONObject) object.get("targview");
+            map.put("show_view", showObject.get("show_view"));
+            map.put("type", showObject.get("type"));
+            map.put("advertisement_id", object.get("advertisement_id"));
+            map.put("endtime", object.get("endtime"));
+            map.put("starttime", object.get("starttime"));
+            listItem.add(map);
+        }
+    }
+
+    public static boolean openURIView(Context context, Uri uri, String scheme) {
+        if ("mqqwpa".equals(scheme) && !AndroidUtil.isQQClientAvailable(context)) {
+            ToastUtil.show(context, context.getString(R.string.qq_not_installed));
+            return true;
+        }
+
+        LogUtil.e("AndroidUtil.checkAliPayInstalled(context)  " + AndroidUtil.checkAliPayInstalled(context));
+        if ("alipays".equals(scheme) && !AndroidUtil.checkAliPayInstalled(context)) {
+            ToastUtil.show(context, context.getString(R.string.alipay_not_installed));
+            return true;
+        }
+        if ("weixin".equals(scheme) && !AndroidUtil.isWeixinAvilible(context)) {
+            ToastUtil.show(context, context.getString(R.string.weixin_not_installed));
+            return true;
+        }
+
+        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+        context.startActivity(intent);
+        return true;
+    }
+
+
+    public static boolean isDestroy(Activity mActivity) {
+        if (mActivity == null || mActivity.isFinishing() || mActivity.isDestroyed()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+
+    public static String setFunctionStateByBool(Boolean isOpen) {
+        if (isOpen) {
+            return "1";
+        } else {
+            return "0";
+        }
+    }
+
+    public static boolean setFunctionStateByStrAndDefClose(String mStrInfo) {
+        if (mStrInfo == null || "".equals(mStrInfo) || "0".equals(mStrInfo)) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    public static boolean setFunctionStateByStrAndDefOpen(String mStrInfo) {
+        if (mStrInfo == null || "".equals(mStrInfo) || "1".equals(mStrInfo)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+
+
+
+    public static void playVideoBySystem(Context context, String videoPath) {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        File file = new File(videoPath);
+
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+            intent.setDataAndType(Uri.fromFile(file), "video/*");
+        } else {  //Android7.0之后获取uri要用contentProvider
+            Uri apkUri = FileProvider.getUriForFile(context, context.getPackageName() + ".xun.fileprovider", file);
+            intent.setDataAndType(apkUri, "video/*");
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        }
+        context.startActivity(intent);
+    }
+
+    public static ArrayList onGsonFromInfo(String mJsonStr, Type type) {
+        if (mJsonStr == null || "".equals(mJsonStr)) return null;
+        Gson gson = new Gson();
+        return gson.fromJson(mJsonStr, type);
+    }
+
+    public static void getMediaFrameAtFirst(String videoPath) {
+        MediaMetadataRetriever media = new MediaMetadataRetriever();
+        media.setDataSource(videoPath);
+        Bitmap bitmap = media.getFrameAtTime();
+        if (bitmap != null) {
+            String fileName = videoPath + ".jpg";
+            saveComPressPicByBitmap(fileName, bitmap, 100);
+        }
+    }
+
+    public static String saveComPressPicByBitmap(String fileName, Bitmap cropBitmap, int CropSize) {
+        String sPreview = null;
+        try {
+            FileOutputStream fos = new FileOutputStream(fileName);
+            boolean b = cropBitmap.compress(Bitmap.CompressFormat.JPEG, CropSize, fos);
+            try {
+                fos.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                fos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if (b) {
+                LogUtil.i("save success");
+                sPreview = fileName;
+            } else {
+                LogUtil.i("save fail");
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        return sPreview;
+    }
+
+    public static void sendCommentGetReq(String reqData, String url, Callback onMsgListener) {
+        OkHttpClient okHttpClient = new OkHttpClient();
+        Request request = new Request.Builder().url(url).addHeader("XUN-YUER-TOKEN", reqData).get().build();
+        Call call = okHttpClient.newCall(request);
+        call.enqueue(onMsgListener);
+    }
+
+    public static void startPickPhoto(Activity context, int IMAGE_CODE) {
+        Intent intent = new Intent(Intent.ACTION_PICK, null);
+        intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
+        context.startActivityForResult(intent, IMAGE_CODE);
+    }
+
+    public static File startPhotoZoom(Activity context, Uri uri, int IMAGE_CODE_1) {
+
+        File temp = new File(ImibabyApp.getIconCacheDir(), "tempcrop" + ".jpg");
+        if (temp.exists()) {
+            temp.delete();
+        }
+
+        Intent intent = new Intent("com.android.camera.action.CROP");
+        intent.setDataAndType(uri, "image/*");
+        //下面这个crop=true是设置在开启的Intent中设置显示的VIEW可裁剪
+        intent.putExtra("crop", "true");
+        // aspectX aspectY 是宽高的比例
+        intent.putExtra("aspectX", 1);
+        intent.putExtra("aspectY", 1);
+        // outputX outputY 是裁剪图片宽高
+        intent.putExtra("outputX", 720);
+        intent.putExtra("outputY", 720);
+        intent.putExtra("noFaceDetection", true);
+        intent.putExtra("outputFormat", Bitmap.CompressFormat.JPEG.toString());
+        intent.putExtra("noFaceDetection", true);
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(temp));
+        intent.putExtra("return-data", false);//设置为不返回数据
+        context.startActivityForResult(intent, IMAGE_CODE_1);
+
+        return temp;
+    }
+
+    public static void setPicToView(Context context, File cropTemp, ValueCallback<Uri[]> mUploadCallbackAboveL) {
+        Bitmap photo = null;
+        try {
+            photo = MediaStore.Images.Media.getBitmap(context.getContentResolver(), Uri.fromFile(cropTemp));
+            if (photo.getWidth() > 720 || photo.getHeight() > 720) {
+                photo = BitmapUtilities.getBitmapThumbnail(cropTemp.getPath(), 720, 720);
+            }
+            FileOutputStream fos = new FileOutputStream(cropTemp);
+            photo.compress(Bitmap.CompressFormat.JPEG, 70, fos);
+
+            //创建文件输出流
+            OutputStream os;
+            byte[] bitmapArray = StrUtil.getBytesFromFile(cropTemp);
+
+            File destFile = new File(ImibabyApp.getIconCacheDir(), TimeUtil.getTimeStampLocal() + ".png");
+            cropTemp.renameTo(destFile);
+            os = new FileOutputStream(destFile);
+            os.write(bitmapArray);
+            os.flush();
+
+            Uri originalUri = Uri.fromFile(destFile); // 获得图片的uri
+
+            if (mUploadCallbackAboveL != null) {
+                Uri[] uris = new Uri[]{originalUri};
+                mUploadCallbackAboveL.onReceiveValue(uris);
+            } else {
+                Toast.makeText(context, context.getString(R.string.get_data_error), Toast.LENGTH_LONG).show();
+            }
+
+        } catch (Exception e) {
+            cancleUploadCallBack(mUploadCallbackAboveL);
+        }
+    }
+
+    public static void cancleUploadCallBack(ValueCallback<Uri[]> mUploadCallbackAboveL) {
+        if (mUploadCallbackAboveL != null) {
+            mUploadCallbackAboveL.onReceiveValue(null);
+        }
+    }
+
+    public static File startCameraCapture(Activity context, int GET_IMAGE_FROM_CAMERA) {
+        try {
+            //指定调用相机拍照后的照片存储的路径
+            File temp = new File(ImibabyApp.getIconCacheDir(), System.currentTimeMillis() + ".jpg");
+            if (temp.exists()) {
+                temp.delete();
+            }
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+                Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                Uri contentUri = FileProvider.getUriForFile(context, context.getPackageName() + ".xun.fileprovider", temp);
+                intent.putExtra(MediaStore.EXTRA_OUTPUT, contentUri);
+                intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                context.startActivityForResult(intent, GET_IMAGE_FROM_CAMERA);
+            } else {
+                Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(temp));
+                context.startActivityForResult(intent, GET_IMAGE_FROM_CAMERA);
+            }
+            return temp;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
+
+    public static boolean isHaveWatchList(ImibabyApp mApp) {
+        if (mApp.getWatchList() == null || mApp.getWatchList().size() == 0) {
+            return false;
+        }
+        return true;
+    }
+
+
+
+    public static String getRectifyLocationInfo(WatchData fouceWatch, String floorInfo, String watchLocCon) {
+        String latlng = fouceWatch.getCurLocation().getLatLng().latitude + "," + fouceWatch.getCurLocation().getLatLng().longitude;
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("imei", fouceWatch.getImei());
+        jsonObject.put("eid", fouceWatch.getEid());
+        jsonObject.put("time", fouceWatch.getCurLocation().getTimestamp());
+        jsonObject.put("errlnglat", latlng);
+        jsonObject.put("lnglat", latlng);
+        jsonObject.put("type", fouceWatch.getCurLocation().getMapType());
+        jsonObject.put("CUID", fouceWatch.getCurLocation().getBdid());
+        jsonObject.put("errfloor", floorInfo);
+        jsonObject.put("content", watchLocCon);
+
+        return jsonObject.toJSONString();
+
+    }
+
+    public static String getWeeksInfoByDays(Context mContext, String mDays) {
+        if (isDestroy((Activity) mContext)) return "";
+        String mWeekInfo;
+        if (mDays.equals("1111100")) {
+            mWeekInfo = mContext.getString(R.string.device_alarm_reset_2);
+        } else if (mDays.equals("1111111")) {
+            mWeekInfo = mContext.getString(R.string.device_alarm_reset_3);
+        } else {
+            mWeekInfo = ((mDays.substring(0, 1).equals("1") ? mContext.getString(R.string.week_1) + "" : "") +
+                    (mDays.substring(1, 2).equals("1") ? mContext.getString(R.string.week_2) + " " : "") +
+                    (mDays.substring(2, 3).equals("1") ? mContext.getString(R.string.week_3) + " " : "") +
+                    (mDays.substring(3, 4).equals("1") ? mContext.getString(R.string.week_4) + " " : "") +
+                    (mDays.substring(4, 5).equals("1") ? mContext.getString(R.string.week_5) + " " : "") +
+                    (mDays.substring(5, 6).equals("1") ? mContext.getString(R.string.week_6) + " " : "") +
+                    (mDays.substring(6, 7).equals("1") ? mContext.getString(R.string.week_0) + " " : ""));
+        }
+
+        return mWeekInfo;
+    }
+
+}

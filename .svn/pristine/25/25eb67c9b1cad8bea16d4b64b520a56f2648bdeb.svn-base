@@ -1,0 +1,22 @@
+package com.xiaoxun.xun.networkv2.beans;
+
+public class CloudTaskRankRequestInfo extends BaseRequestInfo {
+    String taskId;
+
+    public CloudTaskRankRequestInfo(String eid) {
+        super(eid);
+    }
+
+    public CloudTaskRankRequestInfo(String eid, String taskId) {
+        super(eid);
+        this.taskId = taskId;
+    }
+
+    public String getTaskId() {
+        return taskId;
+    }
+
+    public void setTaskId(String taskId) {
+        this.taskId = taskId;
+    }
+}

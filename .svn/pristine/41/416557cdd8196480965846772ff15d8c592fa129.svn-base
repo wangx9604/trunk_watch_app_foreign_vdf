@@ -1,0 +1,45 @@
+package com.xiaoxun.xun.motion.beans;
+
+public class CalendarEventInfo {
+    private String mEventType;//事件总线类型：早睡早起 sleep，上学提醒 goscl，放学提醒 outscl，自定义 custom
+    private int mEventOptype;//事件操作：0：新建；1：编辑；2：删除
+    private String mEventData;//事件携带的数据
+
+    public CalendarEventInfo(String mEventType, int mEventOptype) {
+        this.mEventType = mEventType;
+        this.mEventOptype = mEventOptype;
+    }
+
+    public String getmEventType() {
+        return mEventType;
+    }
+
+    public void setmEventType(String mEventType) {
+        this.mEventType = mEventType;
+    }
+
+    public int getmEventOptype() {
+        return mEventOptype;
+    }
+
+    public void setmEventOptype(int mEventOptype) {
+        this.mEventOptype = mEventOptype;
+    }
+
+    public String getmEventData() {
+        return mEventData;
+    }
+
+    public void setmEventData(String mEventData) {
+        this.mEventData = mEventData;
+    }
+
+    @Override
+    public String toString() {
+        return "CalendarEventInfo{" +
+                "mEventType='" + mEventType + '\'' +
+                ", mEventOptype=" + mEventOptype +
+                ", mEventData='" + mEventData + '\'' +
+                '}';
+    }
+}

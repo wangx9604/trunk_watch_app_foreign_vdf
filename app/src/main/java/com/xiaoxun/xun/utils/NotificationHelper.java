@@ -1,0 +1,167 @@
+/*
+ * Copyright 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.xiaoxun.xun.utils;
+
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.Context;
+import android.content.ContextWrapper;
+import android.content.Intent;
+import android.graphics.Color;
+import android.media.AudioAttributes;
+import android.net.Uri;
+import android.os.Build;
+import android.provider.Settings;
+import androidx.annotation.RequiresApi;
+
+import com.xiaoxun.xun.R;
+
+
+/**
+ * Helper class to manage notification channels, and create notifications.
+ */
+@RequiresApi(api = Build.VERSION_CODES.O)
+public class NotificationHelper extends ContextWrapper {
+
+    private NotificationManager manager;
+    public static final String IMIBEAN_CHANNEL = "XiaoXun";
+    public static final String IMIBEAN_CHANNEL_NAME = "XiaoXun";
+
+    public static final String APP_RUNNING_CHANNEL = "AppRunning";
+    public static final String APP_RUNNING_CHANNEL_NAME = "App运行提醒";
+
+    static NotificationHelper instance;
+
+    public NotificationHelper(Context ctx) {
+        super(ctx);
+    }
+
+    public synchronized static NotificationHelper getInstance(Context ctx){
+        if(instance==null)
+            instance=new NotificationHelper(ctx);
+        return instance;
+    }
+
+    /**
+     * Registers notification channels, which can be used later by individual notifications.
+     */
+    public void init() {
+
+        NotificationChannel channel = new NotificationChannel(IMIBEAN_CHANNEL,
+                IMIBEAN_CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH);
+        channel.setLightColor(Color.GREEN);
+        channel.enableLights(true);
+        channel.enableVibration(true);
+        Uri sounduri=Uri.parse("android.resource://com.xiaoxun.xun/" + R.raw.beep);
+        if (getPackageName().equals("com.imibaby.client")) {
+            sounduri = Uri.parse("android.resource://com.imibaby.client/" + R.raw.beep);
+        } else if (getPackageName().equals("com.xiaoxun.xun")) {
+            sounduri = Uri.parse("android.resource://com.xiaoxun.xun/" + R.raw.beep);
+        } else if (getPackageName().equals("com.xiaotongren.watch")) {
+            sounduri = Uri.parse("android.resource://com.xiaotongren.watch/" + R.raw.beep);
+        }
+        channel.setSound(sounduri, new AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                .build());
+        if (Build.VERSION.SDK_INT >= 29) {
+            channel.setAllowBubbles(true);  //悬浮显示
+        }
+        channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+        getManager().createNotificationChannel(channel);
+
+        NotificationChannel channel2 = new NotificationChannel(APP_RUNNING_CHANNEL, APP_RUNNING_CHANNEL_NAME, NotificationManager.IMPORTANCE_LOW);
+        channel2.enableLights(false);
+        channel2.enableVibration(false);
+        channel2.setSound(null,null);
+        channel2.setLockscreenVisibility(Notification.VISIBILITY_SECRET);
+        getManager().createNotificationChannel(channel2);
+    }
+
+    /**
+     * Get a notification of type 1
+     *
+     * Provide the builder rather than the notification it's self as useful for making notification
+     * changes.
+     *
+     * @param title the title of the notification
+     * @param body the body text for the notification
+     * @return the builder as it keeps a reference to the notification (since API 24)
+     */
+    public Notification.Builder getNotification(String title, String body) {
+        return new Notification.Builder(getApplicationContext(), IMIBEAN_CHANNEL)
+                .setContentTitle(title)
+                .setContentText(body)
+                .setSmallIcon(getSmallIcon())
+                .setAutoCancel(true);
+    }
+
+    /**
+     * Send a notification.
+     *
+     * @param id The ID of the notification
+     * @param notification The notification object
+     */
+    public void notify(int id, Notification.Builder notification) {
+        getManager().notify(id, notification.build());
+    }
+
+    /**
+     * Get the small icon for this app
+     *
+     * @return The small icon resource id
+     */
+    private int getSmallIcon() {
+        return android.R.drawable.stat_notify_chat;
+    }
+
+    /**
+     * Get the notification manager.
+     *
+     * Utility method as this helper works with it a lot.
+     *
+     * @return The system service NotificationManager
+     */
+    private NotificationManager getManager() {
+        if (manager == null) {
+            manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        }
+        return manager;
+    }
+
+    /**
+     * Send Intent to load system Notification Settings for this app.
+     */
+    public void goToNotificationSettings() {
+        Intent i = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS);
+        i.putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName());
+        startActivity(i);
+    }
+
+    /**
+     * Send intent to load system Notification Settings UI for a particular channel.
+     *
+     * @param channel Name of channel to configure
+     */
+    public void goToNotificationSettings(String channel) {
+        Intent i = new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS);
+        i.putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName());
+        i.putExtra(Settings.EXTRA_CHANNEL_ID, channel);
+        startActivity(i);
+    }
+}

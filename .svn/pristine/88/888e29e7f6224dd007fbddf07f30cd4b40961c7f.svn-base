@@ -1,0 +1,9 @@
+include ':app',':googlemap_library',':mapadapter',':libsvideocall',":camera"
+
+//flutter引入
+setBinding(new Binding([gradle: this]))
+evaluate(new File(settingsDir.parentFile, 'flutter_work/.android/include_flutter.groovy'  ))
+include ':flutter_module'
+project(':flutter_module').projectDir = new File('../flutter_work')
+include ':flutter_work'
+project(':flutter_work').projectDir = new File('../flutter_work')

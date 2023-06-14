@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "297964715753",
+    "firebase_url": "https://mibro-1565074871108.firebaseio.com",
+    "project_id": "mibro-1565074871108",
+    "storage_bucket": "mibro-1565074871108.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:297964715753:android:2d7aee83aacbee7a197a78",
+        "android_client_info": {
+          "package_name": "com.xiaoxun.xunoversea"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "297964715753-99kj405jhe5ch0j5gbe0kfmc9f68rep1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA86VXNrZd_ACQUJd0LdJxbtPdh_qL7JRg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "297964715753-99kj405jhe5ch0j5gbe0kfmc9f68rep1.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "297964715753-kf55quvb2pt5lf5ia6irdteto99lbuqv.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.xiaoxun.xunoversea"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

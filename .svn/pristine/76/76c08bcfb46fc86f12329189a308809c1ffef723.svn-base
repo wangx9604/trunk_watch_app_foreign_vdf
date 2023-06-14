@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#F2F2F6">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="13.33dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginRight="13.33dp"
+        android:background="@drawable/securityzoneboder"
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="150dp">
+
+            <ImageView
+                android:id="@+id/security_zone_image"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="3dp"
+                android:layout_marginTop="3dp"
+                android:layout_marginEnd="3dp"
+                android:layout_marginBottom="3dp"
+                android:background="@drawable/security_default"
+                android:scaleType="centerCrop" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:descendantFocusability="blocksDescendants">
+
+            <ImageView
+                android:id="@+id/log_img"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_marginStart="13.33dp"
+                android:layout_marginTop="16.66dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12.66dp"
+                android:layout_toStartOf="@+id/text_security_setting"
+                android:layout_toEndOf="@id/log_img"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="19dp"
+                    android:singleLine="true"
+                    android:text="@string/security_zone_default_home"
+                    android:textColor="@color/black"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/info"
+                    android:layout_marginBottom="5dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/security_zone_default_info"
+                    android:textColor="@color/txt_grey"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+
+            <ImageButton
+                android:id="@+id/button_img"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="13.33dp"
+                android:background="#00000000"
+                android:clickable="true"
+                android:focusable="true"
+                android:visibility="gone" />
+
+            <ImageButton
+                android:id="@+id/delete_img"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="12dp"
+                android:layout_toStartOf="@+id/button_img"
+                android:background="@drawable/delete_security"
+                android:clickable="true"
+                android:focusable="true"
+                android:visibility="gone" />
+
+
+            <TextView
+                android:id="@+id/text_security_setting"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="23.33dp"
+                android:textSize="12.66sp"
+                android:ellipsize="end"
+                android:padding="5dp"
+                android:text="@string/security_zone_default_setting"
+                android:gravity="center"
+                android:background="@drawable/btn_security_zone_setting"
+                android:textColor="#FF8846" />
+
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/layout_home_wifi"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:descendantFocusability="blocksDescendants"
+            android:visibility="gone">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1px"
+                android:layout_marginStart="15dp"
+                android:background="@color/item_grey" />
+
+            <ImageView
+                android:id="@+id/icon_wifi"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_marginStart="13.33dp"
+                android:layout_marginTop="16.66dp"
+                android:background="@drawable/icon_home_wifi1" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="12.66dp"
+                android:layout_marginRight="12.66dp"
+                android:layout_toStartOf="@+id/but_wifi_setting"
+                android:layout_toEndOf="@id/icon_wifi"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/home_wifi_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="19dp"
+                    android:singleLine="true"
+                    android:text="@string/home_wifi_name"
+                    android:textColor="@color/black"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/home_wifi_des"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="5dp"
+                    android:text="@string/home_wifi_des"
+                    android:textColor="@color/txt_grey"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+
+            <TextView
+                android:id="@+id/but_wifi_setting"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="23.33dp"
+                android:textSize="12.66sp"
+                android:ellipsize="end"
+                android:padding="5dp"
+                android:text="@string/security_zone_default_setting"
+                android:gravity="center"
+                android:background="@drawable/btn_security_zone_setting"
+                android:textColor="#FF8846" />
+        </RelativeLayout>
+
+    </LinearLayout>
+
+</RelativeLayout>

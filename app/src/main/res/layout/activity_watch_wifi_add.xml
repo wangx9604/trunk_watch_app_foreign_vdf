@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom_setting="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white">
+
+    <include
+        android:id="@+id/title"
+        layout="@layout/activity_title" />
+
+    <TextView
+        android:id="@+id/tv_add_wifi_desc"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/title"
+        android:layout_marginStart="@dimen/divideleftandright"
+        android:layout_marginEnd="@dimen/divideleftandright"
+        android:layout_marginBottom="@dimen/divideleftandright"
+        android:layout_marginTop="@dimen/divideleftandright"
+        android:text="@string/manual_add_wifi_desc"
+        android:textColor="@color/txt_grey"
+        android:textSize="@dimen/xiaomiMyTextSize1" />
+
+    <ImageView
+        android:id="@+id/setting_divider"
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:layout_below="@+id/tv_add_wifi_desc"
+        android:paddingLeft="@dimen/divideleftandright"
+        android:paddingRight="@dimen/divideleftandright"
+        android:src="@color/line_grey" />
+
+    <com.xiaoxun.xun.views.CustomSettingView
+        android:id="@+id/layout_wifi_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/setting_divider"
+        custom_setting:tv_title="@string/wifi_name" />
+
+    <com.xiaoxun.xun.views.CustomSettingView
+        android:id="@+id/layout_wifi_pwd"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/layout_wifi_name"
+        custom_setting:tv_title="@string/wifi_password" />
+
+</RelativeLayout>

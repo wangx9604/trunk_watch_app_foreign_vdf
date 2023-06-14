@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/color_6" >
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="22dp"
+                android:layout_gravity="center"
+                android:text="title"
+                android:textColor="@color/true_black"
+                android:textSize="@dimen/xiaomiMyTextSize1"/>
+            <TextView
+                android:id="@+id/content"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="30dp"
+                android:layout_marginRight="30dp"
+                android:layout_marginTop="17dp"
+                android:layout_gravity="center"
+                android:text="content"
+                android:textColor="@color/color_5"
+                android:textSize="@dimen/xiaomiMyTextSize3" />
+            <RelativeLayout
+                android:id="@+id/tip_selector"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="30dp"
+                android:layout_marginTop="10dp"
+                android:clickable="true"
+                >
+                <ImageView
+                    android:id="@+id/selector_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/choice_0"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_toRightOf="@+id/selector_view"
+                    android:layout_centerInParent="true"
+                    android:layout_marginLeft="10dp"
+                    android:text="@string/steps_no_title"
+                    android:textColor="@color/true_black"
+                    android:textSize="@dimen/xiaomiMyTextSize3"/>
+            </RelativeLayout>
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="23.33dp"
+                android:layout_marginBottom="23.33dp"
+                android:layout_gravity="center"
+                android:id="@+id/two_btns">
+                <Button
+                    android:id="@+id/one_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:text="@string/donothing_text"
+                    android:textColor="@color/dark_grey"
+                    android:textSize="@dimen/xiaomiMyTextSize1"
+                    android:background="@drawable/btn_dialgo_one_button"/>
+            </LinearLayout>
+        </LinearLayout>
+    </RelativeLayout>
+
+</RelativeLayout>

@@ -1,0 +1,52 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:id="@+id/device_item_layout"
+        android:layout_width="match_parent"
+        android:layout_height="49.66dp"
+        android:background="@drawable/setting_item_selector"
+        android:clickable="false"
+        android:gravity="center_vertical"
+        android:orientation="vertical"
+        android:paddingEnd="@dimen/divideleftandright"
+        android:paddingStart="@dimen/divideleftandright">
+
+        <ImageView
+            android:id="@+id/function_icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:src="@drawable/health_steps"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/function_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_toEndOf="@+id/function_icon"
+            android:text="@string/health_steps"
+            android:textColor="@color/color_7"
+            android:textSize="@dimen/xiaomiMyTextSize1" />
+
+        <CheckBox
+            android:id="@+id/function_onoff"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/btn_next_selector" />
+    </RelativeLayout>
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:layout_below="@id/device_item_layout"
+        android:paddingEnd="@dimen/divideleftandright"
+        android:paddingStart="@dimen/divideleftandright"
+        android:src="@color/line_grey" />
+
+</RelativeLayout>

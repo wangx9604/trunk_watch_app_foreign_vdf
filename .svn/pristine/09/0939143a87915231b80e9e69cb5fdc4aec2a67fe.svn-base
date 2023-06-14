@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/notice_message_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:fitsSystemWindows="true">
+
+    <View
+        android:id="@+id/iv_title_background"
+        android:layout_width="match_parent"
+        android:layout_height="45.3dp"
+        android:background="@color/bg_color_orange"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+    <ImageButton
+        android:id="@+id/iv_title_back"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="13.3dp"
+        android:background="@drawable/btn_title_back_selector"
+        app:layout_constraintBottom_toBottomOf="@+id/iv_title_background"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/iv_title_background" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="45dp"
+        app:layout_constraintBottom_toBottomOf="@+id/iv_title_background"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/iv_title_background">
+
+        <ImageView
+            android:id="@+id/iv_watch_head"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_centerVertical="true"
+            android:src="@drawable/small_default_head"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/tv_watch_name"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tv_watch_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="13dp"
+            android:textColor="@color/white"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textSize="@dimen/xiaomiMyTextSize1"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/iv_watch_head"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <ImageButton
+        android:id="@+id/iv_notice_setting"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="13.3dp"
+        android:background="@drawable/btn_steps_setting_selector"
+        app:layout_constraintBottom_toBottomOf="@+id/iv_title_background"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/iv_title_background" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/other_msg_list_recycler"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@color/white"
+        android:overScrollMode="never"
+        android:visibility="visible"
+        app:layout_constraintBottom_toTopOf="@+id/iv_top_line"
+        app:layout_constraintTop_toBottomOf="@+id/iv_title_background" />
+
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/group_no_notice"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:constraint_referenced_ids="view_1,tv_no_notice" />
+
+    <ImageView
+        android:id="@+id/view_1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:background="@drawable/voice_1"
+        app:layout_constraintBottom_toTopOf="@+id/tv_no_notice"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/iv_title_background"
+        app:layout_constraintVertical_chainStyle="packed" />
+
+    <TextView
+        android:id="@+id/tv_no_notice"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/view_1"
+        android:layout_marginTop="5.66dp"
+        android:text="@string/no_status"
+        android:textColor="@color/color_10"
+        android:textSize="@dimen/xiaomiMyTextSize3"
+        app:layout_constraintBottom_toTopOf="@+id/iv_top_line"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/view_1" />
+
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/group_sms"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="visible"
+        app:constraint_referenced_ids="iv_top_line,send_sms_btn,iv_bottom_line" />
+
+    <View
+        android:id="@+id/iv_top_line"
+        android:layout_width="match_parent"
+        android:layout_height="0.5dp"
+        android:layout_marginBottom="33dp"
+        android:background="@color/line_grey"
+        app:layout_constraintBottom_toTopOf="@+id/send_sms_btn" />
+
+    <Button
+        android:id="@+id/send_sms_btn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="@dimen/dimen17"
+        android:layout_marginEnd="@dimen/dimen17"
+        android:layout_marginBottom="33dp"
+        android:background="@drawable/btn_recording_selector"
+        android:text="@string/calls_inquiry"
+        android:textColor="@color/txt_grey_button"
+        android:textSize="@dimen/MyTextSize2"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/iv_bottom_line"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <View
+        android:id="@+id/iv_bottom_line"
+        android:layout_width="match_parent"
+        android:layout_height="0.3dp"
+        android:background="@color/color_9"
+        app:layout_constraintBottom_toBottomOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>

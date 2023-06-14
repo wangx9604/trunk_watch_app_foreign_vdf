@@ -1,0 +1,26 @@
+package com.xiaoxun.xun.networkv2.beans;
+
+public class EventBusMsgInfoToBehavior {
+    int msgType;  //0:新建&编辑本地任务；  1:新建云端任务；  2：加入云端任务
+    String msgInfo;
+
+    public EventBusMsgInfoToBehavior(int msgType) {
+        this.msgType = msgType;
+    }
+
+    public int getMsgType() {
+        return msgType;
+    }
+
+    public void setMsgType(int msgType) {
+        this.msgType = msgType;
+    }
+
+    public String getMsgInfo() {
+        return msgInfo;
+    }
+
+    public void setMsgInfo(String msgInfo) {
+        this.msgInfo = msgInfo;
+    }
+}

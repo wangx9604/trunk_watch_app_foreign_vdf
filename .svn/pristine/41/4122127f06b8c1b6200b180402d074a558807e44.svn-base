@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white">
+
+    <android.support.constraint.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/tv_help_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_marginTop="11dp"
+            android:text="@string/bind_help_sub_title_network_check"
+            android:textColor="#ff333333"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/bind_help_sub_title_network_check"
+            android:textColor="#333333"
+            android:textSize="9sp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@+id/tv_help_title"
+            app:layout_constraintTop_toTopOf="@+id/tv_help_title"
+            app:layout_constraintStart_toEndOf="@+id/tv_help_title" />
+
+        <ImageView
+            android:id="@+id/network_light_1"
+            android:layout_width="102dp"
+            android:layout_height="123dp"
+            android:layout_marginTop="16dp"
+            android:src="@drawable/network_light_1"
+            app:layout_constraintEnd_toStartOf="@+id/network_light_2"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_help_title" />
+
+        <ImageView
+            android:layout_width="102dp"
+            android:layout_height="123dp"
+            android:src="@drawable/gif_background_1"
+            app:layout_constraintBottom_toBottomOf="@+id/network_light_1"
+            app:layout_constraintEnd_toEndOf="@+id/network_light_1"
+            app:layout_constraintStart_toStartOf="@+id/network_light_1"
+            app:layout_constraintTop_toTopOf="@+id/network_light_1" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="7dp"
+            android:text="@string/bind_help_network_light_1"
+            android:textColor="#ff707070"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="@+id/network_light_1"
+            app:layout_constraintStart_toStartOf="@+id/network_light_1"
+            app:layout_constraintTop_toBottomOf="@+id/network_light_1" />
+
+        <com.xiaoxun.xun.views.GifView
+            android:id="@+id/network_light_2"
+            android:layout_width="102dp"
+            android:layout_height="123dp"
+            android:layout_marginStart="13dp"
+            app:gif="@drawable/network_light_2"
+            app:layout_constraintBottom_toBottomOf="@+id/network_light_1"
+            app:layout_constraintEnd_toStartOf="@+id/network_light_3"
+            app:layout_constraintStart_toEndOf="@+id/network_light_1"
+            app:layout_constraintTop_toTopOf="@+id/network_light_1" />
+
+        <ImageView
+            android:id="@+id/iv_2"
+            android:layout_width="102dp"
+            android:layout_height="123dp"
+            android:src="@drawable/gif_background_1"
+            app:layout_constraintBottom_toBottomOf="@+id/network_light_2"
+            app:layout_constraintEnd_toEndOf="@+id/network_light_2"
+            app:layout_constraintStart_toStartOf="@+id/network_light_2"
+            app:layout_constraintTop_toTopOf="@+id/network_light_2" />
+
+        <TextView
+            android:id="@+id/tv_2_des"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="17dp"
+            android:text="@string/yellow_light_flicker"
+            android:textColor="#707070"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="@+id/iv_2"
+            app:layout_constraintStart_toStartOf="@+id/iv_2"
+            app:layout_constraintTop_toTopOf="@+id/iv_2" />
+
+        <ImageView
+            android:id="@+id/iv_arrow"
+            android:layout_width="8dp"
+            android:layout_height="20dp"
+            android:scaleType="fitXY"
+            android:src="@drawable/arrow_down"
+            app:layout_constraintEnd_toEndOf="@+id/tv_2_des"
+            app:layout_constraintStart_toStartOf="@+id/tv_2_des"
+            app:layout_constraintTop_toBottomOf="@+id/tv_2_des" />
+
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="7dp"
+            android:text="@string/bind_help_network_light_2"
+            android:textColor="#ff707070"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="@+id/network_light_2"
+            app:layout_constraintStart_toStartOf="@+id/network_light_2"
+            app:layout_constraintTop_toBottomOf="@+id/network_light_2" />
+
+        <com.xiaoxun.xun.views.GifView
+            android:id="@+id/network_light_3"
+            android:layout_width="102dp"
+            android:layout_height="123dp"
+            android:layout_marginStart="13dp"
+            app:gif="@drawable/network_light_3"
+            app:layout_constraintBottom_toBottomOf="@+id/network_light_1"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/network_light_2"
+            app:layout_constraintTop_toTopOf="@+id/network_light_1" />
+
+        <ImageView
+            android:id="@+id/iv_3"
+            android:layout_width="102dp"
+            android:layout_height="123dp"
+            android:src="@drawable/gif_background_1"
+            app:layout_constraintBottom_toBottomOf="@+id/network_light_3"
+            app:layout_constraintEnd_toEndOf="@+id/network_light_3"
+            app:layout_constraintStart_toStartOf="@+id/network_light_3"
+            app:layout_constraintTop_toTopOf="@+id/network_light_3" />
+
+        <TextView
+            android:id="@+id/tv_3_des"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="17dp"
+            android:text="@string/red_light_flicker"
+            android:textColor="#707070"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="@+id/iv_3"
+            app:layout_constraintStart_toStartOf="@+id/iv_3"
+            app:layout_constraintTop_toTopOf="@+id/iv_3" />
+
+        <ImageView
+            android:layout_width="8dp"
+            android:layout_height="20dp"
+            android:scaleType="fitXY"
+            android:src="@drawable/arrow_down"
+            app:layout_constraintEnd_toEndOf="@+id/tv_3_des"
+            app:layout_constraintStart_toStartOf="@+id/tv_3_des"
+            app:layout_constraintTop_toBottomOf="@+id/tv_3_des" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="7dp"
+            android:text="@string/bind_help_network_light_3"
+            android:textColor="#ff707070"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="@+id/network_light_3"
+            app:layout_constraintStart_toStartOf="@+id/network_light_3"
+            app:layout_constraintTop_toBottomOf="@+id/network_light_3" />
+
+
+        <com.xiaoxun.xun.views.GifView
+            android:id="@+id/network_light_4"
+            android:layout_width="102dp"
+            android:layout_height="123dp"
+            android:layout_marginTop="72dp"
+            app:gif="@drawable/network_light_4"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/network_light_1" />
+
+        <ImageView
+            android:id="@+id/iv_4"
+            android:layout_width="102dp"
+            android:layout_height="123dp"
+            android:src="@drawable/gif_background_1"
+            app:layout_constraintBottom_toBottomOf="@+id/network_light_4"
+            app:layout_constraintEnd_toEndOf="@+id/network_light_4"
+            app:layout_constraintStart_toStartOf="@+id/network_light_4"
+            app:layout_constraintTop_toTopOf="@+id/network_light_4" />
+
+        <TextView
+            android:id="@+id/tv_4_des"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="17dp"
+            android:text="@string/indicator"
+            android:textColor="#707070"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="@+id/iv_4"
+            app:layout_constraintStart_toStartOf="@+id/iv_4"
+            app:layout_constraintTop_toTopOf="@+id/iv_4" />
+
+        <ImageView
+            android:layout_width="8dp"
+            android:layout_height="20dp"
+            android:scaleType="fitXY"
+            android:src="@drawable/arrow_down"
+            app:layout_constraintEnd_toEndOf="@+id/tv_4_des"
+            app:layout_constraintStart_toStartOf="@+id/tv_4_des"
+            app:layout_constraintTop_toBottomOf="@+id/tv_4_des" />
+
+        <TextView
+            android:id="@+id/tv_network_tips"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_marginTop="9dp"
+            android:layout_marginEnd="14dp"
+            android:text="@string/bind_help_network_tips"
+            android:textColor="#ff707070"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@+id/network_light_4" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_marginTop="24dp"
+            android:layout_marginEnd="14dp"
+            android:text="@string/bind_help_network_tips_notice"
+            android:textColor="#ff707070"
+            android:textSize="13sp"
+            app:layout_constraintTop_toBottomOf="@+id/tv_network_tips" />
+    </android.support.constraint.ConstraintLayout>
+</ScrollView>

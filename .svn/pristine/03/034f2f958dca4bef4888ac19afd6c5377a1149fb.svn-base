@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:background="@color/xiaomi_bg_grey"
+    tools:context="com.xiaoxun.xun.activitys.GoogleMapHistoryTraceActivity">
+
+    <LinearLayout
+        android:id="@+id/history_trace_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/bg_color_orange"
+        android:orientation="vertical">
+
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="45dp">
+
+            <LinearLayout
+                android:id="@+id/iv_title_back_layout"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
+                android:layout_alignParentLeft="true"
+                android:layout_marginLeft="13.33dp"
+                android:clickable="true">
+
+                <ImageButton
+                    android:id="@+id/iv_title_back"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:background="@drawable/btn_title_back_selector"
+                    android:clickable="false" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/tv_title_layout"
+                android:layout_width="180dp"
+                android:layout_height="match_parent"
+                android:layout_centerInParent="true"
+                android:clickable="true"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tv_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical|center_horizontal|center"
+                    android:text="@string/today"
+                    android:textColor="@color/title_white_color"
+                    android:textSize="@dimen/xiaomiMyTextSize1"
+                    android:textStyle="bold" />
+
+                <!-- android:layout_marginLeft="40.3dp" -->
+
+                <ImageView
+                    android:id="@+id/calendar_sign"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginLeft="5dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/listbtn_ly"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
+                android:layout_alignParentRight="true"
+                android:visibility="invisible">
+
+                <ImageButton
+                    android:id="@+id/listbtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:background="@drawable/list_show_selector"
+                    android:visibility="invisible"/>
+
+            </LinearLayout>
+        </RelativeLayout>
+    </LinearLayout>
+
+    <fragment
+        android:id="@+id/map"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/buttomtitle"
+        android:layout_below="@+id/history_trace_title"
+        class="com.google.android.gms.maps.SupportMapFragment"/>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/history_trace_title"
+        android:layout_alignParentRight="true"
+        android:layout_marginTop="185dp"
+        android:layout_marginEnd="12dp"
+        android:clickable="true"
+        android:orientation="vertical">
+
+        <ImageButton
+            android:id="@+id/zoomout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/btn_zoomout_selector" />
+
+        <ImageButton
+            android:id="@+id/zoomin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/btn_zoomin_selector" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_below="@+id/history_trace_title"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="12dp"
+        android:layout_marginTop="9dp"
+        android:background="@drawable/history_trace_days"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/onedays"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="11dp"
+            android:text="@string/history_trace_one_day"
+            android:textSize="@dimen/MyTextSize3"
+            android:textColor="@color/color_7"/>
+        <TextView
+            android:id="@+id/threedays"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="14dp"
+            android:text="@string/history_trace_three_day"
+            android:textSize="@dimen/MyTextSize3"
+            android:textColor="@color/color_7"/>
+        <TextView
+            android:id="@+id/fivedays"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="14dp"
+            android:text="@string/history_trace_five_day"
+            android:textSize="@dimen/MyTextSize3"
+            android:textColor="@color/color_7"/>
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:id="@+id/buttomtitle"
+        android:layout_width="match_parent"
+        android:layout_height="95dp"
+        android:layout_alignParentBottom="true"
+        android:background="@drawable/bottom_navigation_bar">
+
+        <ImageView
+            android:id="@+id/iv_buttomimg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="19.33dp"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/nomalBottomText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="22.33dp"
+            android:layout_marginRight="24dp"
+            android:layout_alignParentLeft="true"
+            android:layout_toLeftOf="@+id/refreshbutton"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/iv_buttomtitle_err"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:gravity="left|center_vertical"
+                android:singleLine="true"
+                android:text="@string/trace_bottom_data_getting"
+                android:textColor="@color/dark_grey"
+                android:textSize="@dimen/MyTextSize2"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/iv_buttomtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="0.66dp"
+                android:gravity="left|center_vertical"
+                android:singleLine="false"
+                android:text="@string/trace_bottom_data_getting"
+                android:textColor="@color/dark_grey"
+                android:textSize="@dimen/xiaomiMyTextSize2" />
+
+            <TextView
+                android:id="@+id/iv_buttomtips"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="1.33dp"
+                android:textColor="@color/txt_grey"
+                android:textSize="@dimen/xiaomiMyTextSize4"
+                android:text="9:18"/>
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/refreshbutton"
+            android:layout_width="70dp"
+            android:layout_height="30dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="23.33dp"
+            android:background="@drawable/btn_trace_retry_selector"
+            android:text="@string/retry"
+            android:textColor="@color/dark_grey"
+            android:textSize="@dimen/MyTextSize2"
+            android:visibility="gone" />
+
+        <ImageButton
+            android:id="@+id/iv_play_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_gravity="center_vertical"
+            android:layout_marginRight="22.33dp"
+            android:background="@drawable/btn_play_selector"
+            android:visibility="gone" />
+
+        <ImageButton
+            android:id="@+id/trace_list"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_gravity="center_vertical"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="22.33dp"
+            android:background="@drawable/btn_trace_list_selector"
+            android:visibility="gone"/>
+
+    </RelativeLayout>
+
+    <com.xiaoxun.xun.utils.MapScaleView
+        android:id="@+id/mapScaleView"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:layout_above="@+id/control_ly"
+        android:layout_marginBottom="16.3dp"
+        android:layout_marginLeft="20dp">
+    </com.xiaoxun.xun.utils.MapScaleView>
+
+    <RelativeLayout
+        android:id="@+id/control_ly"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/buttomtitle"
+        android:background="@color/halftrans_white"
+        android:visibility="visible">
+
+        <ImageButton
+            android:id="@+id/last_point"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:background="@drawable/btn_trace_last"/>
+
+        <SeekBar
+            android:id="@+id/seek_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@+id/last_point"
+            android:layout_toLeftOf="@+id/next_point"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="14.3dp"
+            android:layout_marginRight="14.3dp"
+            android:max="19"
+            android:maxHeight="1dp"
+            android:minHeight="1dp"
+            android:progress="0"
+
+            android:progressDrawable="@drawable/security_zone_setting_seekbar_style"
+            android:thumb="@drawable/seekbar_thumb_selector"
+            android:thumbOffset="0dip"/>
+
+        <ImageButton
+            android:id="@+id/next_point"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:background="@drawable/btn_trace_next"/>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/guide_control"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <FrameLayout
+            android:id="@+id/guideht"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="57dp"
+            android:background="@drawable/guideht"
+            android:visibility="invisible"/>
+    </RelativeLayout>
+
+</RelativeLayout>

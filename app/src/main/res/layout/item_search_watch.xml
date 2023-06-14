@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <RelativeLayout
+        android:id="@+id/search_watch_view"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/DoubleLineItemHeight"
+        android:background="@drawable/setting_item_selector"
+        android:gravity="center"
+        android:paddingStart="@dimen/divideleftandright"
+        android:paddingEnd="@dimen/divideleftandright">
+
+        <ImageView
+            android:id="@+id/iv_watch_head"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_centerVertical="true"
+            android:contentDescription="@string/blank_str"
+            android:src="@drawable/relation_custom" />
+
+        <TextView
+            android:id="@+id/tv_watch_nickname"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="10dp"
+            android:layout_toEndOf="@id/iv_watch_head"
+            android:text="@string/wechat_notice_bind_nickname"
+            android:textColor="@color/black"
+            android:textSize="@dimen/xiaomiMyTextSize1" />
+
+        <ImageButton
+            android:id="@+id/btn_add_friend"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="@drawable/add" />
+    </RelativeLayout>
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:layout_below="@id/search_watch_view"
+        android:paddingStart="@dimen/divideleftandright"
+        android:paddingEnd="@dimen/divideleftandright"
+        android:src="@color/line_grey" />
+
+</RelativeLayout>

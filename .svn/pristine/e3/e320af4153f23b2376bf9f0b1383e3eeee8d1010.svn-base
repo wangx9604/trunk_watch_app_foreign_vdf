@@ -1,0 +1,1535 @@
+package com.xiaoxun.xun.activitys;
+
+import android.app.Dialog;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Environment;
+import android.provider.Settings;
+import android.text.Editable;
+import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.SeekBar;
+import android.widget.SeekBar.OnSeekBarChangeListener;
+import android.widget.SimpleAdapter;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.amap.api.location.AMapLocation;
+import com.amap.api.location.AMapLocationClient;
+import com.amap.api.location.AMapLocationClientOption;
+import com.amap.api.location.AMapLocationListener;
+import com.amap.api.maps.AMap;
+import com.amap.api.maps.AMap.OnMapClickListener;
+import com.amap.api.maps.AMapUtils;
+import com.amap.api.maps.CameraUpdateFactory;
+import com.amap.api.maps.MapView;
+import com.amap.api.maps.MapsInitializer;
+import com.amap.api.maps.model.BitmapDescriptorFactory;
+import com.amap.api.maps.model.CircleOptions;
+import com.amap.api.maps.model.LatLng;
+import com.amap.api.maps.model.Marker;
+import com.amap.api.maps.model.MarkerOptions;
+import com.amap.api.services.core.AMapException;
+import com.amap.api.services.core.LatLonPoint;
+import com.amap.api.services.core.PoiItem;
+import com.amap.api.services.geocoder.GeocodeAddress;
+import com.amap.api.services.geocoder.GeocodeResult;
+import com.amap.api.services.geocoder.GeocodeSearch;
+import com.amap.api.services.geocoder.RegeocodeQuery;
+import com.amap.api.services.geocoder.RegeocodeResult;
+import com.amap.api.services.poisearch.PoiResult;
+import com.amap.api.services.poisearch.PoiSearch;
+import com.baidu.mapapi.utils.CoordinateConverter;
+import com.xiaoxun.calendar.LoadingDialog;
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.adapter.InfoWinAdapter;
+import com.xiaoxun.xun.beans.LocationData;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.utils.AESUtil;
+import com.xiaoxun.xun.utils.CloudBridgeUtil;
+import com.xiaoxun.xun.utils.CommonUtil;
+import com.xiaoxun.xun.utils.CustomSelectDialogUtil;
+import com.xiaoxun.xun.utils.DialogUtil;
+import com.xiaoxun.xun.utils.LogUtil;
+import com.xiaoxun.xun.utils.PermissionUtils;
+import com.xiaoxun.xun.utils.SecurityZone;
+import com.xiaoxun.xun.utils.ToastUtil;
+import com.xiaoxun.xun.utils.WatchWifiUtils;
+
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
+import net.minidev.json.JSONValue;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static com.xiaoxun.xun.activitys.SecurityZoneSettingBaidu.HOMEWIFI_SETTING_REQ;
+
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+
+/**
+ * 类名称：SecurityZoneSettings
+ * 修改人：zhangjun5
+ * 修改时间：2015/11/16 15:31
+ * 方法描述：设置安全区域。设置安全区域的半径和安全区域的位置信息
+ * <p/>
+ * 修改描述：添加一个隐藏的MapView，控制大小，以便于截图使用。
+ */
+public class SecurityZoneSettings extends NormalActivity implements OnClickListener, OnSeekBarChangeListener,
+        OnMapClickListener, GeocodeSearch.OnGeocodeSearchListener, AMap.OnMapScreenShotListener,
+        LoadingDialog.OnConfirmClickListener,
+        AMapLocationListener {
+
+    private WatchData curWatch;//当前设置的watch
+    private int defaultSecurityZoom = 50; //1000范围值为50
+
+    private MapView mMapView = null;
+    private AMap mAMap = null;
+    private MarkerOptions mMarker = null;
+    private ArrayList<MarkerOptions> mMarkerList = null;
+
+    private SeekBar circleRadiusBar;
+    private LinearLayout layout_security_below_200;
+    CircleOptions circleOptions;
+    private GeocodeSearch geocodeSearch;
+
+    private ImageButton btnPhoneLocation;
+    private ImageButton btnWatchLocation;
+    private ImageButton btnBack;
+    private Button mButtonAdd;
+    private TextView mTitleRadiusText;
+
+    private int isModifyOrNewAdd = 0;  // 1 Modify the zone info ,  2 add new item
+    private String sName, sRadius, sCenter, sOnOff, sKey, sInfo, sPreview;
+    ArrayList<SecurityZone> listItem;
+    private final String LogTag = "securityzonesettings";
+    private LoadingDialog loadingdlg;
+    private boolean isdefault = false; //用来判断是否是默认的家或者学校
+    private LatLng locLat = null;
+    //本地城市名
+    private String cityName = null;
+    private AMapLocationClient mlocationClient;                    //修改为2.0.1版本
+    private AMapLocationClientOption mLocationOption;            //手机定位管理   修改为2.0.1版本
+
+    private PoiSearch.Query mQuery;// Poi查询条件类
+    private PoiSearch mPoiSearch;// POI搜索
+
+    private PoiSearch.Query mSearchQuery;// Poi查询条件类
+    private PoiSearch mSearchPoiSearch;// POI搜索
+
+    private View mMapLayout;
+    private InfoWinAdapter adapter;
+    private Marker oldMarker;
+
+    private boolean needSetHomeWifi = false;
+
+    public static final int PERMISSION_RESULT_LOCATION = 1;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.security_zone_settings);
+        ((TextView) findViewById(R.id.tv_title)).setText(R.string.security_zone_settings);
+
+        //使用离线地图位置
+        MapsInitializer.sdcardDir = ImibabyApp.getMapOfflineDir().getPath();
+        MapsInitializer.loadWorldGridMap(true);
+        String eid_firstSet = getIntent().getStringExtra(CloudBridgeUtil.KEY_NAME_EID);
+        if (!eid_firstSet.equals("")) {
+            curWatch = myApp.getCurUser().queryWatchDataByEid(eid_firstSet);
+        } else {
+            curWatch = myApp.getCurUser().getFocusWatch();
+        }
+        loadingdlg = new LoadingDialog(this, R.style.Theme_DataSheet, this);
+        mMapView = (MapView) findViewById(R.id.amap);
+        mMapView.onCreate(savedInstanceState);
+        mMapLayout = findViewById(R.id.layer_map);
+        SharedPreferences prefs = getSharedPreferences(
+                DevOptActivity.DEV_OPT_PREF, Context.MODE_PRIVATE);
+        String security50 = prefs.getString(
+                DevOptActivity.SECURITY_50, "false");
+        if(security50.equalsIgnoreCase("true")){
+            defaultSecurityZoom = 50;
+        }else{
+            defaultSecurityZoom = 50;
+        }
+
+        Intent intent = this.getIntent();
+        if (intent.getBundleExtra("inzone") != null) {
+            Bundle bundle = intent.getBundleExtra("inzone");
+            sName = bundle.getString(CloudBridgeUtil.SECURITY_ZONE_NAME);
+            sRadius = bundle.getString(CloudBridgeUtil.SECURITY_ZONE_RADIUS);
+            sCenter = bundle.getString(CloudBridgeUtil.SECURITY_ZONE_CENTER);
+            sOnOff = bundle.getString(CloudBridgeUtil.SECURITY_ZONE_ONOFF);
+            sKey = bundle.getString(CloudBridgeUtil.SECURITY_ZONE_EFID);
+            sInfo = bundle.getString(CloudBridgeUtil.SECURITY_ZONE_SEARCH_INFO);
+            sPreview = bundle.getString(CloudBridgeUtil.SECURITY_ZONE_PREVIEW);
+            if (sKey.equals("EFID1") || sKey.equals("EFID2")) {
+                isdefault = true;
+                if (sPreview.equals(getResources().getString(R.string.security_default))) {
+                    isModifyOrNewAdd = 2;
+                } else {
+                    isModifyOrNewAdd = 1;
+                }
+                if(sKey.equals("EFID1")
+                        && myApp.getConfigFormDeviceType(curWatch.getDeviceType(),curWatch.getVerCur(),curWatch.getMachSn()).getSwitch_home_wifi_setting()){
+                    needSetHomeWifi = true;
+                }else{
+                    needSetHomeWifi = false;
+                }
+            } else {
+                isModifyOrNewAdd = 1;
+            }
+        } else {
+            isModifyOrNewAdd = 2;
+        }
+        LogUtil.i(LogTag + "  " + "" + isModifyOrNewAdd);
+        getListItemFromLocal();
+
+        init();
+        initViews();
+        initSearchData();
+        initNearbyData();
+        initSecurityZone();
+//        checkExternalStorgePermission();
+    }
+
+    /**
+     * 类名称：SecurityZoneSettings
+     * 修改人：zhangjun5
+     * 修改时间：2015/11/12 11:19
+     * 方法描述：取出所有的数据，后续检查是否有区域重叠
+     * <p/>
+     * 修改描述：未修改
+     */
+    private void getListItemFromLocal() {
+        listItem = new ArrayList<SecurityZone>();
+        String data = "";
+        if(curWatch.getEid()!=null){
+            data = myApp.getStringValue(curWatch.getEid() + Const.SHARE_PREF_SECURITY_ZONE_JASON_KEY,"");
+        }
+        if (data != null && !data.equals("")) {
+            JSONObject pl = (JSONObject) JSONValue.parse(data);
+            JSONArray arr = (JSONArray) pl.get("list");
+            if(arr != null && arr.size()>0){
+                for(int i=0;i<arr.size();i++){
+                    JSONObject item = (JSONObject) arr.get(i);
+                    SecurityZone securityZone = new SecurityZone();
+                    securityZone.sName = (String)item.get("Name");
+                    securityZone.sCenter = (String)item.get("Center_amap");
+                    securityZone.sRadius = (Integer)item.get("Radius");
+                    securityZone.onOff = (String)item.get("Onoff");
+                    securityZone.keyEFID = (String)item.get("Efid");
+                    securityZone.info = (String)item.get("Info");
+                    securityZone.preview = (String)item.get("Preview");
+                    securityZone.sCenterBD = (String)item.get("Center_bd");
+                    securityZone.sCoordinate = (String)item.get("Coodrinate");
+
+                    listItem.add(securityZone);
+                }
+            }
+        }
+    }
+
+    /**
+     * 类名称：SecurityZoneSettings
+     * 修改人：zhangjun5
+     * 修改时间：2015/11/16 15:50
+     * 方法描述：初始化主mapview的显示。添加中心点标记和安全区域显示。
+     * <p/>
+     * 修改描述：未修改。
+     */
+    private void init() {
+        if (null == mAMap) {
+            mAMap = mMapView.getMap();
+            mAMap.getUiSettings().setZoomControlsEnabled(false);     //隐藏地图系统默认的放缩按钮
+            mAMap.getUiSettings().setRotateGesturesEnabled(false);     //禁止通过手势旋转
+            mAMap.getUiSettings().setTiltGesturesEnabled(false);     //禁止通过手势倾斜
+            mAMap.setOnMapClickListener(this);
+            mAMap.clear();
+            mAMap.setMyLocationType(AMap.LOCATION_TYPE_LOCATE);
+            adapter = new InfoWinAdapter(this);
+            mAMap.setInfoWindowAdapter(adapter);
+        }
+
+        if (null == mMarkerList) {
+            mMarkerList = new ArrayList<MarkerOptions>();
+        }
+        mMarkerList.clear();
+
+        try {
+            geocodeSearch = new GeocodeSearch(this);
+        } catch (AMapException e) {
+            e.printStackTrace();
+        }
+        geocodeSearch.setOnGeocodeSearchListener(this);
+    }
+    /**
+     *user:zhangjun5 time:15:06 date:2017/6/8
+     *desc:手表的定位信息，设置marker
+     **/
+    private void setWatchLocation(){
+        if (curWatch.getCurLocation() != null) {
+            setMarkerByLat(curWatch.getCurLocation().getLatLng());
+            mMarker.anchor(0.5f, 0.5f);
+            mMarker.snippet(String.valueOf(circleRadiusBar.getProgress() * 50 + defaultSecurityZoom));
+            mMarkerList.add(mMarker);
+            ArrayList<Marker> markers = mAMap.addMarkers(mMarkerList, true);
+            Marker marker = markers.get(0);
+            showDistancePop(marker);
+        } else {
+            stopPhoneLocation();
+            startPhoneLocation(true);
+        }
+    }
+
+    private void startPhoneLocation(boolean isOnceLocation) {
+
+        if (Build.VERSION.SDK_INT >= 23 && !PermissionUtils.hasPermissions(this, PermissionUtils.locationPermissions)) {
+            ActivityCompat.requestPermissions(this, PermissionUtils.locationPermissions, PERMISSION_RESULT_LOCATION);
+            return;
+        }
+
+        if (mlocationClient == null){
+            try {
+                mlocationClient = new AMapLocationClient(this);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            mlocationClient.setLocationListener(this);       //设置定位监听
+
+            mLocationOption = new AMapLocationClientOption();
+            //设置为高精度定位模式
+            mLocationOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
+            // 设置发送定位请求的时间间隔,最小值为2000，如果小于2000，按照2000算
+            mLocationOption.setInterval(2000);
+            mLocationOption.setOnceLocation(isOnceLocation);
+            // 设置定位参数
+            mlocationClient.setLocationOption(mLocationOption);
+            // 启动定位
+            mlocationClient.startLocation();
+        }else if(!mlocationClient.isStarted()) {
+            // 设置定位参数
+            mlocationClient.setLocationOption(mLocationOption);
+            // 启动定位
+            mlocationClient.startLocation();
+        }
+    }
+    // 停止定位
+    private void stopPhoneLocation() {
+        if (mlocationClient != null) {
+            mlocationClient.stopLocation();
+            mlocationClient.unRegisterLocationListener(this);
+            mlocationClient.onDestroy();
+            mlocationClient = null;
+            mLocationOption = null;
+        }
+    }
+    /**
+     *user:zhangjun5 time:15:07 date:2017/6/8
+     *desc:手机的定位信息，设置marker
+     **/
+    private void setPhoneLocation(){
+        stopPhoneLocation();
+        startPhoneLocation(true);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (PERMISSION_RESULT_LOCATION == requestCode) {
+            if (PermissionUtils.hasPermissions(this, PermissionUtils.locationPermissions)) {
+                startPhoneLocation(true);
+            } else {
+                Toast.makeText(this, getString(R.string.locations_premission_tips), Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void setMarkerByLat(LatLng lat) {
+        if (sKey == null) {
+            mMarker = new MarkerOptions().position(lat)
+                    .icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.yellow_point_0)));
+        } else {
+            if (sKey.equals("EFID1")) {
+                mMarker = new MarkerOptions().position(lat)
+                        .icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.green_point_0)));
+            } else if (sKey.equals("EFID2")) {
+                mMarker = new MarkerOptions().position(lat)
+                        .icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.blue_point_0)));
+            } else {
+                mMarker = new MarkerOptions().position(lat)
+                        .icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.yellow_point_0)));
+            }
+        }
+    }
+
+    private void initViews() {
+        layout_security_below_200 = (LinearLayout) findViewById(R.id.layout_security_below_200);
+        circleRadiusBar = (SeekBar) findViewById(R.id.seek_radius_level);
+        circleRadiusBar.setOnSeekBarChangeListener(this);
+        circleRadiusBar.setMax(9);
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            circleRadiusBar.setPadding(35, 0, 30, 0);
+            circleRadiusBar.invalidate();
+        }
+        if (isModifyOrNewAdd == 1) {
+            int radiusLeng = Integer.parseInt(sRadius) - defaultSecurityZoom;
+            if (radiusLeng < 0) {
+                circleRadiusBar.setProgress(0);
+            } else {
+                circleRadiusBar.setProgress(radiusLeng / 50);
+            }
+        } else {
+            circleRadiusBar.setProgress(3);
+        }
+
+        btnBack = (ImageButton) findViewById(R.id.iv_title_back);
+        btnPhoneLocation = (ImageButton) findViewById(R.id.security_phone_location);
+        btnWatchLocation = (ImageButton) findViewById(R.id.security_watch_location);
+        btnBack.setOnClickListener(this);
+        btnPhoneLocation.setOnClickListener(this);
+        btnWatchLocation.setOnClickListener(this);
+
+        View zoomout = findViewById(R.id.btn_zoomout);    //放大地图按钮
+        zoomout.setOnClickListener(this);
+        View zoomin = findViewById(R.id.btn_zoomin);        //缩小地图按钮
+        zoomin.setOnClickListener(this);
+
+        mButtonAdd = (Button) findViewById(R.id.security_zone_next);
+        mButtonAdd.setOnClickListener(this);
+
+        mTitleRadiusText = (TextView) findViewById(R.id.radius_title_text);
+
+        //中心点
+        if (isModifyOrNewAdd == 1) {
+            LatLng lat = new LatLng(
+                    Double.parseDouble(sCenter.substring(sCenter.indexOf("(") + 1, sCenter.indexOf(","))),
+                    Double.parseDouble(sCenter.substring(sCenter.indexOf(",") + 1, sCenter.indexOf(")"))));
+            setMarkerByLat(lat);
+
+            mMarker.anchor(0.5f, 0.5f);
+            mMarker.snippet(TextUtils.isEmpty(sRadius)?"0":sRadius);
+            mMarkerList.add(mMarker);
+            ArrayList<Marker> markers = mAMap.addMarkers(mMarkerList, true);
+            Marker marker = markers.get(0);
+            showDistancePop(marker);
+        } else {
+            setWatchLocation();
+        }
+
+        if (isModifyOrNewAdd == 1) {
+            checkDistanceBelow200(TextUtils.isEmpty(sRadius)?0:Integer.parseInt(sRadius));
+            mTitleRadiusText.setText(this.getResources().getString(R.string.unit_meter_with_number,sRadius));
+        } else {
+            checkDistanceBelow200(circleRadiusBar.getProgress() * 50 + defaultSecurityZoom);
+            mTitleRadiusText.setText(this.getResources().getString(R.string.unit_meter_with_number,Integer.toString(circleRadiusBar.getProgress() * 50 + defaultSecurityZoom)));
+            if (curWatch.getCurLocation() != null) {
+                LatLonPoint latlonpoint = new LatLonPoint(curWatch.getCurLocation().getLatitude(), curWatch.getCurLocation().getLongitude());
+                RegeocodeQuery query = new RegeocodeQuery(latlonpoint, 200, GeocodeSearch.AMAP);
+                geocodeSearch.getFromLocationAsyn(query);
+            }
+        }
+    }
+
+    private void initSecurityZone() {
+        circleOptions = new CircleOptions();
+        if (isModifyOrNewAdd == 1) {
+            circleOptions.center(new LatLng(
+                    Double.parseDouble(sCenter.substring(sCenter.indexOf("(") + 1, sCenter.indexOf(","))),
+                    Double.parseDouble(sCenter.substring(sCenter.indexOf(",") + 1, sCenter.indexOf(")")))));
+            if (cityName == null || cityName.length() == 0) {
+                if (curWatch.getCurLocation() != null) {
+                    cityName = curWatch.getCurLocation().getCity();
+                } else if (myApp.getCurUser().getLocation() != null) {
+                    cityName = myApp.getCurUser().getLocation().getCity();
+                } else {
+                    cityName = "";
+                }
+                HashMap<String, Object> map = new HashMap<String, Object>();
+                map.put("desc", sInfo);
+                map.put("city", cityName);
+                map.put("latlng", circleOptions.getCenter());
+                map.put("distance", "0" + getText(R.string.unit_meter).toString());
+                mNearbyListItem.clear();
+                mNearbyListItem.add(map);
+                mNearbyAdapter.notifyDataSetChanged();
+                doNearbySearch(cityName, circleOptions.getCenter());
+            }
+        } else {
+            if (curWatch.getCurLocation() != null) {
+                circleOptions.center(curWatch.getCurLocation().getLatLng());
+                doNearbySearch(curWatch.getCurLocation().getCity(), circleOptions.getCenter());
+            } else {
+                if (locLat != null) {
+                    circleOptions.center(locLat);
+                    doNearbySearch(cityName, circleOptions.getCenter());
+                }
+            }
+        }
+
+        setCircleZone();
+    }
+    /**
+     *user:zhangjun5 time:15:20 date:2017/6/8
+     *desc:绘制安全区域的圆形半径
+     **/
+    private void setCircleZone(){
+        circleOptions.radius(circleRadiusBar.getProgress()*50+defaultSecurityZoom);
+        if (sKey == null) {
+            circleOptions.fillColor(0x1afcc634);
+            circleOptions.strokeColor(0xfffcc634);
+        } else {
+            if (sKey.equals("EFID1")) {
+                circleOptions.fillColor(0x1a2cbba5);
+                circleOptions.strokeColor(0xff2cbba5);
+            } else if (sKey.equals("EFID2")) {
+                circleOptions.fillColor(0x1a31b0d5);
+                circleOptions.strokeColor(0xff31b0d5);
+            } else {
+                circleOptions.fillColor(0x1afcc634);
+                circleOptions.strokeColor(0xfffcc634);
+            }
+        }
+        circleOptions.strokeWidth(2);
+        circleOptions.visible(true);
+        circleOptions.zIndex(3);
+
+        mAMap.addCircle(circleOptions);
+        mAMap.moveCamera(CameraUpdateFactory.zoomTo((float)14.8));
+    }
+
+    public void onMapClick(LatLng latLng) {
+        addAnimationMarker(latLng, (int) circleOptions.getRadius(), false);
+
+        LatLonPoint latlonpoint = new LatLonPoint(latLng.latitude, latLng.longitude);
+        RegeocodeQuery query = new RegeocodeQuery(latlonpoint, 200, GeocodeSearch.AMAP);
+        geocodeSearch.getFromLocationAsyn(query);
+        mNearbyListItem.clear();
+        mNearbyAdapter.notifyDataSetChanged();
+        checkDistanceBelow200((int) circleOptions.getRadius());
+        mTitleRadiusText.setText(this.getResources().getString(R.string.unit_meter_with_number, Integer.toString((int) circleOptions.getRadius())));
+    }
+
+    private void addAnimationMarker(LatLng latLng, int radius, boolean mCenter) {
+        mAMap.clear();
+        mMarkerList.clear();
+
+        setMarkerByLat(latLng);
+        mMarker.anchor(0.5f, 0.5f);
+        mMarker.snippet(String.valueOf(radius));
+        mMarkerList.add(mMarker);
+
+        ArrayList<Marker> markers = mAMap.addMarkers(mMarkerList, mCenter);
+        Marker marker = markers.get(0);
+
+        showDistancePop(marker);
+
+        circleOptions.center(latLng);
+        circleOptions.radius(radius);
+        if (sKey == null) {
+            circleOptions.fillColor(0x1afcc634);
+            circleOptions.strokeColor(0xfffcc634);
+        } else {
+            if (sKey.equals("EFID1")) {
+                circleOptions.fillColor(0x1a2cbba5);
+                circleOptions.strokeColor(0xff2cbba5);
+            } else if (sKey.equals("EFID2")) {
+                circleOptions.fillColor(0x1a31b0d5);
+                circleOptions.strokeColor(0xff31b0d5);
+            } else {
+                circleOptions.fillColor(0x1afcc634);
+                circleOptions.strokeColor(0xfffcc634);
+            }
+        }
+        circleOptions.zIndex(3);
+        mAMap.addCircle(circleOptions);
+
+        if (mCenter) {
+            mAMap.moveCamera(CameraUpdateFactory.zoomTo((float)14.8));
+            mAMap.moveCamera(CameraUpdateFactory.changeLatLng(latLng));
+        }
+    }
+
+    private void showDistancePop(Marker marker) {
+        if (oldMarker != null){
+            oldMarker.hideInfoWindow();
+        }
+        oldMarker = marker;
+        oldMarker.showInfoWindow();
+    }
+
+    private String formatLatLng(String latlng){
+        String formatStr = null;
+        String latStr = latlng.substring(latlng.indexOf("(")+1, latlng.indexOf(","));
+        String lngStr = latlng.substring(latlng.indexOf(",")+1, latlng.indexOf(")"));
+        if(latStr.length() > 12){
+            latStr = latStr.substring(0,12);
+        }
+        if(lngStr.length() > 12){
+            lngStr = lngStr.substring(0,12);
+        }
+        formatStr = latlng.substring(0,latlng.indexOf("(")+1)+latStr+","+lngStr+")";
+
+        LogUtil.i("formatLatLng:"+latlng+":"+formatStr);
+        return formatStr;
+    }
+
+    private String formatToBDLatLng(LatLng pos){
+        com.baidu.mapapi.model.LatLng posbd = new com.baidu.mapapi.model.LatLng(pos.latitude,pos.longitude);
+        CoordinateConverter convert = new CoordinateConverter();
+        convert.from(CoordinateConverter.CoordType.COMMON);
+        convert.coord(posbd);
+        com.baidu.mapapi.model.LatLng ret = convert.convert();
+        String bdstr = formatBDLatlng(ret);
+        return bdstr;
+    }
+    private String formatBDLatlng(com.baidu.mapapi.model.LatLng latLng){
+        return "lat/lng:(" + String.valueOf(latLng.latitude) + "," + String.valueOf(latLng.longitude) + ")";
+    }
+    /**
+     * 类名称：SecurityZoneSettings
+     * 修改人：zhangjun5
+     * 修改时间：2015/11/12 11:18
+     * 方法描述：检查安全区域是否有覆盖
+     * <p/>
+     * 修改描述：
+     */
+    private boolean checkSecurityZoneOverlap() {
+        for (int i = 0; i < listItem.size(); i++) {
+            SecurityZone securityZone = listItem.get(i);
+            String efidKey = securityZone.keyEFID;
+            if (sKey != null) {
+                if (efidKey.equals(sKey))
+                    continue;
+            }
+            if (securityZone.preview.equals(getResources().getString(R.string.security_default))) {
+                continue;
+            }
+            if(securityZone.onOff.equals("0")){
+                continue;
+            }
+            String stmpCenter = securityZone.sCenter;
+            LatLng startLatLng = new LatLng(Double.parseDouble(stmpCenter.substring(stmpCenter.indexOf("(") + 1, stmpCenter.indexOf(","))),
+                    Double.parseDouble(stmpCenter.substring(stmpCenter.indexOf(",") + 1, stmpCenter.indexOf(")"))));
+
+            int distance = (int) AMapUtils.calculateLineDistance(startLatLng, circleOptions.getCenter());
+            int twoCircleRadius = (securityZone.sRadius) + (int) (circleOptions.getRadius());
+            if (distance < twoCircleRadius) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.security_phone_location:
+                setPhoneLocation();
+                break;
+            case R.id.security_watch_location:
+                mAMap.clear();
+                mMarkerList.clear();
+                circleOptions = new CircleOptions();
+                if (curWatch.getCurLocation() != null) {
+                    setMarkerByLat(curWatch.getCurLocation().getLatLng());
+                    mMarker.anchor(0.5f, 0.5f);
+                    mMarkerList.add(mMarker);
+                    mAMap.addMarkers(mMarkerList, true);
+                    circleOptions.center(curWatch.getCurLocation().getLatLng());
+                    HashMap<String, Object> map = new HashMap<String, Object>();
+                    map.put("desc", curWatch.getCurLocation().getDescription());
+                    map.put("city", curWatch.getCurLocation().getCity());
+                    map.put("latlng", circleOptions.getCenter());
+                    map.put("distance", getString(R.string.unit_meter_with_number,"0"));
+                    map.put("loc_type",getResources().getString(R.string.security_watch_position));
+                    mNearbyListItem.clear();
+                    mNearbyListItem.add(map);
+                    mNearbyAdapter.notifyDataSetChanged();
+                    doNearbySearch(curWatch.getCurLocation().getCity(), circleOptions.getCenter());
+                    setCircleZone();
+                }else{
+                    setPhoneLocation();
+                }
+                break;
+            case R.id.iv_title_back:
+                finish();
+                break;
+            case R.id.btn_zoomout:
+                mAMap.animateCamera(CameraUpdateFactory.zoomIn(), 250, null);
+                break;
+            case R.id.btn_zoomin:
+                mAMap.animateCamera(CameraUpdateFactory.zoomOut(), 250, null);
+                break;
+            case R.id.security_zone_next:
+                if (circleOptions.getCenter() == null || sInfo == null || sInfo.equals("") || sInfo.equals(getString(R.string.security_zone_default_info))) {
+                    ToastUtil.show(this,
+                            getString(R.string.wait_for_address));
+                    break;
+                }
+                if (!checkSecurityZoneOverlap()) {
+                    ToastUtil.show(this,
+                            getString(R.string.security_zone_overlay));
+                    break;
+                }
+
+                if (oldMarker != null){
+                    oldMarker.hideInfoWindow();
+                }
+
+                int curZone = circleRadiusBar.getProgress() * 50 + defaultSecurityZoom;
+                mAMap.moveCamera(CameraUpdateFactory.changeLatLng(circleOptions.getCenter()));
+                if (curZone > 400) {
+                    mAMap.moveCamera(CameraUpdateFactory.zoomTo((float) 14.4));
+                } else if (curZone == 400) {
+                    mAMap.moveCamera(CameraUpdateFactory.zoomTo((float) 14.5));
+                } else if (curZone == 350) {
+                    mAMap.moveCamera(CameraUpdateFactory.zoomTo((float) 14.6));
+                } else if (curZone == 300) {
+                    mAMap.moveCamera(CameraUpdateFactory.zoomTo((float) 14.7));
+                } else {
+                    mAMap.moveCamera(CameraUpdateFactory.zoomTo((float) 14.8));
+                }
+                if (loadingdlg != null && !loadingdlg.isShowing()) {
+                    loadingdlg.enableCancel(false);
+                    loadingdlg.changeStatus(1, getResources().getString(R.string.save_szone_message));
+                    loadingdlg.show();
+                }
+                //防止地图加载过程中截图，造成空白屏，标记显示不全等问题。
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                mAMap.getMapScreenShot(this);
+
+                break;
+            default:
+                break;
+        }
+    }
+    private boolean isNeedDistanceTip = true;
+    @Override
+    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+        if (fromUser) {
+            int distance = progress * 50 + defaultSecurityZoom;
+            checkDistanceBelow200(distance);
+            addAnimationMarker(circleOptions.getCenter(), distance, false);
+            mTitleRadiusText.setText(this.getResources().getString(R.string.unit_meter_with_number,Integer.toString(distance)));
+
+        }
+    }
+
+    private void checkDistanceBelow200(int distance) {
+        if (distance<200){
+            layout_security_below_200.setVisibility(View.VISIBLE);
+        }else {
+            layout_security_below_200.setVisibility(View.GONE);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mMapView.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mMapView.onPause();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        mMapView.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (oldMarker!=null){
+            oldMarker.hideInfoWindow();
+            oldMarker = null;
+        }
+        mMapView.onDestroy();
+        if (null != mlocationClient) {
+            /**
+             * 如果AMapLocationClient是在当前Activity实例化的，
+             * 在Activity的onDestroy中一定要执行AMapLocationClient的onDestroy
+             */
+            mlocationClient.onDestroy();
+            mlocationClient = null;
+            mLocationOption = null;
+        }
+        if (loadingdlg!=null){
+            loadingdlg.dismiss();
+            loadingdlg = null;
+        }
+
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(requestCode == HOMEWIFI_SETTING_REQ){
+            Intent intent = new Intent();
+            Bundle bundle = new Bundle();
+            //bundle.putString(CloudBridgeUtil.SECURITY_ZONE_NAME, mTextSecurityName.getText().toString() );
+            bundle.putString(CloudBridgeUtil.SECURITY_ZONE_NAME, sName);
+            bundle.putString(CloudBridgeUtil.SECURITY_ZONE_RADIUS,
+                    Integer.toString(circleRadiusBar.getProgress() * 50 + defaultSecurityZoom));
+            bundle.putString(CloudBridgeUtil.SECURITY_ZONE_CENTER, formatLatLng(circleOptions.getCenter().toString()));
+            bundle.putString(CloudBridgeUtil.SECURITY_ZONE_CENTER_BD,formatLatLng(formatToBDLatLng(circleOptions.getCenter())));
+
+            bundle.putString(CloudBridgeUtil.SECURITY_ZONE_SEARCH_INFO, sInfo);
+            bundle.putString(CloudBridgeUtil.SECURITY_ZONE_PREVIEW, sPreview);
+            intent.putExtra("outzone", bundle);
+
+            bundle.putString(CloudBridgeUtil.SECURITY_ZONE_ONOFF, sOnOff);
+            bundle.putString(CloudBridgeUtil.SECURITY_ZONE_EFID, sKey);
+            LogUtil.e("securityzone:" + bundle.toString());
+            myApp.sdcardLog("securityzone:" + bundle.toString());
+            LogUtil.e("HomeWifiSetting return.");
+            if(resultCode == RESULT_OK) {
+                String ssid = data.getStringExtra("ssid");
+                String bssid = data.getStringExtra("bssid");
+                intent.putExtra("ssid", ssid);
+                intent.putExtra("bssid", bssid);
+            }else {
+                intent.putExtra("ssid", "");
+                intent.putExtra("bssid", "");
+            }
+            if (isModifyOrNewAdd == 1) {
+                setResult(1, intent);
+            } else if (isModifyOrNewAdd == 2) {
+                setResult(3, intent);
+            }
+            finish();
+        }else if(requestCode == 1024){
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                if (Environment.isExternalStorageManager()) {
+                    isRefuse = false;
+                    // 授权成功
+                } else {
+                    isRefuse = true;
+                    // 授权失败
+                    ToastUtil.show(this,"未授权成功");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onStartTrackingTouch(SeekBar seekBar) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onStopTrackingTouch(SeekBar seekBar) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onGeocodeSearched(GeocodeResult arg0, int arg1) {
+        // TODO Auto-generated method stub
+        if (arg1 == 1000) {
+            if (arg0 != null && arg0.getGeocodeAddressList() != null
+                    && arg0.getGeocodeAddressList().size() > 0) {
+                GeocodeAddress address = arg0.getGeocodeAddressList().get(0);
+                LatLng latlng = new LatLng(address.getLatLonPoint().getLatitude(), address.getLatLonPoint().getLongitude());
+                addAnimationMarker(latlng, circleRadiusBar.getProgress() * 50 + defaultSecurityZoom, true);
+            }
+        }
+    }
+
+    @Override
+    public void onRegeocodeSearched(RegeocodeResult arg0, int arg1) {
+        // TODO Auto-generated method stub
+        if (arg1 == 1000) {
+            if (arg0 != null && arg0.getRegeocodeAddress() != null
+                    && arg0.getRegeocodeAddress().getFormatAddress() != null) {
+                String addressName = arg0.getRegeocodeAddress().getFormatAddress();
+                //mAddressName.setText(addressName);
+                sInfo = addressName;
+                cityName = arg0.getRegeocodeAddress().getCity();
+                if (cityName == null || cityName.length() == 0) {
+                    cityName = arg0.getRegeocodeAddress().getProvince();
+                }
+                HashMap<String, Object> map = new HashMap<String, Object>();
+                map.put("desc", addressName);
+                map.put("city", cityName);
+                map.put("latlng", circleOptions.getCenter());
+                map.put("distance", getString(R.string.unit_meter_with_number,"0"));
+                mNearbyListItem.clear();
+                mNearbyListItem.add(map);
+                mNearbyAdapter.notifyDataSetChanged();
+                doNearbySearch(cityName, circleOptions.getCenter());
+            }
+        }
+    }
+
+    /**
+     * 类名称：SecurityZoneSettings
+     * 创建人：zhangjun5
+     * 创建时间：2015/11/16 14:48
+     * 方法描述：截屏成功后的回调函数。高德回调函数。对图片进行裁剪，压缩，之后检查压缩后的图片大小。
+     * 如果大于45k，进行二次压缩。以保证上传服务器的数据不大于64kb
+     */
+    @Override
+    public void onMapScreenShot(Bitmap bitmap) {
+        if (null == bitmap) {
+            return;
+        }
+        if (!PermissionUtils.hasPermissions(this, PermissionUtils.storagePermissions))
+            return;
+
+        long width = bitmap.getWidth();
+        long height = bitmap.getHeight();
+        String fileid = circleOptions.getCenter().toString();
+        fileid = fileid.replace("lat/lng:", "");
+        fileid = fileid.replace(" ", "");
+        fileid = fileid.replace("(", "");
+        fileid = fileid.replace(")", "");
+        fileid = fileid.replace(".", "");
+        fileid = fileid.replace(",", "");
+        Bitmap cropBitmap = Bitmap.createBitmap(bitmap, 0, (int)height*3/24, (int) width, (int) height*18/24 );
+        String fileName = ImibabyApp.getIconCacheDir() + "/" + curWatch.getEid() + fileid + ".jpg";
+        try {
+            sPreview = CommonUtil.saveComPressPicByBitmap(fileName, cropBitmap, 25);
+            myApp.sdcardLog("securityzone pic size one:" + getFileSize(sPreview));
+            if (getFileSize(sPreview) > 45) {
+                cropBitmap = Bitmap.createBitmap(bitmap, 0, (int)height*5/24, (int) width, (int) height*14/24 );
+                sPreview = CommonUtil.saveComPressPicByBitmap(fileName, cropBitmap, 10);
+                myApp.sdcardLog("securityzone pic resize one:" + getFileSize(sPreview));
+            }
+            myApp.sdcardLog("securityzone pic size two:" + getFileSize(sPreview));
+            LogUtil.i("securityzone pic size two:" + getFileSize(sPreview));
+            if (getFileSize(sPreview) < 20) {
+                sPreview = CommonUtil.saveComPressPicByBitmap(fileName, cropBitmap, 70);
+                myApp.sdcardLog("securityzone pic resize two:" + getFileSize(sPreview));
+            }
+            AESUtil.encryptFile(new File(sPreview));
+        } catch (Exception e) {
+            e.printStackTrace();
+            myApp.sdcardLog("securityzone exception:" + e.toString());
+        }
+        if (loadingdlg != null && loadingdlg.isShowing()) {
+            loadingdlg.dismiss();
+        }
+        if (isdefault) {
+            Intent intent = new Intent();
+            Bundle bundle = new Bundle();
+            //bundle.putString(CloudBridgeUtil.SECURITY_ZONE_NAME, mTextSecurityName.getText().toString() );
+            bundle.putString(CloudBridgeUtil.SECURITY_ZONE_NAME, sName);
+            bundle.putString(CloudBridgeUtil.SECURITY_ZONE_RADIUS,
+                    Integer.toString(circleRadiusBar.getProgress() * 50 + defaultSecurityZoom));
+            bundle.putString(CloudBridgeUtil.SECURITY_ZONE_CENTER, formatLatLng(circleOptions.getCenter().toString()));
+            bundle.putString(CloudBridgeUtil.SECURITY_ZONE_CENTER_BD,formatLatLng(formatToBDLatLng(circleOptions.getCenter())));
+
+            bundle.putString(CloudBridgeUtil.SECURITY_ZONE_SEARCH_INFO, sInfo);
+            bundle.putString(CloudBridgeUtil.SECURITY_ZONE_PREVIEW, sPreview);
+            intent.putExtra("outzone", bundle);
+
+            bundle.putString(CloudBridgeUtil.SECURITY_ZONE_ONOFF, sOnOff);
+            bundle.putString(CloudBridgeUtil.SECURITY_ZONE_EFID, sKey);
+            LogUtil.e("securityzone:" + bundle.toString());
+            myApp.sdcardLog("securityzone:" + bundle.toString());
+            if(!needSetHomeWifi) {
+                if (isModifyOrNewAdd == 1) {
+                    setResult(1, intent);
+                } else if (isModifyOrNewAdd == 2) {
+                    setResult(3, intent);
+                }
+                finish();
+            }else{
+                if(needResetHomeWifi()) {
+                    ResetHomeWifi();
+                }else{
+                    Intent it = new Intent(SecurityZoneSettings.this, HomeWiFiSettingActivity.class);
+                    String ssid = getMyApp().getStringValue(HomeWiFiSettingActivity.HOMEWIFI_SSID, "");
+                    String bssid = getMyApp().getStringValue(HomeWiFiSettingActivity.HOMEWIFI_BSSID, "");
+                    it.putExtra("ssid", ssid);
+                    it.putExtra("bssid", bssid);
+                    startActivityForResult(it, HOMEWIFI_SETTING_REQ);
+                }
+            }
+        } else {
+            Dialog dlg = CustomSelectDialogUtil.CustomInputDialogWithNotice(SecurityZoneSettings.this,8,0,
+                    getText(R.string.edit_name_alert).toString(),null,sName,null,
+                    new CustomSelectDialogUtil.CustomDialogListener() {
+                        @Override
+                        public void onClick(View v, String text) {
+                        }
+                    },
+                    getText(R.string.cancel).toString(),
+                    new CustomSelectDialogUtil.CustomDialogListener() {
+                        @Override
+                        public void onClick(View v, String text) {
+                            sName = text;
+                            if (sName != null && sName.length() > 0) {
+                                if (sName.equals(getString(R.string.security_zone_home))) {
+                                    if (oldMarker!=null){
+                                        oldMarker.showInfoWindow();
+                                    }
+                                    ToastUtil.showMyToast(SecurityZoneSettings.this,
+                                            sName + getResources().getString(R.string.security_watch_position_another_name), Toast.LENGTH_SHORT);
+                                } else {
+                                    btnClickReasult();
+                                }
+                            } else {
+                                if (oldMarker!=null){
+                                    oldMarker.showInfoWindow();
+                                }
+                                ToastUtil.showMyToast(SecurityZoneSettings.this, getText(R.string.security_zone_error1).toString(), Toast.LENGTH_SHORT);
+                            }
+                        }
+                    },
+                    getText(R.string.confirm).toString());
+            dlg.show();
+        }
+    }
+
+    private boolean needResetHomeWifi(){
+        if(sCenter.equals(getResources().getString(R.string.security_zone_default_home))){
+            return true;
+        }
+        double latitude = Double.parseDouble(sCenter.substring(sCenter.indexOf("(") + 1, sCenter.indexOf(",")));
+        double lngtitude = Double.parseDouble(sCenter.substring(sCenter.indexOf(",") + 1, sCenter.indexOf(")")));
+        if(latitude != circleOptions.getCenter().latitude || lngtitude != circleOptions.getCenter().longitude
+                || Integer.parseInt(sRadius) != circleOptions.getRadius()){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    private void ResetHomeWifi(){
+        WatchWifiUtils.setFamilyWifi(SecurityZoneSettings.this,curWatch.getEid(),"","",getMyApp().getNetService(), new WatchWifiUtils.OperationCallback() {
+            @Override
+            public void onSuccess(Object result) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                showWifiDialog();
+                            }
+                        });
+                    }
+                });
+            }
+
+            @Override
+            public void onFail(final String error) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        ToastUtil.show(SecurityZoneSettings.this, error);
+                    }
+                });
+            }
+        });
+    }
+
+    private void showWifiDialog() {
+        Dialog dialog = DialogUtil.CustomNormalDialog(this, getString(R.string.home_wifi_setting_dialog_title),
+                getString(R.string.home_wifi_setting_dialog_content),
+                new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent it = new Intent(SecurityZoneSettings.this, HomeWiFiSettingActivity.class);
+                        String ssid = getMyApp().getStringValue(HomeWiFiSettingActivity.HOMEWIFI_SSID, "");
+                        String bssid = getMyApp().getStringValue(HomeWiFiSettingActivity.HOMEWIFI_BSSID, "");
+                        it.putExtra("ssid", ssid);
+                        it.putExtra("bssid", bssid);
+                        startActivityForResult(it, HOMEWIFI_SETTING_REQ);
+                    }
+                }, getString(R.string.confirm));
+        dialog.show();
+    }
+
+    @Override
+    public void onMapScreenShot(Bitmap bitmap, int i) {
+
+    }
+
+    private void btnClickReasult() {
+        if (sName != null && sName.length() > 0) {
+            if (isModifyOrNewAdd == 2 || isModifyOrNewAdd == 1) {
+                Intent intent = new Intent();
+                Bundle bundle = new Bundle();
+                bundle.putString(CloudBridgeUtil.SECURITY_ZONE_NAME, sName);
+                bundle.putString(CloudBridgeUtil.SECURITY_ZONE_RADIUS,
+                        Integer.toString(circleRadiusBar.getProgress() * 50 + defaultSecurityZoom));
+                bundle.putString(CloudBridgeUtil.SECURITY_ZONE_CENTER, formatLatLng(circleOptions.getCenter().toString()));
+                bundle.putString(CloudBridgeUtil.SECURITY_ZONE_CENTER_BD,formatLatLng(formatToBDLatLng(circleOptions.getCenter())));
+                bundle.putString(CloudBridgeUtil.SECURITY_ZONE_SEARCH_INFO, sInfo);
+                bundle.putString(CloudBridgeUtil.SECURITY_ZONE_PREVIEW, sPreview);
+                intent.putExtra("outzone", bundle);
+                if (isModifyOrNewAdd == 2) {  // add new zone
+                    setResult(2, intent);
+                } else if (isModifyOrNewAdd == 1) {  //modify the zone item
+                    bundle.putString(CloudBridgeUtil.SECURITY_ZONE_ONOFF, sOnOff);
+                    bundle.putString(CloudBridgeUtil.SECURITY_ZONE_EFID, sKey);
+                    setResult(1, intent);
+                }
+            }
+            finish();
+        } else {
+            if (oldMarker!=null){
+                oldMarker.showInfoWindow();
+            }
+            ToastUtil.showMyToast(this, getString(R.string.security_zone_error1), Toast.LENGTH_SHORT);
+        }
+    }
+
+    /**
+     * 类名称：SecurityZoneSettings
+     * 创建人：zhangjun5
+     * 创建时间：2015/11/24 15:38
+     * 方法描述：获取到文件的大小。
+     */
+    private double getFileSize(String filePath) throws Exception {
+        long size = 0;
+        File file = new File(filePath);
+        if (file.exists()) {
+            FileInputStream fis = null;
+            fis = new FileInputStream(file);
+            size = fis.available();
+        } else {
+            LogUtil.e("获取文件大小" + "  " + "文件不存在!");
+        }
+        LogUtil.i("文件大小" + "  " + "daxiao :" + (double) size / 1024);
+        return (double) size / 1024;
+    }
+
+    @Override
+    public void confirmClick() {
+
+    }
+
+    /**
+     * 类名称：SecurityZoneSettings
+     * 创建人：zhangjun5
+     * 创建时间：2015/12/3 16:49
+     * 方法描述：地图定位相关信息处理
+     */
+    @Override
+    public void onLocationChanged(AMapLocation aMapLocation) {
+        if (aMapLocation != null) {
+            if(aMapLocation.getErrorCode() == 0) {
+                mAMap.clear();
+                mMarkerList.clear();
+                locLat = new LatLng(aMapLocation.getLatitude(),
+                        aMapLocation.getLongitude());
+                cityName = aMapLocation.getCity();
+                setMarkerByLat(locLat);
+                mMarker.anchor(0.5f, 0.5f);
+                mMarker.snippet(String.valueOf(circleRadiusBar.getProgress() * 50 + defaultSecurityZoom));
+                mMarkerList.add(mMarker);
+                ArrayList<Marker> markers = mAMap.addMarkers(mMarkerList, true);
+                Marker marker = markers.get(0);
+                showDistancePop(marker);
+                //mAddressName.setText(aMapLocation.getAddress());
+                sInfo = aMapLocation.getAddress();
+                if (myApp.getCurUser().getLocation() == null) {
+                    myApp.getCurUser().setLocation(new LocationData());
+                }
+                myApp.getCurUser().getLocation().setLatitude(locLat.latitude);
+                myApp.getCurUser().getLocation().setLongitude(locLat.longitude);
+                myApp.getCurUser().getLocation().setCity(aMapLocation.getCity());
+                circleOptions = new CircleOptions();
+                circleOptions.center(locLat);
+                HashMap<String, Object> map = new HashMap<String, Object>();
+                map.put("desc", aMapLocation.getAddress());
+                map.put("city", aMapLocation.getCity());
+                map.put("latlng", circleOptions.getCenter());
+                map.put("distance", getString(R.string.unit_meter_with_number,"0"));
+                map.put("loc_type", getResources().getString(R.string.security_phone_position));
+                mNearbyListItem.clear();
+                mNearbyListItem.add(map);
+                mNearbyAdapter.notifyDataSetChanged();
+                doNearbySearch(cityName, circleOptions.getCenter());
+                setCircleZone();
+            }else if(aMapLocation.getErrorCode() == 12){
+                ToastUtil.showMyToast(this, getResources().getString(R.string.devicelist_permission), 1500);
+            }
+        } else {
+            ToastUtil.showMyToast(this, getResources().getString(R.string.security_location_failed), 1500);
+        }
+    }
+
+
+    ArrayList<HashMap<String, Object>> mNearbyListItem;
+    private NearbyAdapter mNearbyAdapter;
+    private ListView mNearbyListView;
+
+    private void initNearbyData() {
+        mNearbyListItem = new ArrayList<HashMap<String, Object>>();
+        mNearbyAdapter = new NearbyAdapter(this, mNearbyListItem, R.layout.location_nearby_item,
+                new String[]{"desc", "distance"},
+                new int[]{R.id.tv_location_nearby_desc, R.id.tv_location_nearby_distance});
+        mNearbyListView = (ListView) findViewById(R.id.location_nearby_listview);
+        mNearbyListView.setAdapter(mNearbyAdapter);
+        mNearbyListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if (position == 0) return;
+
+                HashMap<String, Object> tmpMap = mNearbyListItem.get(position);
+                sInfo = (String) tmpMap.get("desc");
+                cityName = (String) tmpMap.get("city");
+                String latlng = (String) tmpMap.get("latlng");
+                LatLng latLng = new LatLng(Double.parseDouble(latlng.substring(0, latlng.indexOf(","))),
+                        Double.parseDouble(latlng.substring(latlng.indexOf(",") + 1, latlng.length())));
+
+                addAnimationMarker(latLng, circleRadiusBar.getProgress() * 50 + defaultSecurityZoom, true);
+
+                tmpMap.put("distance", "0" + getText(R.string.unit_meter).toString());
+                mNearbyListItem.clear();
+                mNearbyListItem.add(tmpMap);
+                mNearbyAdapter.notifyDataSetChanged();
+                doNearbySearch(cityName, latLng);
+            }
+        });
+    }
+
+    private class NearbyAdapter extends SimpleAdapter {
+        ArrayList<HashMap<String, Object>> mListItem;
+
+        public NearbyAdapter(Context context, List<? extends Map<String, ?>> data, int resource,
+                             String[] from, int[] to) {
+            super(context, data, resource, from, to);
+            mListItem = (ArrayList<HashMap<String, Object>>)data;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            convertView = super.getView(position, convertView, parent);
+            TextView desc = (TextView) convertView.findViewById(R.id.tv_location_nearby_desc);
+            TextView loc_type = (TextView) convertView.findViewById(R.id.location_type);
+            ImageView location = (ImageView) convertView.findViewById(R.id.iv_location_nearby);
+            TextView distance = (TextView) convertView.findViewById(R.id.tv_location_nearby_distance);
+
+            if (position == 0) {
+                desc.setTextColor(getResources().getColor(R.color.welcome_bg_color));
+                location.setVisibility(View.VISIBLE);
+                distance.setVisibility(View.GONE);
+                String locType = (String)mListItem.get(0).get("loc_type");
+                if(locType != null){
+                    loc_type.setVisibility(View.VISIBLE);
+                    loc_type.setText(locType);
+                    loc_type.setTextColor(getResources().getColor(R.color.welcome_bg_color));
+                }else{
+                    loc_type.setVisibility(View.GONE);
+                }
+            } else {
+                desc.setTextColor(getResources().getColor(R.color.color_7));
+                location.setVisibility(View.GONE);
+                distance.setVisibility(View.VISIBLE);
+                loc_type.setVisibility(View.GONE);
+            }
+            return convertView;
+        }
+    }
+
+    private void doSearchQueryByBound(String keyWord, String keyType,
+                                      String cityName, double latitude, double longitude) {
+        mQuery = new PoiSearch.Query(keyWord, keyType, cityName);// 第一个参数表示搜索字符串，第二个参数表示poi搜索类型，第三个参数表示poi搜索区域（空字符串代表全国）
+        mQuery.setPageSize(30);// 设置每页最多返回多少条poiitem
+        mQuery.setPageNum(0);// 设置查第一页
+
+
+        try {
+            mPoiSearch = new PoiSearch(this, mQuery);
+        } catch (AMapException e) {
+            e.printStackTrace();
+        }
+        mPoiSearch.setBound(new PoiSearch.SearchBound(new LatLonPoint(latitude,
+                longitude), 2000));
+        mPoiSearch.setOnPoiSearchListener(new PoiSearch.OnPoiSearchListener() {
+            @Override
+            public void onPoiSearched(PoiResult poiResult, int rCode) {
+                if (rCode == 1000) {
+                    if (poiResult != null && poiResult.getQuery() != null) {// 搜索poi的结果
+                        if (poiResult.getQuery().equals(mQuery)) {// 是否是同一条
+                            // 取得搜索到的poiitems有多少页
+                            List<PoiItem> poiItems = poiResult.getPois();// 取得第一页的poiitem数据，页数从数字0开始
+
+                            Collections.sort(poiItems, new Comparator<PoiItem>() {
+                                @Override
+                                public int compare(PoiItem lhs, PoiItem rhs) {
+                                    return lhs.getDistance() - rhs.getDistance();
+                                }
+                            });
+
+                            if (poiItems != null && poiItems.size() > 0) {
+                                for (int i = 0; i < poiItems.size(); i++) {
+                                    if (!"".equals(poiItems.get(i).getSnippet())) {
+                                        HashMap<String, Object> map = new HashMap<String, Object>();
+                                        map.put("desc", poiItems.get(i).getTitle());
+                                        map.put("distance", poiItems.get(i).getDistance() + getText(R.string.unit_meter).toString());
+                                        map.put("city", poiItems.get(i).getCityName());
+                                        map.put("latlng", poiItems.get(i).getLatLonPoint().toString());
+                                        mNearbyListItem.add(map);
+                                    }
+                                }
+                                sInfo = (String)mNearbyListItem.get(0).get("desc");
+                                mNearbyAdapter.notifyDataSetChanged();
+                                mNearbyListView.setSelection(0);
+                            } else {
+                                LogUtil.i("toast" + "  " + getString(R.string.no_result));
+                            }
+                        }
+                    } else {
+                        LogUtil.i("toast" + "  " + getString(R.string.no_result));
+                    }
+                } else if (rCode == 27) {
+                    ToastUtil.show(SecurityZoneSettings.this, R.string.error_network);
+                } else if (rCode == 32) {
+                    ToastUtil.show(SecurityZoneSettings.this, R.string.error_key);
+                } else {
+                    ToastUtil.show(SecurityZoneSettings.this, getString(R.string.error_other));
+                }
+                mNearbyAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onPoiItemSearched(PoiItem poiItem, int i) {
+
+            }
+        });
+        mPoiSearch.searchPOIAsyn();
+    }
+
+    private void doNearbySearch(String city, LatLng latlng) {
+        if (sKey != null && sKey.equals("EFID2")) {
+            doSearchQueryByBound(getResources().getString(R.string.security_zone_school), "", city, latlng.latitude, latlng.longitude);
+        } else {
+            doSearchQueryByBound(getResources().getString(R.string.security_xiaoqu), "", city, latlng.latitude, latlng.longitude);
+        }
+    }
+
+    private EditText mSearchInputText;
+    private View mLoading;
+    private ImageButton mDeleteBtn;
+    private ListView mAddressListView;
+    private AddressAdapter mAddressAdapter;
+    ArrayList<HashMap<String, Object>> mAddressListItem;
+
+    private class AddressAdapter extends SimpleAdapter {
+        public AddressAdapter(Context context, List<? extends Map<String, ?>> data, int resource,
+                              String[] from, int[] to) {
+            super(context, data, resource, from, to);
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            convertView = super.getView(position, convertView, parent);
+            return convertView;
+        }
+    }
+
+    private void initSearchData() {
+        mDeleteBtn = (ImageButton) findViewById(R.id.delete_keyword);
+        mDeleteBtn.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mSearchInputText.setText("");
+            }
+        });
+        mLoading = findViewById(R.id.layer_loading);
+        mLoading.setVisibility(View.GONE);
+
+        mAddressListView = (ListView) findViewById(R.id.address_list_view);
+
+        mSearchInputText = (EditText) findViewById(R.id.et_search_bar_input);
+        mSearchInputText.addTextChangedListener(new TextWatcher() {
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (!s.toString().equals("")) {
+                    mDeleteBtn.setVisibility(View.VISIBLE);
+                    mAddressListView.setVisibility(View.VISIBLE);
+                    mMapLayout.setVisibility(View.VISIBLE);
+                } else {
+                    mDeleteBtn.setVisibility(View.GONE);
+                    mAddressListView.setVisibility(View.GONE);
+                    mMapLayout.setVisibility(View.VISIBLE);
+                }
+                updateListView();
+            }
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count,
+                                          int after) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+
+        mAddressListItem = new ArrayList<HashMap<String, Object>>();
+        mAddressAdapter = new AddressAdapter(this, mAddressListItem, R.layout.address_adapter_item,
+                new String[]{"title", "info"},
+                new int[]{R.id.title, R.id.info});
+
+        mAddressListView.setAdapter(mAddressAdapter);
+        mAddressListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                HashMap<String, Object> tmpMap = mAddressListItem.get(position);
+                mSearchInputText.setText("");
+                hideInputMethod();
+                sInfo = (String) tmpMap.get("title");
+                cityName = (String) tmpMap.get("city");
+                String latlng = (String) tmpMap.get("latlng");
+                LatLng latLng = new LatLng(Double.parseDouble(latlng.substring(0, latlng.indexOf(","))),
+                        Double.parseDouble(latlng.substring(latlng.indexOf(",") + 1, latlng.length())));
+
+                addAnimationMarker(latLng, (int) circleOptions.getRadius(), true);
+
+                tmpMap.put("desc", sInfo);
+                tmpMap.put("distance", "0" + getText(R.string.unit_meter).toString());
+                mNearbyListItem.clear();
+                mNearbyListItem.add(tmpMap);
+                mNearbyAdapter.notifyDataSetChanged();
+                doNearbySearch(cityName, latLng);
+            }
+        });
+    }
+
+    private void updateListView() {
+        mAddressListItem.clear();
+        mAddressAdapter.notifyDataSetChanged();
+        if (TextUtils.isEmpty(mSearchInputText.getText())) {
+            return;
+        }
+        mLoading.setVisibility(View.VISIBLE);
+
+        String addName = mSearchInputText.getText().toString();
+        if (addName.length() > 0) {
+            if (null != cityName) {
+                doSearchQuery(addName, cityName);
+            } else {
+                if (curWatch != null) {
+                    if (curWatch.getCurLocation() != null) {
+                        doSearchQuery(addName, curWatch.getCurLocation().getCity());
+                    } else {
+                        doSearchQuery(addName, "");
+                    }
+                }
+            }
+        }
+    }
+
+    protected void doSearchQuery(String keyWord, String cityName) {
+        mSearchQuery = new PoiSearch.Query(keyWord, "", cityName);// 第一个参数表示搜索字符串，第二个参数表示poi搜索类型，第三个参数表示poi搜索区域（空字符串代表全国）
+        mSearchQuery.setPageSize(30);// 设置每页最多返回多少条poiitem
+        mSearchQuery.setPageNum(0);// 设置查第一页
+
+        try {
+            mSearchPoiSearch = new PoiSearch(this, mSearchQuery);
+        } catch (AMapException e) {
+            e.printStackTrace();
+        }
+        mSearchPoiSearch.setOnPoiSearchListener(new PoiSearch.OnPoiSearchListener() {
+            @Override
+            public void onPoiSearched(PoiResult poiResult, int rCode) {
+                mLoading.setVisibility(View.GONE);// 隐藏对话框
+                if (rCode == 1000) {
+                    if (poiResult != null && poiResult.getQuery() != null) {// 搜索poi的结果
+                        if (poiResult.getQuery().equals(mSearchQuery)) {// 是否是同一条
+
+                            // 取得搜索到的poiitems有多少页
+                            List<PoiItem> poiItems = poiResult.getPois();// 取得第一页的poiitem数据，页数从数字0开始
+
+                            if (poiItems != null && poiItems.size() > 0) {
+                                for (int i = 0; i < poiItems.size(); i++) {
+                                    if (!"".equals(poiItems.get(i).getSnippet())) {
+                                        HashMap<String, Object> map = new HashMap<String, Object>();
+                                        map.put("title", poiItems.get(i).getTitle());
+                                        map.put("info", poiItems.get(i).getCityName()
+                                                + poiItems.get(i).getAdName()
+                                                + poiItems.get(i).getSnippet());
+                                        map.put("city", poiItems.get(i).getAdCode());
+                                        map.put("latlng", poiItems.get(i).getLatLonPoint().toString());
+                                        mAddressListItem.add(map);
+                                    }
+                                }
+                                mAddressAdapter.notifyDataSetChanged();
+                            } else {
+                                LogUtil.i("toast" + "  " + getString(R.string.no_result));
+                            }
+                        }
+                    } else {
+                        LogUtil.i("toast" + "  " + getString(R.string.no_result));
+                    }
+                } else if (rCode == 27) {
+                    ToastUtil.show(SecurityZoneSettings.this, R.string.error_network);
+                } else if (rCode == 32) {
+                    ToastUtil.show(SecurityZoneSettings.this, R.string.error_key);
+                } else {
+                    ToastUtil.show(SecurityZoneSettings.this, getString(R.string.error_other));
+                }
+            }
+
+            @Override
+            public void onPoiItemSearched(PoiItem poiItem, int i) {
+
+            }
+        });
+        mSearchPoiSearch.searchPOIAsyn();
+    }
+
+    private void hideInputMethod() {
+        InputMethodManager imm = (InputMethodManager) getSystemService(
+                Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(mSearchInputText.getWindowToken(), 0);
+        mSearchInputText.clearFocus();
+    }
+
+    private boolean isRefuse = false;
+    private void checkExternalStorgePermission(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !isRefuse) {// android 11  且 不是已经被拒绝
+            // 先判断有没有权限
+            if (!Environment.isExternalStorageManager()) {
+                Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                intent.setData(Uri.parse("package:" + getPackageName()));
+                startActivityForResult(intent, 1024);
+            }
+        }
+    }
+}

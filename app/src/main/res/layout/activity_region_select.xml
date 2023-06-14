@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:paddingBottom="20dp"
+    android:fitsSystemWindows="true"
+    tools:context=".region.RegionSelectActivity">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/ly_title"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="@color/bg_color_orange"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/select_region"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/iv_back"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="15dp"
+            android:src="@drawable/btn_title_back_selector"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <TextView
+        android:id="@+id/tv_region_tips"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="20dp"
+        android:text="@string/country_select_tips"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/ly_title" />
+
+    <TextView
+        android:id="@+id/tv_region_tips_2"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="20dp"
+        android:text="@string/choose_different_watch_tip"
+        android:textColor="#ffff4545"
+        android:textSize="12sp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_region_tips" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/customized_version"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="15dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="15dp"
+        app:layout_constraintTop_toBottomOf="@+id/ly_title">
+
+        <TextView
+            android:id="@+id/tv_customized"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/custom_made"
+            android:textColor="#ff000000"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            app:layout_constraintStart_toEndOf="@+id/tv_customized"
+            app:layout_constraintTop_toTopOf="@+id/tv_customized"
+            app:layout_constraintBottom_toBottomOf="@+id/tv_customized"
+            android:text="@string/custom_region_tip"
+            android:textColor="#ff898989"
+            android:textSize="13sp"
+            />
+
+        <TextView
+            android:id="@+id/tv_customized_region"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="22.5dp"
+            android:paddingBottom="21.5dp"
+            android:text="@string/s5_s6_s8_s88_y2"
+            android:textColor="#ff000000"
+            android:textSize="15sp"
+            app:layout_constraintBottom_toTopOf="@id/v_divide_1"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_customized" />
+
+        <View
+            android:id="@+id/v_divide_1"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/color_navbar_check"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tv_customized_region" />
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/tv_customized_region"
+            app:layout_constraintBottom_toBottomOf="@+id/tv_customized_region"
+            android:background="@drawable/doorcard_arrow"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/recommended_region"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="15dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="15dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@+id/customized_version">
+
+        <TextView
+            android:id="@+id/tv_recommend"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/recommended_area"
+            android:textColor="#ff000000"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            app:layout_constraintStart_toEndOf="@+id/tv_recommend"
+            app:layout_constraintTop_toTopOf="@+id/tv_recommend"
+            app:layout_constraintBottom_toBottomOf="@+id/tv_recommend"
+            android:text="@string/recommended_area_tip"
+            android:textColor="#ff898989"
+            android:textSize="13sp"
+            />
+
+        <TextView
+            android:id="@+id/tv_recommend_region"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="22.5dp"
+            android:paddingBottom="21.5dp"
+            android:textColor="#ff000000"
+            android:textSize="15sp"
+            app:layout_constraintBottom_toTopOf="@id/v_divide"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_recommend" />
+
+        <View
+            android:id="@+id/v_divide"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/color_navbar_check"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tv_recommend_region" />
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/tv_recommend_region"
+            app:layout_constraintBottom_toBottomOf="@+id/tv_recommend_region"
+            android:background="@drawable/doorcard_arrow"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/recommended_region" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,155 @@
+package com.xiaoxun.xun.utils;
+
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+
+import android.annotation.TargetApi;
+import android.app.Application;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Build;
+import android.text.TextUtils;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+
+import com.xiaoxun.xun.BuildConfig;
+import com.xiaoxun.xun.Constants;
+import com.xiaoxun.xun.Url;
+import com.xiaoxun.xun.activitys.MultFunWebViewActivity;
+
+/**
+ * Created by zhangjun5 on 2019/4/30.
+ */
+
+public class WebViewUtil {
+
+    private static final String TAG = "WebViewUtil";
+
+    private static WebViewUtil instance;
+
+    private WebViewUtil() {
+    }
+
+    public static synchronized WebViewUtil getInstance() {
+        if (instance == null)
+            instance = new WebViewUtil();
+        return instance;
+    }
+
+    public void initWebSettingsNoAgree(WebView webView, Context context, String miit_oaid) {
+        WebSettings settings = webView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setSupportZoom(true);
+        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        settings.setUseWideViewPort(true);
+        settings.setLoadWithOverviewMode(true);
+        settings.setDefaultTextEncodingName("UTF-8");
+        settings.setDomStorageEnabled(true);
+        settings.setBlockNetworkImage(false);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        }
+    }
+
+    public static String onGetChannalByUrl(String url, boolean isTestPlatfrom, String mDefaultType) {
+        if (TextUtils.isEmpty(url)) return Constants.FINAL_CHANNEL_SUB_FIND;
+
+        String url_store_final;
+        final String url_yuer_final;
+        String channal_type;
+        if (isTestPlatfrom) {
+            url_yuer_final = Url.URL_YUER_TEST;
+            url_store_final = Url.URL_SHOP_TEST;
+        } else {
+            url_yuer_final = Url.URL_YUER;
+            url_store_final = Url.URL_SHOP;
+        }
+        //发现首页特殊操作
+//        if(mDefaultType.equals(Constants.FINAL_CHANNEL_MAIN) && url.contains(url_yuer_final)){
+//            return mDefaultType;
+//        }
+
+        if (url.contains(url_store_final)) {
+            channal_type = Constants.FINAL_CHANNEL_SUB_STORE;
+        } else if (url.contains(url_yuer_final)) {
+            channal_type = Constants.FINAL_CHANNEL_SUB_FIND;
+        } else {
+            channal_type = mDefaultType;
+        }
+        return channal_type;
+    }
+
+    public void initWebSettings(WebView webView, Context context, String miit_oaid) {
+        WebSettings settings = webView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setSupportZoom(true);
+        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        settings.setUseWideViewPort(true);
+        settings.setLoadWithOverviewMode(true);
+        settings.setDefaultTextEncodingName("UTF-8");
+        settings.setDomStorageEnabled(true);
+        settings.setBlockNetworkImage(false);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        }
+
+        String userAgent = settings.getUserAgentString();
+        userAgent = userAgent + " cmsVersion/new Xunversion/" + BuildConfig.VERSION_NAME
+                + " Packagename/" + BuildConfig.APPLICATION_ID
+                + " networkType/" + NetWorkUtils.transNetNameByNetCode(context)
+                + " oaid/" + miit_oaid
+                + " anid/" + SystemUtils.getANDROID_ID(context)
+                + " brand/" + SystemUtils.getDeviceBrand();
+
+        LogUtil.d("userAgent:" + userAgent);
+
+        settings.setUserAgentString(userAgent);
+        settings.setGeolocationEnabled(true);
+    }
+
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    public void dealJavascriptLeak(WebView webView) {
+        webView.removeJavascriptInterface("searchBoxJavaBridge_");
+        webView.removeJavascriptInterface("accessibility");
+        webView.removeJavascriptInterface("accessibilityTraversal");
+    }
+
+    public static void onNextPage(Context mContext, String url, String Channel) {
+        if (TextUtils.isEmpty(url)) return;
+        Intent _intent;
+
+        _intent = new Intent(mContext, MultFunWebViewActivity.class);
+        _intent.putExtra("targetUrl", url);
+        _intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
+        _intent.putExtra(Constants.TYPE_FUN, Channel);
+
+        mContext.startActivity(_intent);
+    }
+
+    public static void onNextPage(Context mContext, String url, Boolean isShowHome) {
+        if (TextUtils.isEmpty(url)) return;
+        Intent _intent;
+
+        _intent = new Intent(mContext, MultFunWebViewActivity.class);
+        _intent.putExtra("targetUrl", url);
+        _intent.putExtra(Constants.TYPE_FUN, Constants.FINAL_CHANNEL_SUB_FIND);
+        _intent.putExtra("show_title_menu", isShowHome);
+
+        mContext.startActivity(_intent);
+    }
+
+    public static void setDataDirectorySuffix() {
+
+        // 适配安卓P，如果WebView使用多进程，添加如下代码
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                String processName = Application.getProcessName();
+                // 填入应用自己的包名
+                if (!BuildConfig.APPLICATION_ID.equals(processName)) {
+                    WebView.setDataDirectorySuffix(processName);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}

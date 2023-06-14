@@ -1,0 +1,245 @@
+package com.xiaoxun.xun.activitys;
+
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.os.Bundle;
+
+import android.view.KeyEvent;
+import android.view.View;
+import android.webkit.CookieManager;
+import android.webkit.CookieSyncManager;
+import android.webkit.WebChromeClient;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.ImageButton;
+import android.widget.TextView;
+
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import com.xiaoxun.xun.BuildConfig;
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.listener.ProgressListener;
+import com.xiaoxun.xun.utils.LogUtil;
+import com.xiaoxun.xun.utils.ProgressOutHttpEntity;
+import com.xiaoxun.xun.utils.SystemUtils;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.InputStreamEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+
+/**
+ * Created by huangyouyang on 2018/10/10.
+ */
+
+public class AIPersonalizeActivity extends NormalActivity implements View.OnClickListener {
+
+    private static final String TAG = "AIPersonalizeActivity ";
+
+    private WebView webcontent;
+    private View mTitleBack;
+    private TextView tvTitle;
+    private ImageButton mBtnMenu;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_help_web);
+
+        initView();
+        initWebSettings();
+        initData();
+        dealJavascriptLeak();
+        setWebViewClientListener();
+
+        new Thread(){
+            @Override
+            public void run() {
+                super.run();
+                File baseDir = getExternalFilesDir(Const.MY_BASE_DIR);
+                File dir = new File(baseDir, "tts.mp3");
+                putFile("https://file.ai.xiaomi.com/file", dir.getPath());
+            }
+        }.start();
+    }
+
+    private void initView() {
+
+        tvTitle = findViewById(R.id.tv_title);
+        webcontent = findViewById(R.id.webcontent);
+        mTitleBack = findViewById(R.id.iv_title_back);
+        mTitleBack.setOnClickListener(this);
+        mBtnMenu = findViewById(R.id.iv_title_menu);
+        mBtnMenu.setOnClickListener(this);
+        SwipeRefreshLayout mSwipeRefreshView = findViewById(R.id.refresh);
+        mSwipeRefreshView.setEnabled(false);
+    }
+
+    private void initData() {
+
+        String url = getIntent().getStringExtra(Const.KEY_HELP_URL);
+        String params = getIntent().getStringExtra(Const.KEY_PARAMS);
+        int webType = getIntent().getIntExtra(Const.KEY_WEB_TYPE, 0);
+        tvTitle.setText(getString(R.string.ai_personalize));
+
+        loadUrl(url, params);
+    }
+
+    private void loadUrl(String url,String params) {
+
+        LogUtil.i(TAG + " url:" + url);
+        if (url == null)
+            url = myApp.getHelpCenterParams("main");
+        if (params == null) {
+            webcontent.loadUrl(url);
+            synCookies(AIPersonalizeActivity.this, url);
+        }
+    }
+
+    public void synCookies(Context context, String url) {
+        CookieSyncManager.createInstance(context);
+        CookieManager cookieManager = CookieManager.getInstance();
+        cookieManager.setAcceptCookie(true);
+        cookieManager.removeSessionCookie();// 移除以前的cookie
+        cookieManager.removeAllCookie();
+        // serviceToken，可以实现免登录的需求
+        cookieManager.setCookie(url, "serviceToken=V3_gMumd3FxHPC1OTFrhitx_IuMwfvbKU4VecQBWQir2fnEJPwYLoT_foDxw_uYIuibh4_3CiY4SAialQZ0MDt3H4vuJJS2IbOf97PaXCsjxA7RECPpV8EQ7soGr3F2sfEt");
+        cookieManager.setCookie(url, "ai_version=device");
+        cookieManager.setCookie(url, "ai_miot_did="+ SystemUtils.getDeviceID(AIPersonalizeActivity.this));
+//        cookieManager.setCookie(url, "ai_miot_client_id=thirdpart");  //MIOTID
+//        cookieManager.setCookie(url, "clientID=thirdpart");  //MIOTID
+//        cookieManager.setCookie(url, "ai_client_id=319404700002680832");  //小爱平台id 2882303761517802378  319404700002680832
+//        cookieManager.setCookie(url, "userId=915716631");
+        CookieSyncManager.getInstance().sync();
+    }
+
+    private void setWebViewClientListener() {
+
+        webcontent.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+
+                LogUtil.i(TAG + " override url:" + url);
+                if (url.contains("audiorecord")) {
+
+                } else {
+                    view.loadUrl(url);
+                }
+                return true;
+            }
+        });
+
+        webcontent.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onReceivedTitle(WebView view, String title) {
+                super.onReceivedTitle(view, title);
+                tvTitle.setText(title);
+            }
+        });
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private void initWebSettings() {
+
+        WebSettings settings = webcontent.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        settings.setUseWideViewPort(true);
+        settings.setLoadWithOverviewMode(true);
+        settings.setDomStorageEnabled(true);
+
+        // 设置userAgent
+        String userAgent = settings.getUserAgentString();
+        settings.setUserAgentString(userAgent+" Packagename/"+ BuildConfig.APPLICATION_ID);
+        userAgent = settings.getUserAgentString();
+        LogUtil.i(TAG + " User Agent:" + userAgent);
+    }
+
+    private void dealJavascriptLeak() {
+        webcontent.removeJavascriptInterface("searchBoxJavaBridge_");
+        webcontent.removeJavascriptInterface("accessibility");
+        webcontent.removeJavascriptInterface("accessibilityTraversal");
+    }
+
+    @Override
+    public void onClick(View view) {
+
+        if(view == mTitleBack){
+            if(webcontent.canGoBack()){
+                webcontent.goBack();
+            }else{
+                finish();
+            }
+        }
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+
+        if(keyCode == KeyEvent.KEYCODE_BACK){
+            if(webcontent.canGoBack()){
+                webcontent.goBack();
+                return true;
+            }else{
+                finish();
+            }
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    protected String getCookie() {
+        CookieManager cookieManager = CookieManager.getInstance();
+        String cookie = cookieManager.getCookie("cookie");
+        if (cookie != null) {
+            return cookie;
+        } else {
+            return "";
+        }
+    }
+
+    protected void setCookie(String cookie) {
+        CookieManager cookieManager = CookieManager.getInstance();
+        cookieManager.setCookie("cookie", cookie);
+    }
+
+    private boolean putFile(String url, String filePath) {
+
+        try {
+            File file = new File(filePath);
+            FileInputStream input = new FileInputStream(file);
+            long ccontentLength = file.length();
+            InputStreamEntity requestEntity = getInputStreamRequestEntity(input, ccontentLength);
+            ProgressOutHttpEntity progressEntity = new ProgressOutHttpEntity(requestEntity, new ProgressListener() {
+                @Override
+                public void transferred(long transferedBytes) {
+
+                }
+            });
+            HttpPut httpPut = new HttpPut(url);
+            httpPut.setEntity(progressEntity);
+
+            DefaultHttpClient dhc = new DefaultHttpClient();
+            HttpResponse response = dhc.execute(httpPut);
+            LogUtil.i(TAG + " putFile state = " + response.getStatusLine().getStatusCode());
+            LogUtil.i(TAG + " putFile reason = " + response.getStatusLine().getReasonPhrase());
+            if (response.getStatusLine().getStatusCode() == 200) {
+                return true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    private InputStreamEntity getInputStreamRequestEntity(InputStream input, long inputStreamLength) {
+        BufferedInputStream bufferedInputStream = new BufferedInputStream(input);
+        return new InputStreamEntity(bufferedInputStream, inputStreamLength);
+    }
+}

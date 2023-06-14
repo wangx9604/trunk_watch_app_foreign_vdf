@@ -1,0 +1,811 @@
+package com.xiaoxun.xun.utils;
+
+import android.animation.ObjectAnimator;
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.media.MediaMetadataRetriever;
+import android.net.Uri;
+import android.os.Build;
+import android.provider.MediaStore;
+
+import androidx.core.content.FileProvider;
+
+import android.view.View;
+import android.webkit.ValueCallback;
+import android.widget.Toast;
+
+import com.google.gson.Gson;
+import com.xiaoxun.xun.CalendarTable.custom.CustomSelectorDialog;
+import com.xiaoxun.xun.CalendarTable.utils.CalendarTableUtils;
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.Constants;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.activitys.AppPopUpAlertActivity;
+import com.xiaoxun.xun.activitys.MiAIServiceActivity;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.interfaces.InterfacesUtil;
+import com.xiaoxun.xun.interfaces.MsgCallback;
+import com.xiaoxun.xun.netdisk.xiaomi.MiImageUtil;
+import com.xiaoxun.xun.xunscore.utils.XunScoreCommonUtil;
+
+import net.minidev.json.JSONObject;
+import net.minidev.json.JSONValue;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Type;
+import java.net.URLDecoder;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+
+/**
+ * Created by zhangjun5 on 2019/6/11.
+ */
+
+public class CommonUtil {
+
+    public static void startAnimationSlipEdge(View view, String mAnimationType, int mStartAbs, int mEndAbs){
+        ObjectAnimator animator = ObjectAnimator.ofFloat(view,mAnimationType,mStartAbs, mEndAbs);
+        animator.start();
+    }
+
+    //初始化新增功能列表
+    private static void initNewFunctionInfo(String soruData, ArrayList<HashMap<String, Object>> listItem) {
+        JSONObject jsonObject = (JSONObject) JSONValue.parse(soruData);
+        net.minidev.json.JSONArray adList = (net.minidev.json.JSONArray) jsonObject.get("PL");
+        for (int i = 0; i < adList.size(); i++) {
+            JSONObject object = (JSONObject) adList.get(i);
+            HashMap<String, Object> map = new HashMap<String, Object>();
+            map.put("EID", object.get("EID"));
+            map.put("pictureUrl", object.get("pictureUrl"));
+            JSONObject showObject = (JSONObject) object.get("targview");
+            map.put("show_view", showObject.get("show_view"));
+            map.put("type", showObject.get("type"));
+            map.put("advertisement_id", object.get("advertisement_id"));
+            map.put("endtime", object.get("endtime"));
+            map.put("starttime", object.get("starttime"));
+            listItem.add(map);
+        }
+    }
+
+    //app端首页弹窗提示信息
+    public static void onDealPopUpAlertShowControl(ImibabyApp mApp, Context context, WatchData focusWatch) {
+        try {
+            String newFunctionInfo = mApp.getStringValue(Const.SHARE_PREF_NEW_FUNCTION_INFO, null);
+            if (newFunctionInfo != null) {
+                ArrayList<HashMap<String, Object>> listItem = new ArrayList<>();
+                initNewFunctionInfo(newFunctionInfo, listItem);
+                for (int i = 0; i < listItem.size(); i++) {
+                    HashMap<String, Object> map = listItem.get(i);
+                    String functionEid = (String) map.get("EID");
+                    if (focusWatch.getEid().equals(functionEid)) {
+                        String expira = (String) map.get("endtime");
+                        String startTime = (String) map.get("starttime");
+                        String advertisement_id = (String) map.get("advertisement_id");
+                        String isOldShow = mApp.getStringValue(advertisement_id, "0");
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+                        long endInterval = TimeUtil.compareToDiffForTwoTime(expira, dateFormat.format(new Date()));
+                        long startInterval = TimeUtil.compareToDiffForTwoTime(startTime, dateFormat.format(new Date()));
+
+                        if (isOldShow.equals("0") && startInterval >= 0 && endInterval < 0) {
+                            String fileName = ImibabyApp.getIconCacheDir() + "/" + advertisement_id + ".jpg";
+                            File imgFile = new File(fileName);
+                            if (imgFile.exists()) {
+                                mApp.setValue(advertisement_id, "1");
+                                String tranUrl = (String) map.get("show_view");
+                                String type = (String) map.get("type");
+                                Intent _intent = new Intent(context, AppPopUpAlertActivity.class);
+                                _intent.putExtra("type", type);
+                                _intent.putExtra("show_view", tranUrl);
+                                _intent.putExtra("show_pic", fileName);
+                                context.startActivity(_intent);
+                            }
+                        }
+                    }
+                }
+
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static String calcCurUseShow(Context context, int useInfo) {
+        int useHour = useInfo / 3600;
+        int useMin = useInfo % 3600 / 60;
+        int useSec = useInfo % 3600 % 60;
+        String timeInfo = "";
+        if (useHour >= 1) {
+            timeInfo += useHour + context.getString(R.string.unit_hour);
+        }
+        if (useSec >= 30) {
+            useMin += 1;
+        }
+
+        if (useMin >= 1) {
+            timeInfo += useMin + context.getString(R.string.unit_minute);
+        } else if (useHour == 0) {
+            timeInfo = context.getString(R.string.watch_power_lower_time);
+        }
+
+        return timeInfo;
+    }
+
+    public static void gotoMiAiService(Activity mContext, String mAIQues) {
+        ImibabyApp myApp = (ImibabyApp) mContext.getApplication();
+        if(myApp == null || myApp.getCurUser() == null || myApp.getCurUser().getFocusWatch() == null) return;
+        String mBuild = "pages/connect/index?";
+        mBuild += "deviceType="+ myApp.getCurWatchConfigData().getTxt_mi_ai_type();
+        mBuild += "&miAiBrand="+ myApp.getCurWatchConfigData().getTxt_mi_ai_brand();
+        mBuild += "&miAiType="+ myApp.getCurWatchConfigData().getTxt_mi_ai_type();
+        mBuild += "&ads="+ SystemUtils.getDeviceInfo(mContext);
+        mBuild += "&deviceVersion="+ myApp.getCurUser().getFocusWatch().getVerCur();
+        mBuild += "&keyword="+ calcQuestTxtByBackDoorTxt(mContext, mAIQues);
+        SystemUtils.gotoWeiXinXiaoChengxu(mContext, mBuild, 0, "gh_ff0ccef3d706");
+    }
+
+    public static boolean isDestroy(Activity mActivity) {
+        if (mActivity == null || mActivity.isFinishing() || mActivity.isDestroyed()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public static String calcQuestTxtByBackDoorTxt(Context context, String txt) {
+        String askTxt;
+        if (txt.contains(context.getString(R.string.watch_poweroff_prompt))) {
+            askTxt = context.getString(R.string.back_door_2);
+        } else if (txt.equals(context.getString(R.string.watch_offline_state))) {
+            askTxt = context.getString(R.string.back_door_1);
+        } else if (txt.equals(context.getString(R.string.watch_state_flight_already))) {
+            askTxt = context.getString(R.string.back_door_3);
+        } else if (txt.equals(context.getString(R.string.watch_state_silence_advanceopt))) {
+            askTxt = context.getString(R.string.back_door_4);
+        } else if (txt.equals(context.getString(R.string.offline_mode_state))) {
+            askTxt = context.getString(R.string.back_door_5);
+        } else if (txt.equals(context.getString(R.string.watch_state_silence))) {
+            askTxt = context.getString(R.string.back_door_6);
+        } else if (txt.equals(context.getString(R.string.setting_home))) {
+            askTxt = context.getString(R.string.back_door_7);
+        } else if (txt.equals(context.getString(R.string.setting_check_update))) {
+            askTxt = context.getString(R.string.back_door_8);
+        } else if (txt.equals(context.getString(R.string.watch_power_help_title))) {
+            askTxt = context.getString(R.string.watch_power_ai_info);
+        } else if (txt.equals(context.getString(R.string.low_power_disable_watch_state_tips))) {
+            askTxt = context.getString(R.string.low_power_disable_watch_state_tips_aiinfo);
+        } else if (txt.equals(context.getString(R.string.map_fct_high_0))) {
+            askTxt = context.getString(R.string.map_fct_high_2);
+        } else {
+            askTxt = txt;
+        }
+
+        return askTxt;
+    }
+
+
+    public static String setFunctionStateByBool(Boolean isOpen) {
+        if (isOpen) {
+            return "1";
+        } else {
+            return "0";
+        }
+    }
+
+    public static boolean setFunctionStateByStrAndDefClose(String mStrInfo) {
+        if (mStrInfo == null || "".equals(mStrInfo) || "0".equals(mStrInfo)) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    public static boolean setFunctionStateByStrAndDefOpen(String mStrInfo) {
+        if (mStrInfo == null || "".equals(mStrInfo) || "1".equals(mStrInfo)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public static String CalcAppData(ImibabyApp myApp, WatchData watchData) {
+        String devBrand = myApp.getConfigFormDeviceType(watchData.getDeviceType(), watchData.getVerCur(),
+                watchData.getMachSn()).getTxt_mi_ai_brand();
+        String devAiIndex = myApp.getConfigFormDeviceType(watchData.getDeviceType(), watchData.getVerCur(),
+                watchData.getMachSn()).getTxt_mi_ai_index();
+
+        return devBrand + "_" + devAiIndex;
+    }
+
+    public static String CalcLevelData(ImibabyApp myApp, WatchData watchData) {
+        String levelStr;
+        String deviceType;
+        String devBrand;
+        String devAiIndex;
+        String devSigalType;
+        if (!watchData.isDevice102())
+            deviceType = watchData.getDeviceType().toLowerCase();
+        else
+            deviceType = "sw102";
+
+        devBrand = myApp.getConfigFormDeviceType(watchData.getDeviceType(), watchData.getVerCur(),
+                watchData.getMachSn()).getTxt_mi_ai_brand();
+        devAiIndex = myApp.getConfigFormDeviceType(watchData.getDeviceType(), watchData.getVerCur(),
+                watchData.getMachSn()).getTxt_mi_ai_index();
+        devSigalType = myApp.getConfigFormDeviceType(watchData.getDeviceType(), watchData.getVerCur(),
+                watchData.getMachSn()).getTxt_mi_ai_type();
+
+        if (deviceType.contains("sw206")) {
+            levelStr = "[小寻:定位器:2G:sw206]";
+        } else {
+            if (devBrand != null && devBrand.equals("xiaoxun")) {
+                levelStr = "[小寻:手表:小寻手表:" + devSigalType + ":" + devAiIndex + "]";
+            } else if (devBrand != null && devBrand.equals("mitu")) {
+                levelStr = "[小寻:手表:米兔手表:" + devSigalType + ":" + devAiIndex + "]";
+            } else {
+                levelStr = "[小寻:手表:小寻手表:" + devSigalType + ":" + devAiIndex + "]";
+            }
+        }
+
+        return levelStr;
+    }
+
+    public static boolean isContainsAiIndex(ImibabyApp myApp) {
+        WatchData watchData = myApp.getCurUser().getFocusWatch();
+
+        String devType;
+        if (!watchData.isDevice102())
+            devType = watchData.getDeviceType().toLowerCase();
+        else
+            devType = "sw102";
+        String devAiIndex = myApp.getConfigFormDeviceType(watchData.getDeviceType(), watchData.getVerCur(),
+                watchData.getMachSn()).getTxt_mi_ai_index();
+        return devType.contains(devAiIndex);
+    }
+
+    public static void playVideoBySystem(Context context, String videoPath) {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        File file = new File(videoPath);
+
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+            intent.setDataAndType(Uri.fromFile(file), "video/*");
+        } else {  //Android7.0之后获取uri要用contentProvider
+            Uri apkUri = FileProvider.getUriForFile(context, context.getPackageName() + ".xun.fileprovider", file);
+            intent.setDataAndType(apkUri, "video/*");
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        }
+        context.startActivity(intent);
+    }
+
+    public static ArrayList onGsonFromInfo(String mJsonStr, Type type) {
+        if (mJsonStr == null || "".equals(mJsonStr)) return null;
+        Gson gson = new Gson();
+        return gson.fromJson(mJsonStr, type);
+    }
+
+    public static void getMediaFrameAtFirst(String videoPath) {
+        MediaMetadataRetriever media = new MediaMetadataRetriever();
+        media.setDataSource(videoPath);
+        Bitmap bitmap = media.getFrameAtTime();
+        if (bitmap != null) {
+            String fileName = videoPath + ".jpg";
+            saveComPressPicByBitmap(fileName, bitmap, 100);
+        }
+    }
+
+    public static String saveComPressPicByBitmap(String fileName, Bitmap cropBitmap, int CropSize) {
+        String sPreview = null;
+        try {
+            FileOutputStream fos = new FileOutputStream(fileName);
+            boolean b = cropBitmap.compress(Bitmap.CompressFormat.JPEG, CropSize, fos);
+            try {
+                fos.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                fos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if (b) {
+                LogUtil.i("save success");
+                sPreview = fileName;
+            } else {
+                LogUtil.i("save fail");
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        return sPreview;
+    }
+
+    public static void sendCommentGetReq(String reqData, String url, Callback onMsgListener) {
+        OkHttpClient okHttpClient = new OkHttpClient();
+        Request request = new Request.Builder().url(url).addHeader("XUN-YUER-TOKEN", reqData).get().build();
+        Call call = okHttpClient.newCall(request);
+        call.enqueue(onMsgListener);
+    }
+
+    public static void startPickPhoto(Activity context, int IMAGE_CODE) {
+        Intent intent = new Intent(Intent.ACTION_PICK, null);
+        intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
+        context.startActivityForResult(intent, IMAGE_CODE);
+    }
+
+    public static File startPhotoZoom(Activity context, Uri uri, int IMAGE_CODE_1) {
+
+        File temp = new File(ImibabyApp.getIconCacheDir(), "tempcrop" + ".jpg");
+        if (temp.exists()) {
+            temp.delete();
+        }
+
+        Intent intent = new Intent("com.android.camera.action.CROP");
+        intent.setDataAndType(uri, "image/*");
+        //下面这个crop=true是设置在开启的Intent中设置显示的VIEW可裁剪
+        intent.putExtra("crop", "true");
+        // aspectX aspectY 是宽高的比例
+        intent.putExtra("aspectX", 1);
+        intent.putExtra("aspectY", 1);
+        // outputX outputY 是裁剪图片宽高
+        intent.putExtra("outputX", 720);
+        intent.putExtra("outputY", 720);
+        intent.putExtra("noFaceDetection", true);
+        intent.putExtra("outputFormat", Bitmap.CompressFormat.JPEG.toString());
+        intent.putExtra("noFaceDetection", true);
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(temp));
+        intent.putExtra("return-data", false);//设置为不返回数据
+        context.startActivityForResult(intent, IMAGE_CODE_1);
+
+        return temp;
+    }
+
+    public static void setPicToView(Context context, File cropTemp, ValueCallback<Uri[]> mUploadCallbackAboveL) {
+        Bitmap photo = null;
+        try {
+            photo = MediaStore.Images.Media.getBitmap(context.getContentResolver(), Uri.fromFile(cropTemp));
+            if (photo.getWidth() > 720 || photo.getHeight() > 720) {
+                photo = BitmapUtilities.getBitmapThumbnail(cropTemp.getPath(), 720, 720);
+            }
+            FileOutputStream fos = new FileOutputStream(cropTemp);
+            photo.compress(Bitmap.CompressFormat.JPEG, 70, fos);
+
+            //创建文件输出流
+            OutputStream os;
+            byte[] bitmapArray = StrUtil.getBytesFromFile(cropTemp);
+
+            File destFile = new File(ImibabyApp.getIconCacheDir(), TimeUtil.getTimeStampLocal() + ".png");
+            cropTemp.renameTo(destFile);
+            os = new FileOutputStream(destFile);
+            os.write(bitmapArray);
+            os.flush();
+
+            Uri originalUri = Uri.fromFile(destFile); // 获得图片的uri
+
+            if (mUploadCallbackAboveL != null) {
+                Uri[] uris = new Uri[]{originalUri};
+                mUploadCallbackAboveL.onReceiveValue(uris);
+            } else {
+                Toast.makeText(context, context.getString(R.string.get_data_error), Toast.LENGTH_LONG).show();
+            }
+
+        } catch (Exception e) {
+            cancleUploadCallBack(mUploadCallbackAboveL);
+        }
+    }
+
+    public static void cancleUploadCallBack(ValueCallback<Uri[]> mUploadCallbackAboveL) {
+        if (mUploadCallbackAboveL != null) {
+            mUploadCallbackAboveL.onReceiveValue(null);
+        }
+    }
+
+    public static File startCameraCapture(Activity context, int GET_IMAGE_FROM_CAMERA) {
+        try {
+            //指定调用相机拍照后的照片存储的路径
+            File temp = new File(ImibabyApp.getIconCacheDir(), System.currentTimeMillis() + ".jpg");
+            if (temp.exists()) {
+                temp.delete();
+            }
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+                Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                Uri contentUri = FileProvider.getUriForFile(context, context.getPackageName() + ".xun.fileprovider", temp);
+                intent.putExtra(MediaStore.EXTRA_OUTPUT, contentUri);
+                intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                context.startActivityForResult(intent, GET_IMAGE_FROM_CAMERA);
+            } else {
+                Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(temp));
+                context.startActivityForResult(intent, GET_IMAGE_FROM_CAMERA);
+            }
+            return temp;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static boolean openURIView(Context context, Uri uri, String scheme) {
+        if ("mqqwpa".equals(scheme) && !AndroidUtil.isQQClientAvailable(context)) {
+            ToastUtil.show(context, context.getString(R.string.qq_not_installed));
+            return true;
+        }
+//		支付宝判断方法无效，暂时注释
+        LogUtil.e("AndroidUtil.checkAliPayInstalled(context)  " + AndroidUtil.checkAliPayInstalled(context));
+        if ("alipays".equals(scheme) && !AndroidUtil.checkAliPayInstalled(context)) {
+            ToastUtil.show(context, context.getString(R.string.alipay_not_installed));
+            return true;
+        }
+        if ("weixin".equals(scheme) && !AndroidUtil.isWeixinAvilible(context)) {
+            ToastUtil.show(context, context.getString(R.string.weixin_not_installed));
+            return true;
+        }
+        if ("baidumap".equals(scheme) && !AndroidUtil.isBDMapAvilible(context)) {
+            ToastUtil.show(context, context.getString(R.string.bdmap_not_installed));
+            return true;
+        }
+
+        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+        context.startActivity(intent);
+        return true;
+    }
+
+    public static boolean openWeiXinMiNiProgram(Context context, Uri uri) {
+        if (uri.getAuthority().equals("contact")) {
+            if (!AndroidUtil.isWeixinAvilible(context)) {
+                ToastUtil.show(context, context.getString(R.string.store_weixin_disable));
+                return true;
+            }
+            String miniPath = uri.getQueryParameter("minipath");
+            String miniType = uri.getQueryParameter("minitype");
+            String userName = uri.getQueryParameter("username");
+            if (miniPath != null && miniType != null && userName != null) {
+                SystemUtils.gotoWeiXinXiaoChengxu(context, miniPath, Integer.valueOf(miniType), userName);
+            }
+        }
+        return true;
+    }
+
+    public static boolean isHaveWatchList(ImibabyApp mApp) {
+        if (mApp.getWatchList() == null || mApp.getWatchList().size() == 0) {
+            return false;
+        }
+        return true;
+    }
+
+    public static String getMonthInfoByDays(Context mContext, String repeatts) {
+        if (isDestroy((Activity) mContext) || "".equals(repeatts)) return "";
+        String mMonthInfo;
+        String[] mMonthDays = repeatts.split(",");
+        if (mMonthDays.length == 31) {
+            mMonthInfo = mContext.getString(R.string.device_alarm_reset_3);
+        } else if (mMonthDays.length > 5) {
+            mMonthInfo = mContext.getString(R.string.watch_behavior_task_month_1,
+                    mMonthDays.length + "");
+        } else {
+            StringBuilder mStrBuilder = new StringBuilder();
+            for (int i = 0; i < mMonthDays.length; i++) {
+                if (i == mMonthDays.length - 1) {
+                    mStrBuilder.append(mMonthDays[i]);
+                    break;
+                }
+                mStrBuilder.append(mMonthDays[i]);
+                mStrBuilder.append("、");
+            }
+            mMonthInfo = mContext.getString(R.string.watch_behavior_task_month_0,
+                    mStrBuilder.toString());
+        }
+
+        return mMonthInfo;
+    }
+
+    public static String getRectifyLocationInfo(WatchData fouceWatch, String floorInfo, String watchLocCon) {
+        String latlng = fouceWatch.getCurLocation().getLatLng().latitude + "," + fouceWatch.getCurLocation().getLatLng().longitude;
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("imei", fouceWatch.getImei());
+        jsonObject.put("eid", fouceWatch.getEid());
+        jsonObject.put("time", fouceWatch.getCurLocation().getTimestamp());
+        jsonObject.put("errlnglat", latlng);
+        jsonObject.put("lnglat", latlng);
+        jsonObject.put("type", fouceWatch.getCurLocation().getMapType());
+        jsonObject.put("CUID", fouceWatch.getCurLocation().getBdid());
+        jsonObject.put("errfloor", floorInfo);
+        jsonObject.put("content", watchLocCon);
+
+        return jsonObject.toJSONString();
+
+    }
+
+    public static String getWeeksInfoByDays(Context mContext, String mDays) {
+        if (isDestroy((Activity) mContext)) return "";
+        String mWeekInfo;
+        if (mDays.equals("1111100")) {
+            mWeekInfo = mContext.getString(R.string.device_alarm_reset_2);
+        } else if (mDays.equals("1111111")) {
+            mWeekInfo = mContext.getString(R.string.device_alarm_reset_3);
+        } else {
+            mWeekInfo = ((mDays.substring(0, 1).equals("1") ? mContext.getString(R.string.week_1) + "" : "") +
+                    (mDays.substring(1, 2).equals("1") ? mContext.getString(R.string.week_2) + " " : "") +
+                    (mDays.substring(2, 3).equals("1") ? mContext.getString(R.string.week_3) + " " : "") +
+                    (mDays.substring(3, 4).equals("1") ? mContext.getString(R.string.week_4) + " " : "") +
+                    (mDays.substring(4, 5).equals("1") ? mContext.getString(R.string.week_5) + " " : "") +
+                    (mDays.substring(5, 6).equals("1") ? mContext.getString(R.string.week_6) + " " : "") +
+                    (mDays.substring(6, 7).equals("1") ? mContext.getString(R.string.week_0) + " " : ""));
+        }
+
+        return mWeekInfo;
+    }
+
+
+    public static String getRepeatWeeksInfoByDays(Context mContext, String mDays) {
+        if (isDestroy((Activity) mContext)) return "";
+        String mWeekInfo;
+        if (mDays.equals("1111111")) {
+            mWeekInfo = mContext.getString(R.string.device_alarm_reset_3);
+        } else {
+            mWeekInfo = mContext.getString(R.string.repeat_week_days) + ((mDays.substring(0, 1).equals("1") ? "一、" : "") +
+                    (mDays.substring(1, 2).equals("1") ? "二、" : "") +
+                    (mDays.substring(2, 3).equals("1") ? "三、" : "") +
+                    (mDays.substring(3, 4).equals("1") ? "四、" : "") +
+                    (mDays.substring(4, 5).equals("1") ? "五、" : "") +
+                    (mDays.substring(5, 6).equals("1") ? "六、" : "") +
+                    (mDays.substring(6, 7).equals("1") ? "日 " : ""));
+        }
+        if (mWeekInfo.lastIndexOf("、") == mWeekInfo.length() - 1) {
+            mWeekInfo = mWeekInfo.substring(0, mWeekInfo.length() - 1);
+        }
+
+        return mWeekInfo;
+    }
+
+    public static String getRepeatWeeksFromSunday(Context mContext, String mDays) {
+        if (isDestroy((Activity) mContext)) return "";
+        String mWeekInfo;
+        if (mDays.equals("1111111")) {
+            mWeekInfo = mContext.getString(R.string.device_alarm_reset_3);
+        } else if (mDays.equals("0111110")) {
+            mWeekInfo = mContext.getString(R.string.focustime_week_work_day);
+        } else {
+            mWeekInfo = mContext.getString(R.string.repeat_week_days) + ((mDays.substring(1, 2).equals("1") ? "一、" : "") +
+                    (mDays.substring(2, 3).equals("1") ? "二、" : "") +
+                    (mDays.substring(3, 4).equals("1") ? "三、" : "") +
+                    (mDays.substring(4, 5).equals("1") ? "四、" : "") +
+                    (mDays.substring(5, 6).equals("1") ? "五、" : "") +
+                    (mDays.substring(6, 7).equals("1") ? "六、" : "") +
+                    (mDays.substring(0, 1).equals("1") ? "日 " : ""));
+        }
+        if (mWeekInfo.lastIndexOf("、") == mWeekInfo.length() - 1) {
+            mWeekInfo = mWeekInfo.substring(0, mWeekInfo.length() - 1);
+        }
+
+        return mWeekInfo;
+    }
+
+    public static boolean isShenDunOn(ImibabyApp myApp, Context context) {
+        if (myApp.getCurUser() == null || myApp.getCurUser().getFocusWatch() == null ||
+                MiImageUtil.isDestroy((Activity) context)) {
+            return false;
+        }
+        //神盾模式不打开设置
+        String mShenDunOn = myApp.getStringValue(myApp.getCurUser().getFocusWatch().getEid() + CloudBridgeUtil.SHENDUN_MODE, "0");
+        if ("1".equals(mShenDunOn)) {
+            ToastUtil.showMyToast(context, context.getString(R.string.map_fct_high_5), Toast.LENGTH_SHORT);
+            return true;
+        }
+        return false;
+    }
+
+    //thirdPlatType  0:微信好友  1：朋友圈   2：QQ空间
+    public static boolean shareMsgToThirdPlatform(Context mContext, int thirdPlatType, String url) {
+        String firsh = url.substring(url.indexOf("//") + 2);
+        String info[] = firsh.split("&&");
+        String image = "", sendUrl = "", title = "", des = "", type = "", downloading = "";
+        for (int i = 0; i < info.length; i++) {
+            if (info[i].contains("title")) {
+                title = info[i].substring(info[i].indexOf("=") + 1);
+            } else if (info[i].contains("url")) {
+                sendUrl = info[i].substring(info[i].indexOf("=") + 1);
+            } else if (info[i].contains("image")) {
+                image = info[i].substring(info[i].indexOf("=") + 1);
+            } else if (info[i].contains("des")) {
+                des = info[i].substring(info[i].indexOf("=") + 1);
+            } else if (info[i].contains("type")) {
+                type = info[i].substring(info[i].indexOf("=") + 1);
+            } else if (info[i].contains("downloadimg")) {
+                downloading = info[i].substring(info[i].indexOf("=") + 1);
+            }
+        }
+
+        try {
+            title = URLDecoder.decode(title, "UTF-8");
+            des = URLDecoder.decode(des, "UTF-8");
+            sendUrl = URLDecoder.decode(sendUrl, "UTF-8");
+            image = URLDecoder.decode(image, "UTF-8");
+            type = URLDecoder.decode(type, "UTF-8");
+            downloading = URLDecoder.decode(downloading, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        LogUtil.d("multFunWeb:" + url);
+        LogUtil.d("multFunWeb:" + title + ":" + des + ":" + sendUrl + ":" + image + ":" + type + ":" + downloading);
+        final byte[][] bytesimg = new byte[1][1];
+        final String[] fileName = {""};
+        if (type.equals("0")) {
+            String finalImage = image;
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    Bitmap bitmap = BitmapUtil.getbitmap(finalImage);
+                    bytesimg[0] = BitmapUtil.bmpToByteArray(bitmap, false);
+                }
+            }).start();
+        } else {
+            String finalDownloading = downloading;
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    Bitmap bitmap = BitmapUtil.getbitmap(finalDownloading);
+                    fileName[0] = ShareUtil.SaveImageFile(bitmap);
+                }
+            }).start();
+        }
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        switch (thirdPlatType) {
+            case 0:
+                if (type.equals("0")) {
+                    new ShareUtil(mContext).sharewx(false, title, des, sendUrl, bytesimg[0], image);
+                } else {
+                    new ShareUtil(mContext).sharewx(false, title, des, fileName[0]);
+                }
+                break;
+            case 1:
+                if (type.equals("0")) {
+                    new ShareUtil(mContext).sharewx(true, title, des, sendUrl, bytesimg[0], image);
+                } else {
+                    new ShareUtil(mContext).sharewx(true, title, des, fileName[0]);
+                }
+                break;
+            case 2:
+                if (type.equals("0")) {
+                    new ShareUtil(mContext).shareToQzone(title, des, sendUrl, image);
+                } else {
+                    String shareTitle;
+                    String shareUrl;
+                    shareTitle = mContext.getString(R.string.share_xiaoxun);
+                    shareUrl = Const.SHARE_TO_QQ_URL;
+                    new ShareUtil(mContext).shareToQzone((Activity) mContext, shareTitle, shareUrl, fileName[0], null);
+                }
+                break;
+        }
+
+
+        return true;
+    }
+
+    public static int getSmallWeatherIconByName(String name){
+        int mIconId ;
+        switch (name){
+            case "多云" :
+                mIconId = R.drawable.weather_small_duoyun;
+                break;
+            case "阴" :
+                mIconId = R.drawable.weather_small_yintian;
+                break;
+            case "雷阵雨" :
+                mIconId = R.drawable.weather_small_leizhenyu;
+                break;
+            case "小雨" :
+            case "阵雨" :
+                mIconId = R.drawable.weather_small_zhenyu;
+                break;
+            case "中雨" :
+                mIconId = R.drawable.weather_small_zhongyu;
+                break;
+            case "大雨" :
+            case "暴雨" :
+            case "大暴雨" :
+            case "特大暴雨" :
+                mIconId = R.drawable.weather_small_tedabaoyu;
+                break;
+            case "雨雪天气" :
+            case "雨夹雪" :
+            case "冻雨" :
+                mIconId = R.drawable.weather_small_yujiaxue;
+                break;
+            case "雪" :
+            case "阵雪" :
+            case "小雪" :
+                mIconId = R.drawable.weather_small_xiaoxue;
+                break;
+            case "中雪" :
+                mIconId = R.drawable.weather_small_zhongxue;
+                break;
+            case "大雪" :
+                mIconId = R.drawable.weather_small_baoxue;
+                break;
+            case "浮尘" :
+            case "扬尘" :
+            case "沙尘暴" :
+            case "强沙尘暴" :
+                mIconId = R.drawable.weather_small_fuceng;
+                break;
+            case "霾" :
+                mIconId = R.drawable.weather_small_wumai;
+                break;
+            case "雾" :
+                mIconId = R.drawable.weather_small_wu;
+                break;
+            case "大风" :
+                mIconId = R.drawable.weather_small_dafeng;
+                break;
+            case "龙卷风" :
+                mIconId = R.drawable.weather_small_longjuanfeng;
+                break;
+            case "暴风" :
+            case "台风" :
+                mIconId = R.drawable.weather_small_taifeng;
+                break;
+            default:
+                mIconId = R.drawable.weather_small_qitian;
+        }
+        return mIconId;
+    }
+
+
+    public static void GotoNavigaAppFromPkg(Activity mActivity, String mPkgName,
+                                            String mSchemeData){
+        if (XunScoreCommonUtil.isPkgInstalled(mActivity, mPkgName)) {
+            try{
+                Intent intent = new Intent();
+                intent.setData(Uri.parse(mSchemeData));
+                intent.setPackage(mPkgName);
+                mActivity.startActivity(intent);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }else{
+            new CustomSelectorDialog.Builder(mActivity)
+                    .setmDailogType(4)
+                    .setTitle(mActivity.getString(R.string.map_naviga_find_title))
+                    .setContent(mActivity.getString(R.string.map_naviga_no_app))
+                    .setmRightBtnTxt(mActivity.getString(R.string.donothing_text))
+                    .setOnlyButton(true)
+                    .setmSmallBtnRightListener(new InterfacesUtil.UpdateViewData() {
+                        @Override
+                        public void UpdateView(View view, String resq) {
+
+                        }
+                    }).build().show();
+
+        }
+    }
+
+    public static ArrayList<WatchData> sortWatchList(ArrayList<WatchData> mSourceList) {
+        if(mSourceList == null) return null;
+        ArrayList<WatchData> watchList = new ArrayList<>();
+        watchList.addAll(mSourceList);
+        Collections.sort(watchList);
+        return watchList;
+    }
+}

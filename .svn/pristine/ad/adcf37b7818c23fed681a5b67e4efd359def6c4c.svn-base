@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="45.33dp"
+    android:gravity="center"
+    android:descendantFocusability="blocksDescendants">
+    
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="45.33dp"
+        android:paddingLeft="23.33dp"
+        android:paddingRight="23.33dp"
+        android:gravity="center_vertical"
+        android:background="@drawable/setting_item_selector">
+    	<TextView 
+	    android:id="@+id/iv_selecttext1"       
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content" 
+	    android:text="@string/week_1"
+	    android:textColor="@color/dark_grey"
+    	android:textSize="@dimen/xiaomiMyTextSize1"
+    	android:layout_weight="1"/>
+    	<ImageView
+        android:id="@+id/iv_selectimg1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/select_2"/>
+    </LinearLayout>
+</RelativeLayout>

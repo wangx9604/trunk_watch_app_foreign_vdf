@@ -1,0 +1,1034 @@
+/**
+ * Creation Date:2015-2-12
+ * <p>
+ * Copyright
+ */
+package com.xiaoxun.xun.utils;
+
+import android.content.Context;
+
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.R;
+
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
+
+
+/**
+ * Description Of The Class<br>
+ *
+ * @author liutianxiang
+ * @version 1.000, 2015-2-12
+ */
+public class TimeUtil {
+    public static String getTimeStampLocal() {
+        Date d = new Date();
+        DateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+        // format.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+        return format.format(d);
+    }
+
+    public static String formTimeByTime(String mDate){
+        String mSourceData = mDate.substring(0,14);
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat format1 = new SimpleDateFormat("yyyyMMddHHmmss");
+        try {
+            Date d = format1.parse(mSourceData);
+            return format.format(d);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static String getMonthDayByymdhmss(String mDateS) {
+        SimpleDateFormat format = new SimpleDateFormat("MM/dd");
+        SimpleDateFormat format1 = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+        try {
+            Date other = format1.parse(mDateS);
+            return format.format(other);
+        } catch (Exception e) {
+            return format.format(new Date());
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    public static String getTimeStampGMT() {
+        Date d = new Date();
+        DateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+        format.setTimeZone(TimeZone.getTimeZone("GMT"));
+
+        return format.format(d);
+    }
+
+    public static String getMonth() {
+        Date date = new Date();
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
+        return format.format(date);
+    }
+
+
+    public static String getLocationTimeIntervalDesc(Context context, String mDates) {
+
+        String intervalDesc;
+        long interval = compareToDiffForTwoTime(mDates, getTimeStampLocal());
+        if (interval < 60) {  //1分钟内
+            intervalDesc = context.getString(R.string.location_time_one_minute);
+        } else if (interval < 60 * 60) {  //分钟
+            intervalDesc = context.getString(R.string.location_time_x_minute, interval / 60);
+        } else if (interval < 24 * 60 * 60) {  //小时
+            intervalDesc = context.getString(R.string.location_time_x_hour, interval / (60 * 60));
+        } else { //天
+            intervalDesc = context.getString(R.string.location_time_x_day, interval / (24 * 60 * 60));
+        }
+        return intervalDesc;
+    }
+
+    public static String getDayTimeStampLocal() {
+        Date d = new Date();
+        DateFormat format = new SimpleDateFormat("HHmmssSSS");
+        return format.format(d);
+    }
+
+    /**
+     * user:zhangjun5 time:17:21 date:2017/1/19
+     * desc:给出的时间是否为当日的时间
+     **/
+    public static boolean compareTodayToLastInfo(String oldData) {
+        boolean isToday = false;
+        String curTime = TimeUtil.getTimeStampLocal();
+        String curDate = curTime.substring(0, 8);
+        String oldDate = oldData.substring(0, 8);
+        if (curDate.equals(oldDate)) {
+            isToday = true;
+        }
+        return isToday;
+    }
+
+    public static String getDaysByDays(int diff){
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT+08:00"));
+        calendar.add(Calendar.DAY_OF_MONTH,-diff);
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd", Locale.CHINA);
+        Date date = calendar.getTime();
+        return sdf.format(date);
+    }
+
+    public static String getReversedOrderTime(long time) {
+        StringBuilder timeStamp = new StringBuilder();
+        String test = null;
+        if (time > 0) {
+            test = getTimeStampGMT(time);
+        } else {
+            test = getTimeStampGMT();
+        }
+
+        timeStamp.append(String.format("%1$08d", Const.YMD_REVERSED_MASK_8 - Integer.parseInt(test.substring(0, 8))));
+        timeStamp.append(String.format("%1$09d", Const.HMSS_REVERSED_MASK_9 - Integer.parseInt(test.substring(8, 17))));
+        return timeStamp.toString();
+    }
+
+    public static String getReversedOrderTime(String time) {
+        StringBuilder timeStamp = new StringBuilder();
+        String test = null;
+        if (time != null) {
+            test = time;
+        } else {
+            test = getTimeStampGMT();
+        }
+
+        try {
+            timeStamp.append(String.format("%1$08d", Const.YMD_REVERSED_MASK_8 - Integer.parseInt(test.substring(0, 8))));
+            timeStamp.append(String.format("%1$09d", Const.HMSS_REVERSED_MASK_9 - Integer.parseInt(test.substring(8, 17))));
+        } catch (Exception e) {
+            test = getTimeStampGMT();
+            timeStamp.append(String.format("%1$08d", Const.YMD_REVERSED_MASK_8 - Integer.parseInt(test.substring(0, 8))));
+            timeStamp.append(String.format("%1$09d", Const.HMSS_REVERSED_MASK_9 - Integer.parseInt(test.substring(8, 17))));
+        }
+        return timeStamp.toString();
+    }
+
+    public static String getOrderTime(String time) {
+        StringBuilder timeStamp = new StringBuilder();
+        if (time != null && time.length() == 17) {
+            timeStamp.append(String.format("%1$08d", Const.YMD_REVERSED_MASK_8 - Integer.parseInt(time.substring(0, 8))));
+            timeStamp.append(String.format("%1$09d", Const.HMSS_REVERSED_MASK_9 - Integer.parseInt(time.substring(8, 17))));
+            return timeStamp.toString();
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * 类名称：TimeUtil
+     * 创建人：zhangjun5
+     * 创建时间：2016/10/21 15:19
+     * 方法描述：对日期进行倒序处理
+     */
+    public static String getReversedTimeByTime(String time) {
+        String reversedTime = null;
+        if (time != null && time.length() >= 8) {
+            reversedTime = String.format("%1$08d", Const.YMD_REVERSED_MASK_8 - Integer.parseInt(time.substring(0, 8)));
+        }
+
+        return reversedTime;
+    }
+
+    public static String getTimeStampGMT(long time) {
+        String timeStamp = null;
+        if (time > 0) {
+            Date d = new Date(time);
+            DateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+            format.setTimeZone(TimeZone.getTimeZone("GMT"));
+            timeStamp = format.format(d);
+        }
+        return timeStamp;
+    }
+
+    public static String parseTimeStampGMT2Local(String gmtStr) {
+        String timeStamp = null;
+        DateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+        format.setTimeZone(TimeZone.getTimeZone("GMT"));
+        try {
+            Date d = format.parse(gmtStr);
+            DateFormat format2 = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+            timeStamp = format2.format(d);
+        } catch (ParseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return timeStamp;
+    }
+
+    public static String getTimeStampFromUTC(long time) {
+        String timeStamp = null;
+        if (time > 0) {
+            Date d = new Date(time);
+            DateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+            timeStamp = format.format(d);
+        }
+        return timeStamp;
+    }
+
+    public static Date getDataFromTimeStamp(String time) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+        try {
+            return dateFormat.parse(time);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return new Date();
+        }
+    }
+
+    //给定时间字符串加一
+    public static String timeInc(String time) {
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+        if (time == null) {
+            return time;
+        } else {
+            Date other = null;
+            Date inc = null;
+            try {
+                other = format.parse(time);
+            } catch (ParseException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            inc = new Date(other.getTime() + 1);
+            return format.format(inc);
+        }
+    }
+
+    //给定时间字符串减一
+    public static String timeDec(String time) {
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+        if (time == null) {
+            return time;
+        } else {
+            Date other = null;
+            Date inc = null;
+            try {
+                other = format.parse(time);
+            } catch (ParseException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            inc = new Date(other.getTime() - 1);
+            return format.format(inc);
+        }
+    }
+
+    public static String getYear(String mDate) {
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+//      format.setTimeZone(TimeZone.getTimeZone("GMT"));  
+        Date other = null;
+        try {
+            other = format.parse(mDate);
+        } catch (ParseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        SimpleDateFormat format1 = new SimpleDateFormat("yyyy年MM月dd日   HH:mm");
+        return format1.format(other);
+    }
+
+    public static String getReqTime(String mDate) {
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+//      format.setTimeZone(TimeZone.getTimeZone("GMT"));  
+        Date other = null;
+        try {
+            other = format.parse(mDate);
+        } catch (ParseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        SimpleDateFormat format1 = new SimpleDateFormat("MM/dd   HH:mm");
+        return format1.format(other);
+    }
+
+    //时间戳格式转换
+    public static String getSosTime(String mDateS) {
+        String result = "";
+        SimpleDateFormat sdf = new SimpleDateFormat("dd");
+        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy");
+        SimpleDateFormat sdf2 = new SimpleDateFormat("MM");
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+//            format.setTimeZone(TimeZone.getTimeZone("GMT"));  
+        Date other = null;
+        try {
+            other = format.parse(mDateS);
+        } catch (ParseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        Date today = new Date();
+        int temp = Integer.parseInt(sdf.format(today))
+                - Integer.parseInt(sdf.format(other));
+        if (!sdf1.format(other).equals(sdf1.format(today))) {
+            temp = 3;
+        } else if (!sdf2.format(other).equals(sdf2.format(today))) {
+            temp = 4;
+        }
+        switch (temp) {
+            case 0:
+//                    result = getDayPart(other);
+                result = getHourAndMin(other);
+                break;
+            case 1:
+                result = "yesterday " + getHourAndMin(other);
+                break;
+            case 3:
+                result = getYear(other);
+                break;
+            case 4:
+                if (Integer.parseInt(sdf.format(today)) == 1) {
+                    int mm = Integer.parseInt(sdf2.format(other));
+                    if (mm == 1 || mm == 3 || mm == 5 || mm == 7 || mm == 8 || mm == 10 || mm == 12) {
+                        if (Integer.parseInt(sdf.format(other)) == 31) {
+                            result = "yesterday " + getHourAndMin(other);
+                        } else {
+                            result = getTime(other);
+                        }
+                    } else if (mm != 2) {
+                        if (Integer.parseInt(sdf.format(other)) == 30) {
+                            result = "yesterday " + getHourAndMin(other);
+                        } else {
+                            result = getTime(other);
+                        }
+                    } else {
+                        result = getTime(other);
+                    }
+                } else if (Integer.parseInt(sdf.format(today)) == 2) {
+                    int mm = Integer.parseInt(sdf2.format(other));
+                    if (mm == 1 || mm == 3 || mm == 5 || mm == 7 || mm == 8 || mm == 10 || mm == 12) {
+                        result = getTime(other);
+                    } else if (mm != 2) {
+                        result = getTime(other);
+                    } else {
+                        result = getTime(other);
+                    }
+                } else {
+                    result = getTime(other);
+                }
+                break;
+            default:
+                result = getTime(other);
+                break;
+        }
+        return result;
+    }
+
+    //时间戳格式转换
+    public static String getTime(Context context, String mDateS) {
+        String result = "";
+        SimpleDateFormat sdf = new SimpleDateFormat("dd");
+        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy");
+        SimpleDateFormat sdfMonth = new SimpleDateFormat("MM");
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+//            format.setTimeZone(TimeZone.getTimeZone("GMT"));  
+        Date other = null;
+        try {
+            other = format.parse(mDateS);
+        } catch (ParseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        Date today = new Date();
+        int temp = Integer.parseInt(sdf.format(today))
+                - Integer.parseInt(sdf.format(other));
+        if (!sdf1.format(other).equals(sdf1.format(today)) || !sdfMonth.format(other).equals(sdfMonth.format(today))) {
+            temp = 1000;
+        }
+
+        switch (temp) {
+            case 0:
+                result = context.getString(R.string.today) + " " + getHourAndMin(other);
+                break;
+            case 1:
+                result = context.getString(R.string.yesterday) + " " + getHourAndMin(other);
+                break;
+            case 2:
+                result = context.getString(R.string.day_before_yesterday) + " " + getHourAndMin(other);
+                break;
+            case 1000:
+                result = getYear(other);
+                break;
+            default:
+                result = getTime(other);
+                break;
+        }
+        return result;
+    }
+
+    //时间戳格式转换
+    public static String getAllMsgTime(Context context,String mDateS) {
+        String result = "";
+        if (mDateS == null || mDateS.length() == 0) {
+            return result;
+        }
+        SimpleDateFormat sdf = new SimpleDateFormat("dd");
+        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy");
+        SimpleDateFormat sdfMonth = new SimpleDateFormat("MM");
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+//            format.setTimeZone(TimeZone.getTimeZone("GMT"));
+        Date other = null;
+        try {
+            other = format.parse(mDateS);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Date today = new Date();
+        int temp = Integer.parseInt(sdf.format(today))
+                - Integer.parseInt(sdf.format(other));
+        if (!sdf1.format(other).equals(sdf1.format(today)) || !sdfMonth.format(other).equals(sdfMonth.format(today))) {
+            temp = 1000;
+        }
+
+        switch (temp) {
+            case 0:
+                result = getHourAndMin(other);
+                break;
+            case 1:
+                result = context.getString(R.string.yesterday);
+                break;
+            case 2:
+                result = getMsgYear(other);
+                break;
+            case 1000:
+                result = getMsgYear(other);
+                break;
+            default:
+                result = getMsgYear(other);
+                break;
+        }
+        return result;
+    }
+
+    public static String getDayPart(Date mDate) {
+        SimpleDateFormat format = new SimpleDateFormat("HH:mm");
+        String result;
+        int hh = mDate.getHours();
+        if (hh >= 0 && hh <= 8) {
+            result = "早上" + format.format(mDate);
+        } else if (hh > 8 && hh <= 12) {
+            result = "上午" + format.format(mDate);
+        } else if (hh > 12 && hh <= 18) {
+            result = "下午" + format.format(mDate);
+        } else if (hh > 18) {
+            result = "晚上" + format.format(mDate);
+        } else {
+            result = "今天" + format.format(mDate);
+        }
+        return result;
+    }
+
+    public static String getHourAndMin(Date mDate) {
+        SimpleDateFormat format = new SimpleDateFormat("HH:mm");
+        return format.format(mDate);
+    }
+
+    public static String getTime(Date mDate) {
+        SimpleDateFormat format = new SimpleDateFormat("MM-dd  HH:mm");
+        return format.format(mDate);
+    }
+
+    public static String getYear(Date mDate) {
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd  HH:mm");
+        return format.format(mDate);
+    }
+
+    public static String getMsgYear(Date mDate) {
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        return format.format(mDate);
+    }
+
+    // time:201104141302
+    public static long getMillisByTime(String time) {
+        long millionSeconds = 0;
+        String format;
+        if (time.length() == 12) {
+            format = "yyyyMMddHHmm";
+        } else if (time.length() == 14) {
+            format = "yyyyMMddHHmmss";
+        } else if (time.length() == 17) {
+            format = "yyyyMMddHHmmssSSS";
+        } else {
+            return 0;
+        }
+
+        SimpleDateFormat sdf = new SimpleDateFormat(format);
+        try {
+            millionSeconds = sdf.parse(time).getTime();
+        } catch (ParseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        return millionSeconds;
+    }
+
+    public static String convertToLocalTime(long addSec) {
+        String convertDate;
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+        Date curTime = new Date();
+        long converdate = curTime.getTime() + addSec * 1000;
+        Date timeDate = new Date(converdate);
+        convertDate = format.format(timeDate);
+        LogUtil.i("curdate:+convertDate:" + format.format(curTime) + convertDate);
+        return convertDate;
+    }
+
+    /**
+     * 类名称：TimeUtil
+     * 创建人：zhangjun5
+     * 创建时间：2016/5/23 14:27
+     * 方法描述：获取两个时间日期的差，返回相差的秒数
+     */
+    public static long compareToDiffForTwoTime(String mDateStart, String mDateEnd) {
+        long result = 0;
+        if (mDateStart == null || mDateEnd == null) {
+            return 0;
+        }
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+        Date startTime = null;
+        Date endTime = null;
+        try {
+            startTime = format.parse(mDateStart);
+            endTime = format.parse(mDateEnd);
+            result = (endTime.getTime() - startTime.getTime()) / 1000;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    //时间戳格式转换
+    public static String getDayTime(String mDateS) {
+        String result = "";
+        SimpleDateFormat sdf = new SimpleDateFormat("dd");
+        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy");
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+//            format.setTimeZone(TimeZone.getTimeZone("GMT"));
+        Date other = null;
+        try {
+            other = format.parse(mDateS);
+            Date today = new Date();
+//            int temp = Integer.parseInt(sdf.format(other)) - Integer.parseInt(sdf.format(today));
+            int temp = getInterval(today, other);  //获取today和other的日期间隔
+            switch (temp) {
+                case 0:
+                    result = getHourAndMin(other);
+                    break;
+                case 1:
+                    result = "明天" + getHourAndMin(other);
+                    break;
+                case 2:
+                    result = "后天" + getHourAndMin(other);
+                default:
+                    result = getTime(other);
+                    break;
+            }
+        } catch (ParseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    public static String getDay() {
+        Date date = new Date();
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
+        return format.format(date);
+    }
+
+    public static String getDay(String mDateS) {
+        SimpleDateFormat format = new SimpleDateFormat("yyyy.MM.dd");
+        SimpleDateFormat format1 = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+        try {
+            Date other = format1.parse(mDateS);
+            return format.format(other);
+        } catch (Exception e) {
+            return format.format(new Date());
+        }
+    }
+
+    public static String getTimeHHMM(String mDateS) {
+        SimpleDateFormat format = new SimpleDateFormat("HH:mm");
+        SimpleDateFormat format1 = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+        try {
+            Date other = format1.parse(mDateS);
+            return format.format(other);
+        } catch (Exception e) {
+            return format.format(new Date());
+        }
+    }
+
+    /**
+     * 获取today和other的日期间隔
+     *
+     * @return 0-当天  1-明天  2-后天  3-下一年（超过两天） -1-昨天  -2-前天  -3-上一年（超过两天） 4-当年（超过两天） 6-其它
+     */
+    public static int getInterval(Date today, Date other) {
+
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT+08:00"));
+        calendar.setTime(today);
+        int currentYear = calendar.get(Calendar.YEAR);
+        int currentToday = calendar.get(Calendar.DAY_OF_YEAR);
+        int totalDay = calendar.getMaximum(Calendar.DAY_OF_YEAR);   //366
+
+        calendar.setTime(other);
+        int otherYear = calendar.get(Calendar.YEAR);
+        int otherDay = calendar.get(Calendar.DAY_OF_YEAR);
+        int otherTotalDay = calendar.getMaximum(Calendar.DAY_OF_YEAR);
+
+        LogUtil.d("HYY " + "currentYear:" + currentYear + "  currentToday:" + currentToday + "  totalDay:" + totalDay + "  otherYear:" + otherYear + "  otherDay:" + otherDay + "  otherTotalDay:" + otherTotalDay);
+        if (otherYear == currentYear) {
+            int interval = otherDay - currentToday;
+            if (Math.abs(interval) <= 2) {
+                return interval;
+            } else {
+                return 4;
+            }
+        } else if ((otherYear - currentYear) == 1) {
+            int interval = otherDay + (totalDay - currentToday);
+            if (interval <= 2) {
+                return interval;
+            } else {
+                return 3;   //下一年（超过两天）
+            }
+        } else if ((otherYear - currentYear) == -1) {
+            int interval = currentToday + (otherTotalDay - otherDay);
+            if (interval <= 2) {
+                return -1 * interval;
+            } else {
+                return -3;   //上一年（超过两天）
+            }
+        }
+        return 6;   //其它（理论上不会出现）
+    }
+
+    /**
+     * one hour in s
+     */
+    private static final int ONE_HOUR = 1 * 60 * 60 * 1000;
+    /**
+     * one minute in s
+     */
+    private static final int ONE_MIN = 1 * 60 * 1000;
+    private static final int ONE_SECOND = 1 * 1000;
+
+    public static String formatTimeStamp(Context ctxt, int second) {
+        StringBuilder sb = new StringBuilder();
+        int days = second / (24 * 3600);
+        int hour = (second % (24 * 3600)) / 3600;
+        int min = (second % 3600) / 60;
+        int sec = second % 60;
+        if (days != 0) {
+            sb.append(days).append(ctxt.getString(R.string.day_info));
+        }
+        if (hour == 0) {
+//			sb.append("00:");
+        } else {
+            sb.append(hour).append(ctxt.getString(R.string.unit_hour));
+        }
+        if (min == 0) {
+            sb.append(min).append(ctxt.getString(R.string.minute));
+        } else {
+            sb.append(min).append(ctxt.getString(R.string.minute));
+        }
+        if (sec == 0) {
+        } else {
+            sb.append(sec).append(ctxt.getString(R.string.second));
+        }
+        return sb.toString();
+    }
+
+    public static String getMonthDay(String mDateS) {
+        SimpleDateFormat format = new SimpleDateFormat("yyyy/MM/dd");
+        SimpleDateFormat format1 = new SimpleDateFormat("yyyyMMdd");
+        try {
+            Date other = format1.parse(mDateS);
+            return format.format(other);
+        } catch (Exception e) {
+            return format.format(new Date());
+        }
+    }
+
+    /**
+     * HH:mm:ss
+     */
+    public static String formatTime(int second) {
+        StringBuilder sb = new StringBuilder();
+        int hour = second / 3600;
+        int min = (second % 3600) / 60;
+        int sec = second % 60;
+        if (hour == 0) {
+//			sb.append("00:");
+        } else {
+            sb.append(hour).append("'");
+        }
+        if (min == 0) {
+            sb.append(min).append("'");
+        } else {
+            sb.append(min).append("'");
+        }
+        if (sec == 0) {
+        } else {
+            sb.append(sec).append("''");
+        }
+        return sb.toString();
+    }
+
+    public static String getNormalDateByYMD(int year,int month,int day){
+        StringBuilder mDate = new StringBuilder();
+        mDate.append(year);
+        if(month < 10){
+            mDate.append("0"+month);
+        }else{
+            mDate.append(month);
+        }
+        if(day < 10){
+            mDate.append("0"+day);
+        }else{
+            mDate.append(day);
+        }
+
+        return mDate.toString();
+    }
+
+    public static String getRecentlyDay(Context ctxt, String mDate){
+        String mRecentlyDay="";
+        SimpleDateFormat format= new SimpleDateFormat("yyyy.MM.dd");
+        try{
+            Date date = format.parse(mDate);
+            Date today = new Date();
+            long mTimeDiff = today.getTime() - date.getTime();
+            long days = mTimeDiff/(24*3600*1000);
+            if(days == 0){
+                mRecentlyDay = ctxt.getString(R.string.today);
+            }else if(days == 1){
+                mRecentlyDay = ctxt.getString(R.string.yesterday);
+            }else{
+                mRecentlyDay = mDate;
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+
+        return mRecentlyDay;
+    }
+
+    public static String formatTimeYYYYMMDD(String mDate){
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat format1 = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+        try {
+            Date d = format1.parse(mDate);
+            return format.format(d);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * HH:mm:ss
+     */
+    public static String formatTimeMs(long ms, boolean isShowHour) {
+        StringBuilder sb = new StringBuilder();
+        int hour = (int) (ms / ONE_HOUR);
+        int min = (int) ((ms % ONE_HOUR) / ONE_MIN);
+        int sec = (int) (ms % ONE_MIN) / ONE_SECOND;
+        if (hour == 0) {
+            if(isShowHour)
+                sb.append("00:");
+        } else if (hour < 10) {
+            sb.append("0").append(hour).append(":");
+        } else {
+            sb.append(hour).append(":");
+        }
+        if (min == 0) {
+            sb.append("00:");
+        } else if (min < 10) {
+            sb.append("0").append(min).append(":");
+        } else {
+            sb.append(min).append(":");
+        }
+        if (sec == 0) {
+            sb.append("00");
+        } else if (sec < 10) {
+            sb.append("0").append(sec);
+        } else {
+            sb.append(sec);
+        }
+        return sb.toString();
+    }
+
+    public static int getMaxday(String year, String month) {
+        {
+            int y = Integer.valueOf(year);
+            int m = Integer.valueOf(month);
+
+            int dayMax = 31;
+
+            if (m == 2) {
+                if (y % 4 == 0) {
+                    dayMax = 29;
+                } else {
+                    dayMax = 28;
+                }
+            } else if (m == 4 || m == 6 || m == 9 || m == 11) {
+                dayMax = 30;
+            }
+            return dayMax;
+        }
+    }
+
+    public static String getLocationTime(String mDates) {
+        String result;
+        SimpleDateFormat sdf = new SimpleDateFormat("dd");
+        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy");
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+        Date other = null;
+        try {
+            other = format.parse(mDates);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        Date today = new Date();
+        int temp = Integer.valueOf(sdf.format(today)) - Integer.valueOf(sdf.format(other));
+        if (!sdf1.format(other).equals(sdf1.format(today))) {
+            temp = 3;
+        }
+        switch (temp) {
+            case 0:
+                result = getHourAndMin(other); //今天
+                break;
+            case 3:
+                SimpleDateFormat yearFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+                result = yearFormat.format(other);
+                break;
+            default:
+                SimpleDateFormat timeFormat = new SimpleDateFormat("MM-dd HH:mm");
+                result = timeFormat.format(other);
+                break;
+        }
+        return result;
+    }
+
+    public static String getOrderTimeFromTimeStamp(String time) {
+        SimpleDateFormat format = new SimpleDateFormat("yyMMddHHmmssSSS");
+        SimpleDateFormat format1 = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+        String timeStamp = String.valueOf(999999999999999L - Long.valueOf(time));
+        try {
+            Date d = format.parse(timeStamp);
+            return format1.format(d);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static String getTimeStringFromDate(Date d) {
+        SimpleDateFormat format = new SimpleDateFormat("yyMMddHHmmssSSS");
+        String timeStamp = format.format(d);
+        long time = Long.valueOf(timeStamp);
+        timeStamp = String.valueOf(999999999999999L - time);
+        return timeStamp;
+    }
+
+    public static Date getTimeStampGMTFromFmt(long time) {
+        String timeStamp = String.valueOf(99999999999999999L - time);
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+        format.setTimeZone(TimeZone.getTimeZone("GMT"));
+        try {
+            Date d = format.parse(timeStamp);
+            return d;
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static Date getTimeStampGMTFromFmt(long time, int dev) {
+        String timeStamp = String.valueOf(999999999999999L - time);
+        //timeStamp = "20" + timeStamp;
+        SimpleDateFormat format = new SimpleDateFormat("yyMMddHHmmssSSS");
+        //format.setTimeZone(TimeZone.getTimeZone("GMT"));
+        try {
+            Date d = format.parse(timeStamp);
+            return d;
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static boolean isTheSameDay(Date d1, Date d2) {
+        Calendar cal1 = Calendar.getInstance();
+        cal1.setTime(d1);
+        Calendar cal2 = Calendar.getInstance();
+        cal2.setTime(d2);
+        return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR)
+                && cal1.get(Calendar.MONTH) == cal2.get(Calendar.MONTH)
+                && cal1.get(Calendar.DAY_OF_MONTH) == cal2.get(Calendar.DAY_OF_MONTH);
+    }
+
+    public static String timeTextFromString(Context ctxt, long timestr) {
+        String ret = null;
+        Calendar now = Calendar.getInstance();
+        Calendar time = Calendar.getInstance();
+        time.setTimeInMillis(timestr);
+        if (now.get(Calendar.YEAR) == time.get(Calendar.YEAR)
+                && now.get(Calendar.MONTH) == time.get(Calendar.MONTH)
+                && now.get(Calendar.DAY_OF_MONTH) == time.get(Calendar.DAY_OF_MONTH)) {
+            ret = ctxt.getString(R.string.today);
+        } else {
+            now.add(Calendar.DAY_OF_MONTH, -1);
+            if (now.get(Calendar.YEAR) == time.get(Calendar.YEAR)
+                    && now.get(Calendar.MONTH) == time.get(Calendar.MONTH)
+                    && now.get(Calendar.DAY_OF_MONTH) == time.get(Calendar.DAY_OF_MONTH)) {
+                ret = ctxt.getString(R.string.yesterday);
+            } else {
+                String year = String.valueOf(time.get(Calendar.YEAR));
+                String month = String.valueOf(time.get(Calendar.MONTH) + 1);
+                String day = String.valueOf(time.get(Calendar.DAY_OF_MONTH));
+                ret = year + "." + month + "." + day;
+            }
+        }
+        return ret;
+    }
+
+    public static String getTimestampCHN() {
+        Date d = new Date();
+        DateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+        format.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+        return format.format(d);
+    }
+
+    public static String localToCHNTimestamp(String localTimestamp) {
+        try {
+            SimpleDateFormat localDateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");//北京时间格式
+            localDateFormat.setTimeZone(TimeZone.getDefault());
+            Date localDate = localDateFormat.parse(localTimestamp);
+            SimpleDateFormat chnDateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");//当地时间格式
+            chnDateFormat.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+            String chnTimestamp = chnDateFormat.format(localDate.getTime());
+            return chnTimestamp;
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return localTimestamp;
+        }
+    }
+
+    public static String chnToLocalTimestamp(String chnTimestamp) {
+        try {
+            SimpleDateFormat chnDateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");//北京时间格式
+            chnDateFormat.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+            Date chnDate = chnDateFormat.parse(chnTimestamp);
+            SimpleDateFormat localDateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");//当地时间格式
+            localDateFormat.setTimeZone(TimeZone.getDefault());
+            String localTimestamp = localDateFormat.format(chnDate.getTime());
+            return localTimestamp;
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return chnTimestamp;
+        }
+    }
+
+    public static String parseTimeStampGMT2CHN(String gmtStr) {
+        String timeStamp = null;
+        DateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+        format.setTimeZone(TimeZone.getTimeZone("GMT"));
+        try {
+            Date d = format.parse(gmtStr);
+            DateFormat format2 = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+            format2.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+            timeStamp = format2.format(d);
+        } catch (ParseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return timeStamp;
+    }
+
+    public static long getChatTime(String mDateS) {
+        long result;
+        if (mDateS == null) {
+            return 0;
+        }
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+        Date other = null;
+        try {
+            other = format.parse(mDateS);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Date today = new Date();
+        result = (today.getTime() - other.getTime()) / 1000;
+        return result;
+    }
+
+    /**
+     * UTC时间 ---> 当地时间
+     * @param utcTime   UTC时间
+     * @return
+     */
+    public static String utc2Local(String utcTime) {
+        SimpleDateFormat utcFormater = new SimpleDateFormat("yyyyMMddHHmmssSSS");//UTC时间格式
+        utcFormater.setTimeZone(TimeZone.getTimeZone("UTC"));
+        Date gpsUTCDate = null;
+        try {
+            gpsUTCDate = utcFormater.parse(utcTime);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        SimpleDateFormat localFormater = new SimpleDateFormat("yyyyMMddHHmmssSSS");//当地时间格式
+        localFormater.setTimeZone(TimeZone.getDefault());
+        String localTime = localFormater.format(gpsUTCDate.getTime());
+        return localTime;
+    }
+}

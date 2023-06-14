@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/color_3" >
+    <RelativeLayout
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="79.33dp" >
+        <ImageView
+            android:id="@+id/watch_head"
+            android:layout_width="186dp"
+            android:layout_height="186dp"
+            android:background="@drawable/animation_1" />
+        <TextView
+            android:id="@+id/nicename"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/watch_head"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="5dp"
+            android:textColor="@color/m_a_watch_nice_name_c"
+            android:textSize="@dimen/xiaomiMyTextSize10" />
+        <TextView
+            android:id="@+id/sos_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/nicename"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="6.66dp"
+            android:textColor="@color/m_a_watch_nice_name_c"
+            android:textSize="@dimen/xiaomiMyTextSize1" />
+        </RelativeLayout>
+        
+    <LinearLayout 
+       android:layout_width="wrap_content"
+       android:layout_height="wrap_content"
+       android:layout_centerHorizontal="true"
+       android:layout_marginBottom="23dp"
+       android:layout_alignParentBottom="true"
+       android:orientation="horizontal" >
+       <FrameLayout 
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content" >
+           <ImageButton
+               android:id="@+id/nothing"
+               android:layout_width="wrap_content"
+               android:layout_height="wrap_content"
+               android:background="@drawable/btn_sos_left_selector" />
+           <TextView
+               android:layout_width="wrap_content"
+               android:layout_height="wrap_content"
+               android:layout_gravity="center"
+               android:text="@string/donothing_text"
+               android:textColor="@color/m_a_watch_nice_name_c"
+               android:textSize="@dimen/xiaomiMyTextSize3" />
+           </FrameLayout>
+       <FrameLayout 
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content" >
+           <ImageButton
+               android:id="@+id/donow"
+               android:layout_width="wrap_content"
+               android:layout_height="wrap_content"
+               android:background="@drawable/btn_sos_right_selector" />
+           <TextView
+               android:layout_width="wrap_content"
+               android:layout_height="wrap_content"
+               android:layout_gravity="center"
+               android:text="@string/donow_text"
+               android:textColor="@color/m_a_watch_nice_name_c"
+               android:textSize="@dimen/xiaomiMyTextSize3" />
+           </FrameLayout>
+        </LinearLayout>
+</RelativeLayout>

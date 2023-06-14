@@ -1,0 +1,669 @@
+/**
+ * Creation Date:2015-6-8
+ * <p>
+ * Copyright
+ */
+package com.xiaoxun.xun.activitys;
+
+import android.Manifest;
+import android.app.Dialog;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.os.Bundle;
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Base64;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.xiaoxun.xun.calendar.LoadingDialog;
+import com.xiaoxun.xun.calendar.LoadingDialog.OnConfirmClickListener;
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.beans.FamilyData;
+import com.xiaoxun.xun.beans.MyMsgData;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.db.WatchDAO;
+import com.xiaoxun.xun.interfaces.MsgCallback;
+import com.xiaoxun.xun.utils.BitmapUtilities;
+import com.xiaoxun.xun.utils.CloudBridgeUtil;
+import com.xiaoxun.xun.utils.CustomSelectDialogUtil;
+import com.xiaoxun.xun.utils.CustomSelectDialogUtil.AdapterItemClickListener;
+import com.xiaoxun.xun.utils.CustomSelectDialogUtil.CustomDialogListener;
+import com.xiaoxun.xun.utils.DialogUtil;
+import com.xiaoxun.xun.utils.ImageUtil;
+import com.xiaoxun.xun.utils.LogUtil;
+import com.xiaoxun.xun.utils.MD5;
+import com.xiaoxun.xun.utils.PhotoGetUtil;
+import com.xiaoxun.xun.utils.StrUtil;
+import com.xiaoxun.xun.utils.TimeUtil;
+import com.xiaoxun.xun.utils.ToastUtil;
+import com.yalantis.ucrop.UCrop;
+
+import net.minidev.json.JSONObject;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+
+/**
+ * Description Of The Class<br>
+ *
+ * @author liutianxiang
+ * @version 1.000, 2015-6-8
+ */
+public class WatchFirstSetActivity extends NormalActivity implements OnClickListener, MsgCallback, OnConfirmClickListener {
+
+
+    EditText editNick;
+
+    private ImageButton btn_back;
+    //head edit
+    private ImageView iv_head;
+
+    private File cameraTemp = null;
+    private File cropTemp = null;
+    private int headE2cSn;
+    String nickname;
+    private View layerWaiting;
+    private String curWatchEid;
+    private int step = 0;
+    Button btnNext;
+    WatchData watch = new WatchData();//cur watch
+
+    Button selSexMale;
+    Button selSexFemale;
+    private LoadingDialog loadingdlg;
+    EditText editPhonenum;
+    String phonenum;
+    private int setNickAndPhoneSn;
+    private TextView editPhoneNumTips;
+
+    private ImageButton nicknameDeleteKeyword;
+    private ImageButton numberDeleteKeyword;
+    private View phoneNumberLayout;
+
+    private Uri photoUri;
+    private File mSaveTemp;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        // TODO Auto-generated method stub
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_watch_first_set);
+        curWatchEid = getIntent().getExtras().getString(CloudBridgeUtil.KEY_NAME_EID);
+        watch = myApp.getCurUser().queryWatchDataByEid(curWatchEid);
+        //兼容一下老的手表nickname过长问题
+        if (watch.getNickname() != null && watch.getNickname().length() > 8) {
+            watch.setNickname(watch.getNickname().substring(0, 8));
+        }
+        ((TextView) findViewById(R.id.tv_title)).setText(getText(R.string.setting_babyinfo));
+        initViews();
+        loadingdlg = new LoadingDialog(this, R.style.Theme_DataSheet, this);
+        loadingdlg.hideReloadView();
+    }
+
+    private void initViews() {
+        layerWaiting = findViewById(R.id.layer_waiting);
+
+        btn_back = findViewById(R.id.iv_title_back);
+        btn_back.setOnClickListener(this);
+        btn_back.setVisibility(View.GONE);
+        btnNext = findViewById(R.id.btn_next_step);
+        btnNext.setOnClickListener(this);
+
+        iv_head = findViewById(R.id.iv_head);
+        iv_head.setOnClickListener(this);
+
+        phoneNumberLayout = findViewById(R.id.phone_number_layout);
+
+        nicknameDeleteKeyword = findViewById(R.id.nickname_delete_keyword);
+        nicknameDeleteKeyword.setOnClickListener(this);
+        editNick = findViewById(R.id.edit_nickname);
+//        editNick.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+//            @Override
+//            public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
+//                if (keyEvent.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
+//                    editPhonenum.requestFocus();
+//                    return true;
+//                }
+//                return false;
+//            }
+//        });
+        editNick.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (!s.toString().equals("")) {
+                    nicknameDeleteKeyword.setVisibility(View.VISIBLE);
+                } else {
+                    nicknameDeleteKeyword.setVisibility(View.INVISIBLE);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+        if (watch.getNickname() == null || watch.getNickname().length() < 1) {
+            editNick.setHint(getResources().getString(R.string.wechat_notice_bind_nickname));
+        } else {
+            editNick.setText(watch.getNickname());
+            editNick.setSelection(watch.getNickname().length());
+        }
+//        editNick.setSelection(2);
+        ImageUtil.setMaskImage(iv_head, R.drawable.mask, getMyApp().getHeadDrawableByFile(getResources(), watch.getHeadPath(), watch.getEid(), R.drawable.default_head));
+        selSexMale = findViewById(R.id.sel_sex_male);
+        selSexMale.setOnClickListener(this);
+        selSexFemale = findViewById(R.id.sel_sex_female);
+        selSexFemale.setOnClickListener(this);
+        if (watch.getSex() > 0) {
+            selSexMale.setBackgroundResource(R.drawable.selsex_left_focus);
+            selSexMale.setTextColor(getResources().getColor((R.color.white)));
+            selSexFemale.setBackgroundResource(R.drawable.selsex_right_unfocus);
+            selSexFemale.setTextColor(getResources().getColor((R.color.red_color)));
+        } else {
+            selSexMale.setBackgroundResource(R.drawable.selsex_left_unfocus);
+            selSexMale.setTextColor(getResources().getColor((R.color.red_color)));
+            selSexFemale.setBackgroundResource(R.drawable.selsex_right_focus);
+            selSexFemale.setTextColor(getResources().getColor((R.color.white)));
+        }
+        numberDeleteKeyword = findViewById(R.id.number_delete_keyword);
+        numberDeleteKeyword.setOnClickListener(this);
+        editPhonenum = findViewById(R.id.edit_phonenum);
+        editPhonenum.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (!watch.isDevice102()) {
+                    if (!s.toString().equals("")) {
+                        numberDeleteKeyword.setVisibility(View.VISIBLE);
+                    } else {
+                        numberDeleteKeyword.setVisibility(View.INVISIBLE);
+                    }
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+        editPhoneNumTips = findViewById(R.id.tv_edit_phonenum_tips);
+        if (watch.isWatch()) {
+            if (watch.getCellNum() == null || watch.getCellNum().length() < 1) {
+
+            } else {
+                String num = StrUtil.formatPhoneNumber(watch.getCellNum());
+                phonenum = num;
+                if (watch.isDevice102()) {
+                    editPhonenum.setClickable(false);
+                    editPhonenum.setHint(num);
+                    editPhonenum.setFocusableInTouchMode(false);
+                    editPhonenum.setFocusable(false);
+                    editPhonenum.setCursorVisible(false);
+                    editPhoneNumTips.setVisibility(View.GONE);
+                } else {
+                    editPhonenum.setText(num);
+                    editPhonenum.setSelection(num.length());
+                    editPhoneNumTips.setVisibility(View.VISIBLE);
+                }
+            }
+        } else {
+            editPhoneNumTips.setVisibility(View.GONE);
+            phoneNumberLayout.setVisibility(View.GONE);
+        }
+
+    }
+
+    @Override
+    protected void onResume() {
+        // TODO Auto-generated method stub
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        // TODO Auto-generated method stub
+        super.onPause();
+    }
+
+    @Override
+    public void onBackPressed() {
+        // TODO Auto-generated method stub
+        // super.onBackPressed();
+    }
+
+    @Override
+    protected void onDestroy() {
+        // TODO Auto-generated method stub
+        super.onDestroy();
+    }
+
+    @Override
+    public void doCallBack(JSONObject reqMsg, JSONObject respMsg) {
+        // TODO Auto-generated method stub
+        int rc = CloudBridgeUtil.getCloudMsgRC(respMsg);
+        int cid = CloudBridgeUtil.getCloudMsgCID(respMsg);
+
+        switch (cid) {
+            case CloudBridgeUtil.CID_E2C_DOWN:
+                if (rc == CloudBridgeUtil.RC_SUCCESS) {
+                    if (CloudBridgeUtil.getCloudMsgSN(respMsg) == headE2cSn) {
+                        sendDeviceHeadPath(watch);
+                    }
+                } else {
+                    if (CloudBridgeUtil.getCloudMsgSN(respMsg) == headE2cSn) {
+                        if (rc == CloudBridgeUtil.RC_NETERROR
+                                || rc == CloudBridgeUtil.RC_SOCKET_NOTREADY) {
+                            ToastUtil.showMyToast(this,
+                                    getString(R.string.network_error_prompt),
+                                    Toast.LENGTH_SHORT);
+                        } else {
+                            ToastUtil.showMyToast(this, getResources().getString(R.string.set_error), Toast.LENGTH_SHORT);
+                        }
+                        loadingdlg.dismiss();
+                        watch.setHeadPath(null);
+                        WatchDAO.getInstance(getApplicationContext()).readWatch(watch);
+                        initViews();
+                    }
+                }
+                break;
+            case CloudBridgeUtil.CID_DEVICE_SET_RESP:
+                loadingdlg.dismiss();
+                if (rc == CloudBridgeUtil.RC_SUCCESS) {
+                    FamilyData family = myApp.getCurUser().queryFamilyByGid(watch.getFamilyId());
+                    if (family != null) {
+                        family.setFamilyName(StrUtil.genFamilyName(family, getApplicationContext()));
+                    }
+                    WatchDAO.getInstance(getApplicationContext()).addWatch(watch);
+                    if (CloudBridgeUtil.getCloudMsgSN(respMsg) == setNickAndPhoneSn) {
+                        Intent intent2 = new Intent(WatchFirstSetActivity.this, WatchDetailFirstSetActivity.class);
+                        intent2.putExtra(CloudBridgeUtil.KEY_NAME_EID, curWatchEid);
+                        startActivity(intent2);
+                        finish();
+                    }
+                    sendBroadcast(new Intent(Const.ACTION_RECEIVE_SET_DEVICE_INFO_CHANGE));//set success
+                } else {
+                    if (rc == CloudBridgeUtil.RC_NETERROR
+                            || rc == CloudBridgeUtil.RC_SOCKET_NOTREADY) {
+                        ToastUtil.showMyToast(this,
+                                getString(R.string.network_error_prompt),
+                                Toast.LENGTH_SHORT);
+                        WatchDAO.getInstance(getApplicationContext()).readWatch(watch);
+                        initViews();
+                    } else {
+                        ToastUtil.showMyToast(this, getResources().getString(R.string.set_error), Toast.LENGTH_SHORT);
+                    }
+
+                }
+                break;
+
+            case CloudBridgeUtil.CID_DEVICE_SIM_CHANGE_RESP:
+
+                if (rc == CloudBridgeUtil.RC_SUCCESS) {
+                    watch.setCellNum(phonenum);
+                    setNickAndPhoneSn = sendDeviceFirstSet();
+                } else {
+                    ToastUtil.showMyToast(this, getResources().getString(R.string.watch_first_set_failed), Toast.LENGTH_SHORT);
+                }
+                break;
+
+            case CloudBridgeUtil.CID_MAPSET_RESP:
+                break;
+
+            case CloudBridgeUtil.CID_E2G_DOWN:
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void sendDeviceHeadPath(WatchData watch) {
+
+        MyMsgData relationMsg = new MyMsgData();
+        relationMsg.setCallback(WatchFirstSetActivity.this);
+        //set msg body
+        JSONObject pl = new JSONObject();
+        // pl.put(CloudBridgeUtil.KEY_NAME_ALIAS, getMyApp().getCurUser().genRelationStr());
+        pl.put(CloudBridgeUtil.KEY_NAME_EID, watch.getEid());
+        pl.put(CloudBridgeUtil.KEY_NAME_CUSTOM, watch.getCustomData().toJsonStr());
+        relationMsg.setReqMsg(myApp.obtainCloudMsgContent(CloudBridgeUtil.CID_DEVICE_SET, pl));
+        if (myApp.getNetService() != null)
+            myApp.getNetService().sendNetMsg(relationMsg);
+
+
+    }
+
+    @Override
+    public void onClick(View v) {
+        // TODO Auto-generated method stub
+        if (v == btn_back) {
+            //    finish();
+        } else if (v == selSexMale) {
+            watch.setSex(1);
+            sendDeviceSet(CloudBridgeUtil.KEY_NAME_SEX, watch.getSex());
+            refreshUI();
+        } else if (v == selSexFemale) {
+            watch.setSex(0);
+            sendDeviceSet(CloudBridgeUtil.KEY_NAME_SEX, watch.getSex());
+            refreshUI();
+        } else if (v == iv_head) {
+
+            ArrayList<String> itemList = new ArrayList<String>();
+            itemList.add(getText(R.string.head_edit_camera).toString());
+            itemList.add(getText(R.string.head_edit_pics).toString());
+            Dialog dlg = CustomSelectDialogUtil.CustomItemSelectDialogWithTitle(WatchFirstSetActivity.this, getText(R.string.edit_head).toString(), itemList,
+                    new AdapterItemClickListener() {
+                        @Override
+                        public void onClick(View v, int position) {
+                            // TODO Auto-generated method stub
+                            if (position == 1) {
+                                if (ActivityCompat.checkSelfPermission(WatchFirstSetActivity.this, Manifest.permission.CAMERA) == PERMISSION_GRANTED) {
+                                    mSaveTemp = PhotoGetUtil.getDestinationFile(myApp);
+                                    photoUri = PhotoGetUtil.startCameraCapture(myApp, WatchFirstSetActivity.this, mSaveTemp);
+                                } else {
+                                    ActivityCompat.requestPermissions(WatchFirstSetActivity.this, new String[]{Manifest.permission.CAMERA}, 1);
+                                }
+                            } else {
+                                PhotoGetUtil.startPickHead(WatchFirstSetActivity.this);
+                            }
+                        }
+                    },
+                    -1, new CustomDialogListener() {
+
+                        @Override
+                        public void onClick(View v, String text) {
+                            // TODO Auto-generated method stub
+
+                        }
+                    }, getText(R.string.cancel).toString());
+            dlg.show();
+        } else if (v == btnNext) {
+            nickname = editNick.getText().toString();
+            if (nickname.length() < 1) {//没有编辑的话，设置成小宝贝
+                ToastUtil.showMyToast(WatchFirstSetActivity.this, getText(R.string.wrong_nickname).toString(), Toast.LENGTH_SHORT);
+                return;
+            }
+            watch.setNickname(nickname);
+            if (editPhonenum.isFocusable() == true) {//如果允许编辑号码，则获取编辑后号码
+                phonenum = editPhonenum.getText().toString();
+            }
+            if (phonenum == null || phonenum.length() == 0) {//未设置
+                Dialog dlg = DialogUtil.CustomNormalDialog(WatchFirstSetActivity.this,
+                        getResources().getString(R.string.prompt),
+                        getResources().getString(R.string.watch_first_set_dlg_content),
+                        new DialogUtil.OnCustomDialogListener() {
+
+                            @Override
+                            public void onClick(View v) {
+                                // TODO Auto-generated method stub
+                                setNickAndPhoneSn = sendDeviceFirstSet();
+                            }
+                        },
+                        getResources().getString(R.string.watch_first_set_dlg_left_content),
+                        new DialogUtil.OnCustomDialogListener() {
+
+                            @Override
+                            public void onClick(View v) {
+                                // TODO Auto-generated method stub
+                            }
+                        },
+                        getResources().getString(R.string.watch_first_set_dlg_right_content));
+                dlg.show();
+                return;
+            }
+            if (!StrUtil.isMobileNumber(phonenum, 2)) {
+                ToastUtil.showMyToast(WatchFirstSetActivity.this, getText(R.string.format_error).toString(), Toast.LENGTH_SHORT);
+                return;
+            }
+            phonenum = StrUtil.formatPhoneNumber(phonenum);
+            if (watch.getCellNum() == null
+                    || !watch.getCellNum().equals(phonenum)) {
+                sendDevicePhoneChange();
+            } else {
+                setNickAndPhoneSn = sendDeviceFirstSet();
+            }
+
+        } else if (v == nicknameDeleteKeyword) {
+            editNick.setText("");
+            nicknameDeleteKeyword.setVisibility(View.GONE);
+        } else if (v == numberDeleteKeyword) {
+            editPhonenum.setText("");
+            numberDeleteKeyword.setVisibility(View.GONE);
+        }
+    }
+
+    private void refreshUI() {
+        if (watch.getSex() > 0) {
+            selSexMale.setBackgroundResource(R.drawable.selsex_left_focus);
+            selSexMale.setTextColor(getResources().getColor((R.color.white)));
+            selSexFemale.setBackgroundResource(R.drawable.selsex_right_unfocus);
+            selSexFemale.setTextColor(getResources().getColor((R.color.red_color)));
+        } else {
+            selSexMale.setBackgroundResource(R.drawable.selsex_left_unfocus);
+            selSexMale.setTextColor(getResources().getColor((R.color.red_color)));
+            selSexFemale.setBackgroundResource(R.drawable.selsex_right_focus);
+            selSexFemale.setTextColor(getResources().getColor((R.color.white)));
+        }
+
+    }
+
+    private void sendDeviceSet(String key, Object value) {
+        MyMsgData setMsg = new MyMsgData();
+        setMsg.setCallback(WatchFirstSetActivity.this);
+
+        JSONObject pl = new JSONObject();
+        pl.put(key, value);
+        pl.put(CloudBridgeUtil.KEY_NAME_EID, watch.getEid());
+        setMsg.setReqMsg(myApp.obtainCloudMsgContent(CloudBridgeUtil.CID_DEVICE_SET, pl));
+        if (myApp.getNetService() != null)
+            myApp.getNetService().sendNetMsg(setMsg);
+    }
+
+    private void checkNextOk() {
+        if ((watch.getHeadPath() != null && watch.getHeadPath().length() > 0)
+                && (watch.getNickname() != null && watch.getNickname().length() > 0)) {
+            step = 1;
+            btnNext.setEnabled(true);
+        }
+
+    }
+
+    private int sendDeviceFirstSet() {
+        int sn;
+        MyMsgData setMsg = new MyMsgData();
+        setMsg.setCallback(WatchFirstSetActivity.this);
+
+        JSONObject pl = new JSONObject();
+        pl.put(CloudBridgeUtil.KEY_NAME_NICKNAME, watch.getNickname());
+        pl.put(CloudBridgeUtil.KEY_NAME_EID, watch.getEid());
+        sn = Long.valueOf(TimeUtil.getTimeStampGMT()).intValue();
+
+        setMsg.setReqMsg(CloudBridgeUtil.obtainCloudMsgContent(CloudBridgeUtil.CID_DEVICE_SET,
+                sn, myApp.getToken(), pl));
+        myApp.getNetService().sendNetMsg(setMsg);
+        return sn;
+    }
+
+    private int sendDevicePhoneChange() {
+        int sn;
+        MyMsgData setMsg = new MyMsgData();
+        setMsg.setCallback(WatchFirstSetActivity.this);
+
+        JSONObject pl = new JSONObject();
+        pl.put(CloudBridgeUtil.KEY_NAME_TGID, watch.getFamilyId());
+        pl.put(CloudBridgeUtil.KEY_NAME_SUB_ACTION, CloudBridgeUtil.SUB_ACTION_VALUE_NAME_UPDATE_SIM_CARD_INFO);
+        pl.put(CloudBridgeUtil.KEY_NAME_SIM_NO, phonenum);
+//        pl.put(CloudBridgeUtil.KEY_NAME_ICCID, watch.getIccid());
+        pl.put(CloudBridgeUtil.KEY_NAME_EID, watch.getEid());
+        pl.put(CloudBridgeUtil.KEY_NAME_REMOVEOLD, 0);//app 设置号码不传iccid，只设置号码
+        sn = Long.valueOf(TimeUtil.getTimeStampGMT()).intValue();
+
+        setMsg.setReqMsg(CloudBridgeUtil.obtainCloudMsgContent(CloudBridgeUtil.CID_DEVICE_SIM_CHANGE,
+                sn, myApp.getToken(), pl));
+        myApp.getNetService().sendNetMsg(setMsg);
+        return sn;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == PhotoGetUtil.GET_IMAGE_FROM_ALBUM) {
+            try {
+                if (data != null) {
+                    mSaveTemp = PhotoGetUtil.getDestinationFile(myApp);
+                    PhotoGetUtil.startPhotoZoom(myApp, data.getData(), this, mSaveTemp);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else if (requestCode == PhotoGetUtil.GET_IMAGE_FROM_CAMERA) {
+            try {
+                mSaveTemp = PhotoGetUtil.getDestinationFile(myApp);
+                PhotoGetUtil.startPhotoZoom(myApp, photoUri, this, mSaveTemp);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }else if(resultCode == RESULT_OK && requestCode == UCrop.REQUEST_CROP){
+            setPicToView(data);
+        }
+    }
+
+    byte[] headBitmapBytes = null;
+
+
+    /**
+     * 保存裁剪之后的图片数据
+     *
+     * @param picdata
+     */
+    private void setPicToView(Intent picdata) {
+
+        {
+            Uri resultUri = UCrop.getOutput(picdata);
+            Bitmap photo = null;
+            cropTemp = mSaveTemp;
+            try {
+                photo =  BitmapFactory.decodeStream(getContentResolver().openInputStream(resultUri));
+                if (photo.getWidth() > 160 || photo.getHeight() > 160) {
+                    photo = BitmapUtilities.getBitmapThumbnail(cropTemp.getPath(), 160, 160);
+                }
+                FileOutputStream fos = new FileOutputStream(cropTemp);
+                boolean b = photo.compress(Bitmap.CompressFormat.JPEG, 70, fos);
+
+            } catch (FileNotFoundException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+                myApp.sdcardLog("startPhotoZoom crop data FileNotFoundException");
+            } catch (Exception e) {
+                // TODO: handle exception
+                myApp.sdcardLog("startPhotoZoom crop data get other Exception:" + e.getMessage());
+            }
+
+            Drawable drawable = new BitmapDrawable(getApplicationContext().getResources(), photo);
+            try {
+                //创建文件输出流
+                OutputStream os;
+                String md5;
+                byte[] bitmapArray = StrUtil.getBytesFromFile(cropTemp);
+                md5 = MD5.md5_bytes(bitmapArray);
+                headBitmapBytes = bitmapArray;
+
+                File destFile = new File(ImibabyApp.getIconCacheDir(), md5 + ".jpg");
+                cropTemp.renameTo(destFile);
+                os = new FileOutputStream(destFile);
+                os.write(bitmapArray);
+                os.flush();
+
+                watch.setHeadPath(md5);
+
+                //send and wait
+                if (headBitmapBytes != null) {
+
+                    headE2cSn = sendHeadImageE2c(watch.getEid(), headBitmapBytes);
+                }
+                checkNextOk();
+                ImageUtil.setMaskImage(iv_head, R.drawable.mask, drawable);
+                if (!loadingdlg.isShowing()) {
+                    loadingdlg.changeStatus(1, getResources().getString(R.string.synch_szone_message));
+                    loadingdlg.show();
+                }
+            } catch (FileNotFoundException e) {
+                LogUtil.e("save croped img failed :", e);
+                myApp.sdcardLog("startPhotoZoom crop data save FileNotFoundException");
+            } catch (Exception e) {
+                // TODO: handle exception
+                myApp.sdcardLog("startPhotoZoom crop data save other Exception:" + e.getMessage());
+            }
+
+
+        }
+    }
+
+    private int sendHeadImageE2c(String eid, byte[] mapBytes) {
+
+        MyMsgData e2c = new MyMsgData();
+        int sn;
+        e2c.setCallback(WatchFirstSetActivity.this);
+        JSONObject pl = new JSONObject();
+        StringBuilder key = new StringBuilder(CloudBridgeUtil.PREFIX_GP_E2C_MESSAGE);
+        key.append(eid);
+        key.append(CloudBridgeUtil.E2C_SPLIT_HEADIMG);
+        JSONObject chat = new JSONObject();
+        chat.put(CloudBridgeUtil.HEAD_IMAGE_DATA, Base64.encodeToString(mapBytes, Base64.NO_WRAP));
+
+        pl.put(key.toString(), chat);
+        sn = Long.valueOf(TimeUtil.getTimeStampGMT()).intValue();
+        e2c.setReqMsg(CloudBridgeUtil.obtainCloudMsgContent(CloudBridgeUtil.CID_E2C_UP,
+                sn, myApp.getToken(), pl));
+        if (getMyApp().getNetService() != null)
+            getMyApp().getNetService().sendNetMsg(e2c);
+        return sn;
+    }
+
+    @Override
+    public void confirmClick() {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if(1 == requestCode && grantResults.length == 1) {
+            if (grantResults[0] == PERMISSION_GRANTED) {
+                mSaveTemp = PhotoGetUtil.getDestinationFile(myApp);
+                photoUri = PhotoGetUtil.startCameraCapture(myApp, this, mSaveTemp);
+            } else {
+                Toast.makeText(WatchFirstSetActivity.this, getString(R.string.camera_premission_tips), Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+}

@@ -1,0 +1,57 @@
+package dx.client.tool;
+
+import com.xiaoxun.xun.utils.LogUtil;
+
+import java.io.FileInputStream;
+import java.util.Properties;
+
+import dx.client.impl.ssl.SslClientContextFactory;
+
+public class CliCfg extends Properties{
+	private static final long serialVersionUID = 1L;
+	public static CliCfg instance = new CliCfg();
+    
+	public static String http  = "http://www.cloud-bridge:8080/svc";
+	public static String https  = "https://www.cloud-bridge:8443/svc";
+    public static String ws  = "ws://www.cloud-bridge.net:8080";
+    public static String wss = "wss://www.cloud-bridge.net:8443";
+    public static String tcp = "www.cloud-bridge.net:7070";
+    public static String ssl = "www.cloud-bridge.net:7443";
+    public static boolean trustAll = false;
+    
+ 
+
+    public static synchronized void loadConfig() throws Exception {
+
+        instance.clear();
+                  
+        instance.load(new FileInputStream("cli.cfg"));
+        
+        CliCfg.http  = instance.getProperty("http");
+        CliCfg.https  = instance.getProperty("https");
+        CliCfg.ws  = instance.getProperty("ws");
+        CliCfg.wss = instance.getProperty("wss");
+
+        CliCfg.tcp  = instance.getProperty("tcp");
+        CliCfg.ssl   = instance.getProperty("ssl");
+        
+        CliCfg.trustAll  = Boolean.parseBoolean(instance.getProperty("trustAll"));        
+
+        SslClientContextFactory.key_store_file_path = instance.getProperty("key_store_file_path");
+        SslClientContextFactory.CLIENT_TRUST_PASSWORD = instance.getProperty("key_store_file_password");
+        SslClientContextFactory.CLIENT_KEY_PASSWORD = instance.getProperty("trust_store_file_path");
+        SslClientContextFactory.CLIENT_TRUST_PASSWORD = instance.getProperty("trust_store_file_password");
+    }
+
+	public static void main(String[] args) throws Exception{
+	    CliCfg.loadConfig();
+	    LogUtil.d(CliCfg.http);
+	    LogUtil.d(CliCfg.https);
+	    LogUtil.d(CliCfg.ws);
+	    LogUtil.d(CliCfg.wss);
+	    LogUtil.d(CliCfg.tcp);
+	    LogUtil.d(CliCfg.ssl);
+	    LogUtil.d(CliCfg.trustAll+"");
+	}
+	
+}

@@ -1,0 +1,69 @@
+package com.xiaoxun.xun.networkv2.beans;
+
+import java.io.Serializable;
+
+public class GrowthRecord implements Serializable, Comparable<GrowthRecord> {
+    private static final long serialVersionUID = 5539228057102488199L;
+
+    String eid;
+    String id;
+    double height;
+    double weight;
+    String timestamp;
+
+    public String getEid() {
+        return eid;
+    }
+
+    public void setEid(String eid) {
+        this.eid = eid;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public double getHeight() {
+        return height;
+    }
+
+    public void setHeight(double height) {
+        this.height = height;
+    }
+
+    public double getWeight() {
+        return weight;
+    }
+
+    public void setWeight(double weight) {
+        this.weight = weight;
+    }
+
+    public String getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(String timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    @Override
+    public int compareTo(GrowthRecord o) {
+        return timestamp.compareTo(o.timestamp);
+    }
+
+    @Override
+    public String toString() {
+        return "GrowthRecord{" +
+                "eid='" + eid + '\'' +
+                ", id='" + id + '\'' +
+                ", height=" + height +
+                ", weight=" + weight +
+                ", timestamp='" + timestamp + '\'' +
+                '}';
+    }
+}

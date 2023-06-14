@@ -1,0 +1,313 @@
+package com.xiaoxun.xun.utils;
+
+import android.app.Activity;
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.style.ForegroundColorSpan;
+import android.view.View;
+import android.widget.TextView;
+import android.os.Build;
+import android.view.Window;
+import android.view.WindowManager;
+
+import com.xiaoxun.xun.BuildConfig;
+import com.xiaoxun.xun.R;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+
+/**
+ * Created by xilvkang on 2017/4/28.
+ */
+
+public class ToolUtils {
+    public static int isPreviewOrSrc(String key){
+        if(key.contains("/PREVIEW/")){//view
+            return 0;
+        }else if(key.contains("/SRC/")){
+            return 1;
+        }else{
+            return -1;
+        }
+    }
+
+    public static void setTVColorText(TextView view,String content,String tar,int color){
+        int index = content.indexOf(tar);
+        SpannableStringBuilder builder = new SpannableStringBuilder(content);
+        builder.setSpan(new ForegroundColorSpan(color),index,index+tar.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        view.setText(builder);
+    }
+
+    public static String getNameFromKey(String key){
+        String name = "";
+        String[] list = key.split("/");
+        name = list[list.length - 1];
+        return name;
+    }
+
+    public static String getEidFromKey(String key) {
+        String eid = "";
+        String[] list = key.split("/");
+        eid = list[1];
+        return eid;
+    }
+
+    public static String getTimeFromName(String name){
+        String time = "";
+        String[] list = name.split("\\.");
+        String temp = list[0];
+        String[] listl = temp.split("_");
+        time = listl[0];
+        return time;
+    }
+
+    public static String getTimeFromNextStr(String next){
+        String name = getNameFromKey(next);
+        String[] list_n = name.split("\\.");
+        String temp = list_n[0];
+        String[] listl = temp.split("_");
+        name = listl[0];
+        return name;
+    }
+
+    public static boolean isNetworkAvailable(Context context) {
+        ConnectivityManager connectivity = (ConnectivityManager) context
+                .getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connectivity != null) {
+            NetworkInfo info = connectivity.getActiveNetworkInfo();
+            if (info != null && info.isConnected())
+            {
+                // 当前网络是连接的
+                // 当前所连接的网络可用
+                return info.getState() == NetworkInfo.State.CONNECTED;
+            }
+        }
+        return false;
+    }
+
+    /**
+     *
+     * @param name file name
+     * @return 0 img 1 video -1 none
+     */
+    public static int imgOrVideo(String name){
+        if(name.contains("_JPG") || name.contains("_PNG") || name.contains("_GIF") || name.contains("_xxx")){
+            return 0;
+        }else if(name.contains("_MP4") || name.contains("_RMVB") || name.contains("_AVI") ||
+                name.contains("_3GP") || name.contains("_MPEG")){
+            return 1;
+        }else{
+            return -1;
+        }
+    }
+
+    public static String getSrcName(String name){
+        String ret = "";
+        String[] listn = name.split("_");
+        if(listn[1].equals("xxx")){
+            ret = name.replace("_xxx","");
+        }else{
+            String[] listp = listn[1].split("\\.");
+            ret = listn[0] + "." + listp[0];
+        }
+        return ret;
+    }
+
+    public static final int NETWORKTYPE_WIFI = 0;
+    public static final int NETWORKTYPE_MOBILE = 1;
+    public static final int NETWORKTYPE_OTHER = 2;
+    public static final int NETWORKTYPE_INVALID = -1;
+
+    /**
+     * @param ctxt
+     * @return 0 wifi ;1 mobile; 2 other; -1 invalid
+     */
+    public static int getConnectionType(Context ctxt) {
+        ConnectivityManager connectivityManager = (ConnectivityManager) ctxt.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        if(networkInfo != null && networkInfo.isConnected()) {
+            String type = networkInfo.getTypeName();
+            if (type.equalsIgnoreCase("WIFI")) {
+               return NETWORKTYPE_WIFI;
+            } else if (type.equalsIgnoreCase("MOBILE")) {
+                return NETWORKTYPE_MOBILE;
+            }else{
+                return NETWORKTYPE_OTHER;
+            }
+        }else{
+            return NETWORKTYPE_INVALID;
+        }
+    }
+
+    /**
+     * @param fp the encrypt file
+     * @return 0 success -1 fail
+     */
+
+    public static Bitmap decryptImgFile(File fp, String key){
+        Bitmap ret = null;
+        try {
+            FileInputStream is = new FileInputStream(fp);
+            int len = is.available();
+            byte[] buf = new byte[len];
+            is.read(buf);
+            is.close();
+            byte[] decbuf = AESUtil.decryptAESCBC(buf,key,key);
+            ret = BitmapFactory.decodeByteArray(decbuf,0,decbuf.length);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return ret;
+    }
+
+    public static void saveDecryptimgFile(File fp,Bitmap bitmap){
+        if(fp.exists()){
+            FileOutputStream fOut = null;
+            try {
+                fOut = new FileOutputStream(fp,false);
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, fOut);
+                fOut.flush();
+                fOut.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
+
+    public static String decryptUrl(String encode,String key){
+        try {
+            byte[] buf = org.java_websocket.util.Base64.decode(encode);
+            byte[] decbuf = AESUtil.decryptAESCBC(buf,key,key );
+            String ret = new String(decbuf);
+            return ret;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static String asizeConvert(double result){
+        double temp = result/1024/1024/1024;
+        if(temp >= 1){
+            return dataFormat(temp) + "G";
+        }else{
+            temp = result/1024L/1024L;
+            return dataFormat(temp) + "M";
+        }
+    }
+
+    public static String usizeConvert(double result){
+        double temp = result/1024/1024/1024;
+        if(temp >= 1){
+            return dataFormat(temp) + "G";
+        }else{
+            temp = result/1024/1024;
+            if(temp >= 1) {
+                return dataFormat(temp) + "M";
+            }else{
+                temp = result/1024;
+                if(temp < 0.1){
+                    temp = 0.1;
+                }
+                return dataFormat(temp) + "K";
+            }
+        }
+    }
+
+    public static String dataFormat(double num){
+        java.text.DecimalFormat myformat = new java.text.DecimalFormat("0.0");
+        String str = myformat.format(num);
+        return str;
+    }
+
+    public static boolean isJsonData(String msg){
+        return msg.indexOf("{") > -1;
+    }
+
+    public static String[] formatFlowStatiticsDataInfo(Context context,float flowData){
+        String[] flowFromcatInfo = new String[2];
+        if(flowData <=1024){
+            flowFromcatInfo[0] = String.format("%.0f",flowData);
+            flowFromcatInfo[1] = context.getString(R.string.flow_statistics_unit_kb);
+        }else if(flowData <=10240){
+            flowFromcatInfo[0] = String.format("%.1f",flowData / 1024);
+            flowFromcatInfo[1] = context.getString(R.string.flow_statistics_unit);
+        }else if(flowData <= 1048576){
+            flowFromcatInfo[0] = String.format("%.0f",flowData/1024);
+            flowFromcatInfo[1] = context.getString(R.string.flow_statistics_unit);
+        }else{
+            flowFromcatInfo[0] = String.format("%.1f",flowData / 1024 /1024 );
+            flowFromcatInfo[1] = context.getString(R.string.flow_statistics_unit_g);
+        }
+
+        return flowFromcatInfo;
+    }
+
+    public static void showAppVerInfo(Context context, TextView debug_txt,View debug){
+
+        debug_txt.setText(BuildConfig.BUILD_TIME);
+        if (BuildConfig.ISDEBUG) {
+            if (BuildConfig.VERSION_TYPE.equals("Normal")) {
+                debug_txt.setText("debug_normal_" + BuildConfig.BUILD_TIME);
+            } else if (BuildConfig.VERSION_TYPE.equals("Monkey")) {
+                debug_txt.setText("debug_monkey_" + BuildConfig.BUILD_TIME);
+            }
+            debug.setVisibility(View.VISIBLE);
+        } else {
+            if (BuildConfig.VERSION_TYPE.equals("Official")) {
+                debug.setVisibility(View.INVISIBLE);
+            } else if (BuildConfig.VERSION_TYPE.equals("DVT")) {
+                debug.setVisibility(View.VISIBLE);
+                debug_txt.setText(context.getText(R.string.release_version_type_dvt) + "_" + BuildConfig.BUILD_TIME);
+            } else if (BuildConfig.VERSION_TYPE.equals("Beta")) {
+                debug.setVisibility(View.VISIBLE);
+                debug_txt.setText(context.getText(R.string.release_version_type_beta) + "_" + BuildConfig.BUILD_TIME);
+            }
+        }
+    }
+
+    public static void setWindowStatusColor(Activity ctxt){
+        //设置沉浸状态栏
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            Window win = ctxt.getWindow();
+            WindowManager.LayoutParams winParams = win.getAttributes();
+            final int bits = WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS;
+            if (true) {
+                winParams.flags |= bits;
+            } else {
+                winParams.flags &= ~bits;
+            }
+            win.setAttributes(winParams); //状态栏透明 需要在创建SystemBarTintManager 之前调用。
+        }
+//        SystemBarTintManager mTintManager = new SystemBarTintManager(ctxt);
+//        mTintManager.setStatusBarTintEnabled(true);
+//        mTintManager.setTintColor(ctxt.getResources().getColor(R.color.bg_color_orange));
+//        mTintManager.setStatusBarDarkMode(true, ctxt);
+        StatusBarUtil.changeStatusBarColor(ctxt, ctxt.getResources().getColor(R.color.bg_color_orange));
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+//            // 解决部分5.x系统使用状态栏透明属性后状态栏变黑色，不使用这句代码，在6.0设备上又出现半透明状态栏
+//            // 需要特殊处理
+//            ctxt.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+//
+//            ctxt.getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+//                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+//            ctxt.getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+//            ctxt.getWindow().setStatusBarColor(Color.TRANSPARENT);
+//        }
+    }
+}

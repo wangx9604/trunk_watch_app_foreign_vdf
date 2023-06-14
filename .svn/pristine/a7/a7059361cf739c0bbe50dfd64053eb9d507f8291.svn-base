@@ -1,0 +1,482 @@
+package com.xiaoxun.xun.activitys;
+
+import android.app.Dialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
+import android.support.annotation.NonNull;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.xiaoxun.xun.Const;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.beans.WatchAppBean;
+import com.xiaoxun.xun.beans.WatchData;
+import com.xiaoxun.xun.services.NetService;
+import com.xiaoxun.xun.utils.AppStoreUtils;
+import com.xiaoxun.xun.utils.CustomSelectDialogUtil;
+import com.xiaoxun.xun.utils.DialogUtil;
+import com.xiaoxun.xun.utils.ImageDownloadHelper;
+import com.xiaoxun.xun.utils.ImageUtil;
+import com.xiaoxun.xun.utils.ToastUtil;
+import com.xiaoxun.xun.utils.ToolUtils;
+
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONValue;
+
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
+
+public class AppStoreActivity extends NormalActivity {
+
+    private ImageButton mBtnBack;
+    private ImageButton mBtnSetting;
+    private TextView mTitle;
+
+    private RecyclerView mLayoutAppList;
+    private ArrayList<WatchAppBean> mAppList = new ArrayList<>();
+    private WatchAppListAdapter mAppListAdapter;
+    private LinearLayoutManager mLinearLayoutManager;
+
+    private WatchData focusWatch;
+    private NetService mNetService;
+    AppStoreHandler mHandler;
+    private BroadcastReceiver mReceiver;
+
+    class AppStoreHandler extends Handler{
+
+        static final int UPDATE_APPSTORE_LIST = 1;
+        static final int UPDATE_INSTALLAPP_LIST = 2;
+        static final int UPDATE_APPSTORE_ITEM = 3;
+
+        static final int ERROR=1000;
+
+        final WeakReference<AppStoreActivity> mActivity;
+        AppStoreHandler(AppStoreActivity mActivity, Looper looper) {
+            super(looper);
+            this.mActivity = new WeakReference<>(mActivity);
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            AppStoreActivity context = mActivity.get();
+            switch (msg.what) {
+                case UPDATE_APPSTORE_LIST: {
+                    mAppListAdapter.notifyDataSetChanged();
+                    reqInstalledAppList();
+                }
+                break;
+
+                case UPDATE_INSTALLAPP_LIST: {
+                    mAppListAdapter.notifyDataSetChanged();
+                }
+                break;
+
+                case UPDATE_APPSTORE_ITEM: {
+                    int position = (int) msg.obj;
+                    mAppListAdapter.notifyItemChanged(position);
+//                    mAppListAdapter.notifyDataSetChanged();
+                }
+                break;
+
+                case ERROR:
+                    break;
+            }
+        }
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_app_store);
+
+        initView();
+        initData();
+        initReceiver();
+        initListener();
+        reqAppStoreList();
+    }
+
+    private void initView() {
+
+        mBtnBack = findViewById(R.id.iv_title_back);
+        mBtnSetting = findViewById(R.id.iv_title_menu);
+        mTitle = findViewById(R.id.tv_title);
+        mLayoutAppList = findViewById(R.id.recyclerview_app_list);
+
+        mTitle.setText(R.string.app_store);
+        mBtnSetting.setVisibility(View.VISIBLE);
+        mBtnSetting.setBackgroundResource(R.drawable.setting_app_store);
+    }
+
+    private void initData() {
+
+        focusWatch = myApp.getCurUser().getFocusWatch();
+        mNetService = myApp.getNetService();
+        mHandler=new AppStoreHandler(AppStoreActivity.this,getMainLooper());
+
+        mLinearLayoutManager = new LinearLayoutManager(this);
+        mLayoutAppList.setLayoutManager(mLinearLayoutManager);
+        mAppListAdapter = new WatchAppListAdapter(AppStoreActivity.this);
+        mLayoutAppList.setAdapter(mAppListAdapter);
+        mAppListAdapter.notifyDataSetChanged();
+    }
+
+    private void initReceiver() {
+
+        mReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (Const.ACTION_INSTALL_APPLIST_CHANGE.equals(intent.getAction())) {
+                    reqInstalledAppList();
+                }
+            }
+        };
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Const.ACTION_INSTALL_APPLIST_CHANGE);
+        registerReceiver(mReceiver, filter);
+    }
+
+    private void initListener() {
+
+        mBtnBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AppStoreActivity.this.finish();
+            }
+        });
+        mBtnSetting.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AppStoreActivity.this.startActivity(new Intent(AppStoreActivity.this, AppStoreSettingActivity.class));
+            }
+        });
+
+        setOnItemClickLitener(new OnItemClickListener() {
+            @Override
+            public void onItemClick(int position) {
+                Intent intent = new Intent(AppStoreActivity.this, AppDetailActivity.class);
+                intent.putExtra("app_id", mAppList.get(position).app_id);
+                intent.putExtra("status", mAppList.get(position).status);
+                intent.putExtra("position", position);
+                startActivityForResult(intent, 0);
+            }
+        });
+
+        setOnButtonClickLitener(new OnButtonClickListener() {
+            @Override
+            public void onButtonClick(final int position) {
+                if (!myApp.isMeAdmin(focusWatch)) {
+                    ToastUtil.show(AppStoreActivity.this, getString(R.string.need_admin_auth));
+                    return;
+                }
+                final WatchAppBean appBean = mAppList.get(position);
+                if (appBean.status == -1 || appBean.status == 4) {
+                    openDownloadAppDialog(appBean, position, false);
+                } else if (appBean.status == 1 || appBean.status == 2) {
+                    openDownloadingPromptDialog(appBean, position);
+                }
+            }
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        unregisterReceiver(mReceiver);
+        super.onDestroy();
+    }
+
+    private void openDownloadingPromptDialog(final WatchAppBean appBean, final int position) {
+
+        String title = getString(R.string.watch_app_download_in_mobile);
+        String desc = getString(R.string.watch_app_download_in_mobile_desc, appBean.name);
+        if (appBean.wifi == 1) {
+            title = getString(R.string.watch_app_download_in_wifi);
+            desc = getString(R.string.watch_app_download_in_wifi_desc, appBean.name);
+        }
+
+        Dialog dlg = DialogUtil.CustomNormalDialog(AppStoreActivity.this,
+                title, desc,
+                new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+                        openDownloadAppDialog(appBean, position, true);
+                    }
+                },
+                getText(R.string.watch_app_download_type_modify).toString(),
+                new DialogUtil.OnCustomDialogListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                    }
+                },
+                getText(R.string.donothing_text).toString());
+        dlg.show();
+    }
+
+    private void reqAppStoreList() {
+
+        AppStoreUtils.getInstance(AppStoreActivity.this).getAppStoreList(focusWatch.getDeviceType(), mNetService.AES_KEY, myApp.getToken(),
+                new AppStoreUtils.OperationCallback() {
+                    @Override
+                    public void onSuccess(final String result) {
+
+                        JSONArray appArray = (JSONArray) JSONValue.parse(result);
+                        List<WatchAppBean> appList = WatchAppBean.toWatchAppList(appArray);
+                        mAppList.clear();
+                        mAppList.addAll(appList);
+                        mHandler.sendEmptyMessage(AppStoreHandler.UPDATE_APPSTORE_LIST);
+                    }
+
+                    @Override
+                    public void onFail(String error) {
+
+                        mAppList.clear();
+                        mHandler.sendEmptyMessage(AppStoreHandler.ERROR);
+                    }
+                });
+    }
+
+    private void reqInstalledAppList(){
+
+        AppStoreUtils.getInstance(this).getInstalledAppList(focusWatch.getEid(), mNetService, myApp.getToken(),
+                new AppStoreUtils.OperationCallback() {
+
+                    @Override
+                    public void onSuccess(String result) {
+
+                        JSONArray appArray = (JSONArray) JSONValue.parse(result);
+                        ArrayList<WatchAppBean> appList = WatchAppBean.toWatchAppList(appArray);
+                        WatchAppBean.updateWatchAppList(mAppList, appList);
+                        mHandler.sendEmptyMessage(AppStoreHandler.UPDATE_INSTALLAPP_LIST);
+                    }
+
+                    @Override
+                    public void onFail(String error) {
+
+                    }
+                });
+    }
+
+    private void openDownloadAppDialog(final WatchAppBean appBean, final int position, final boolean isModify) {
+
+        String title = getString(R.string.watch_app_install_title);
+        String size = ToolUtils.formatFlowStatiticsDataInfo(AppStoreActivity.this, appBean.size / 1024)[0]
+                + ToolUtils.formatFlowStatiticsDataInfo(AppStoreActivity.this, appBean.size / 1024)[1];
+        String funcDesc = getString(R.string.watch_app_install_desc, appBean.name, size);
+        ArrayList<String> itemList = new ArrayList<>();
+        itemList.add(getString(R.string.watch_app_download_in_mobile));
+        itemList.add(getString(R.string.watch_app_download_in_wifi));
+        Dialog dlg = CustomSelectDialogUtil.CustomItemSelectDialogWithTitle(AppStoreActivity.this, title, funcDesc, itemList,
+                new CustomSelectDialogUtil.AdapterItemClickListener() {
+                    @Override
+                    public void onClick(View v, int position) {
+                        appBean.wifi = position - 1;
+                    }
+                },
+                appBean.wifi + 1,
+                new CustomSelectDialogUtil.CustomDialogListener() {
+                    @Override
+                    public void onClick(View v, String text) {
+                    }
+                }, getText(R.string.cancel).toString(),
+                new CustomSelectDialogUtil.CustomDialogListener() {
+                    @Override
+                    public void onClick(View v, String text) {
+                        setWatchAppState(appBean, position, isModify);
+                    }
+                }, getText(R.string.confirm).toString(),
+                true);
+        dlg.show();
+    }
+
+    private void setWatchAppState(final WatchAppBean appBean, final int position, boolean isModify) {
+
+        int optType = 0;
+        if (isModify)
+            optType = 1;
+        // 如果此刻为更新或者待更新，修改状态为待更新，否则为待安装
+        if (appBean.status == 2 || appBean.status == 4)
+            appBean.status = 2;
+        else
+            appBean.status = 1;
+        AppStoreUtils.getInstance(AppStoreActivity.this).setWatchAppState(appBean, optType, focusWatch.getEid(), focusWatch.getFamilyId(),
+                mNetService, myApp.getToken(), new AppStoreUtils.OperationCallback() {
+                    @Override
+                    public void onSuccess(String result) {
+                        Message msg = Message.obtain();
+                        msg.what = AppStoreHandler.UPDATE_APPSTORE_ITEM;
+                        msg.obj = position;
+                        mHandler.sendMessage(msg);
+                    }
+
+                    @Override
+                    public void onFail(String error) {
+                        ToastUtil.show(AppStoreActivity.this, error);
+                    }
+                });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == 0 && resultCode == RESULT_OK) {
+            int position = getIntent().getIntExtra("position", 0);
+            final WatchAppBean appBean = mAppList.get(position);
+            if (appBean.status == 1 || appBean.status == 5) {
+                openDownloadAppDialog(appBean, position, false);
+            } else if (appBean.status == 2) {
+                openDownloadingPromptDialog(appBean, position);
+            }
+        }
+    }
+
+    class WatchAppListAdapter extends RecyclerView.Adapter<WatchAppViewHolder> {
+
+        Context context;
+        WatchAppListAdapter(Context context) {
+            this.context = context;
+        }
+
+        @Override
+        public int getItemCount() {
+            return mAppList.size();
+        }
+
+        @NonNull
+        @Override
+        public WatchAppViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+            View view = View.inflate(context, R.layout.item_watch_app, null);
+            return new WatchAppViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull final WatchAppViewHolder watchAppViewHolder, final int i) {
+            WatchAppBean appBean = mAppList.get(i);
+            watchAppViewHolder.tvAppName.setText(appBean.name);
+            String size = ToolUtils.formatFlowStatiticsDataInfo(context, appBean.size / 1024)[0] + ToolUtils.formatFlowStatiticsDataInfo(context, appBean.size / 1024)[1];
+            watchAppViewHolder.tvAppSize.setText(size);
+            watchAppViewHolder.tvAppDesc.setText(appBean.description);
+
+            // icon
+            showAppIcon(context, appBean.icon, watchAppViewHolder.ivAppIcon);
+            // status
+            showAppStatus(appBean.status, watchAppViewHolder.btnDownloadApp);
+
+            watchAppViewHolder.btnDownloadApp.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (mOnButtonClickLitener != null)
+                        mOnButtonClickLitener.onButtonClick(i);
+                }
+            });
+            watchAppViewHolder.layoutApp.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (mOnItemClickLitener != null) {
+                        mOnItemClickLitener.onItemClick(i);
+                    }
+                }
+            });
+        }
+    }
+
+    private void showAppIcon(final Context context, String url, final ImageView imageView) {
+        Bitmap headBitmap = new ImageDownloadHelper(context).downloadImage(url, new ImageDownloadHelper.OnImageDownloadListener() {
+            @Override
+            public void onImageDownload(String url, Bitmap bitmap) {
+                Drawable headDrawable = new BitmapDrawable(context.getResources(), bitmap);
+                ImageUtil.setMaskImage(imageView, R.drawable.head_2, headDrawable);
+            }
+        });
+        if (headBitmap != null) {
+            Drawable headDrawable = new BitmapDrawable(context.getResources(), headBitmap);
+            ImageUtil.setMaskImage(imageView, R.drawable.head_2, headDrawable);
+        }
+    }
+
+    private void showAppStatus(int status,ImageButton imageButton){
+        //0已安装，1待安装，2待更新，3待卸载  4有更新
+        switch (status){
+            case 0:
+                imageButton.setBackgroundResource(R.drawable.btn_app_installed);
+                imageButton.setClickable(false);
+                break;
+            case 1:
+                imageButton.setBackgroundResource(R.drawable.btn_app_install_wait);
+                imageButton.setClickable(true);
+                break;
+            case 2:
+                imageButton.setBackgroundResource(R.drawable.btn_app_update_wait);
+                imageButton.setClickable(true);
+                break;
+            case 3:
+                imageButton.setBackgroundResource(R.drawable.btn_app_uninstall_wait);
+                imageButton.setClickable(false);
+                break;
+            case 4:
+                imageButton.setBackgroundResource(R.drawable.btn_app_update);
+                imageButton.setClickable(true);
+                break;
+            default:
+                imageButton.setBackgroundResource(R.drawable.btn_app_install);
+                imageButton.setClickable(true);
+                break;
+        }
+    }
+
+    class WatchAppViewHolder extends RecyclerView.ViewHolder {
+
+        View layoutApp;
+        ImageView ivAppIcon;
+        TextView tvAppName;
+        TextView tvAppSize;
+        TextView tvAppDesc;
+        ImageButton btnUninstallApp;
+        ImageButton btnDownloadApp;
+
+        WatchAppViewHolder(@NonNull View itemView) {
+            super(itemView);
+            layoutApp = itemView.findViewById(R.id.layout_watch_app);
+            ivAppIcon = itemView.findViewById(R.id.iv_app_icon);
+            tvAppName = itemView.findViewById(R.id.tv_app_name);
+            tvAppSize = itemView.findViewById(R.id.tv_app_size);
+            tvAppDesc = itemView.findViewById(R.id.tv_app_desc);
+            btnUninstallApp = itemView.findViewById(R.id.btn_uninstall_app);
+            btnUninstallApp.setVisibility(View.GONE);
+            btnDownloadApp = itemView.findViewById(R.id.btn_download_app);
+        }
+    }
+
+    private OnButtonClickListener mOnButtonClickLitener;
+    public void setOnButtonClickLitener(OnButtonClickListener mOnButtonClickLitener) {
+        this.mOnButtonClickLitener = mOnButtonClickLitener;
+    }
+    interface OnButtonClickListener {
+        void onButtonClick(int position);
+    }
+
+    private OnItemClickListener mOnItemClickLitener;
+    public void setOnItemClickLitener(OnItemClickListener mOnItemClickLitener) {
+        this.mOnItemClickLitener = mOnItemClickLitener;
+    }
+    interface OnItemClickListener {
+        void onItemClick(int position);
+    }
+}

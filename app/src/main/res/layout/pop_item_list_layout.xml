@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@color/transparent">
+
+    <RelativeLayout
+        android:layout_width="137dp"
+        android:layout_height="45dp"
+        android:paddingEnd="11dp"
+        android:paddingStart="11dp">
+
+        <ImageView
+            android:id="@+id/item_list_imageview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:background="@drawable/moreico_3dmap" />
+
+        <TextView
+            android:id="@+id/item_list_textview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="12dp"
+            android:layout_toEndOf="@id/item_list_imageview"
+            android:gravity="center_vertical"
+            android:text="卫星地图"
+            android:textColor="@color/color_7"
+            android:textSize="@dimen/dimen13" />
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:layout_alignParentBottom="true"
+            android:src="@color/line_grey" />
+
+    </RelativeLayout>
+
+</RelativeLayout>

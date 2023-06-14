@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+	android:layout_height="wrap_content" >
+	<RelativeLayout
+		android:layout_width="match_parent"
+		android:layout_height="55dp">
+	</RelativeLayout>
+	<RelativeLayout
+		android:layout_height="wrap_content"
+		android:layout_width="wrap_content"
+		android:layout_marginLeft="109dp"
+		android:layout_centerVertical="true">
+		<ImageView
+			android:id="@+id/selector"
+			android:layout_width="8.66dp"
+			android:layout_height="8.66dp"
+			android:layout_centerVertical="true"
+			android:background="@drawable/select_arrow_0" />
+		<RelativeLayout
+			android:id="@+id/title_head"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_toRightOf="@+id/selector"
+			android:layout_marginLeft="8dp"
+			android:layout_centerVertical="true" >
+			<ImageView
+				android:id="@+id/title_head_mask"
+				android:layout_width="38.66dp"
+				android:layout_height="38.66dp"
+				android:layout_centerInParent="true" />
+		</RelativeLayout>
+		<TextView
+			android:id="@+id/title_nice_name"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_toRightOf="@+id/title_head"
+			android:layout_marginLeft="10dp"
+			android:layout_centerVertical="true"
+			android:textSize="@dimen/xiaomiMyTextSize1"
+			android:textColor="@color/white"/>
+		</RelativeLayout>
+	<View
+		android:layout_width="330.66dp"
+		android:layout_height="1px"
+		android:layout_centerHorizontal="true"
+		android:background="@color/WatchListItemLine" />
+</RelativeLayout>
+

@@ -1,0 +1,43 @@
+package com.xiaoxun.mapadapter.bean;
+
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+
+import java.io.InputStream;
+
+public class XunMarker {
+
+    public XunLatLng xunLatLng;
+    public int resId;
+    public Bitmap bitmap;
+
+    public int[] resIdArray;
+    public Bitmap[] bitmapArray;
+
+    public XunMarker(Context context, XunLatLng xunLatLng, int resId) {
+
+        this.xunLatLng = xunLatLng;
+        this.resId = resId;
+        InputStream inputStream = context.getResources().openRawResource(resId);
+        this.bitmap = BitmapFactory.decodeStream(inputStream);
+    }
+
+    public XunMarker(Context context, XunLatLng xunLatLng, int[] resIdArray) {
+
+        this.xunLatLng = xunLatLng;
+        this.resIdArray = resIdArray;
+        this.resId = resIdArray[0];
+        bitmapArray = new Bitmap[resIdArray.length];
+        for (int i = 0; i < resIdArray.length; i++) {
+            bitmapArray[i] = BitmapFactory.decodeStream(context.getResources().openRawResource(resId));
+        }
+        this.bitmap = bitmapArray[0];
+    }
+
+    public XunMarker(Context context, XunLatLng xunLatLng, Bitmap bitmap) {
+
+        this.xunLatLng = xunLatLng;
+        this.bitmap = bitmap;
+    }
+}

@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:fitsSystemWindows="true"
+    android:background="#F2F2F6"
+    android:orientation="vertical">
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/cl_title"
+        android:background="@color/bg_color_orange"
+        android:layout_width="match_parent"
+        android:layout_height="45dp">
+
+        <ImageButton
+            android:id="@+id/iv_title_back"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10.66dp"
+            android:background="@drawable/btn_title_back_selector"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/color_tile_content"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/xiaomi_bg_grey"
+        android:layout_above="@+id/buttom_add_view"
+        android:layout_below="@+id/cl_title"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:visibility="gone"
+            android:id="@+id/layout_save_power_state"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="#FEEDED">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="25dp"
+                android:background="@drawable/bg_network_error_prompt"/>
+            <TextView
+                android:id="@+id/watch_state"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="17dp"
+                android:layout_marginLeft="10dp"
+                android:gravity="start"
+                android:text="@string/save_power_remmind"
+                android:textColor="#777777"
+                android:textSize="14sp" />
+
+
+
+        </LinearLayout>
+
+        <TextView
+            android:visibility="gone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:layout_marginLeft="13dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="13dp"
+            android:lineSpacingExtra="4.66dp"
+            android:paddingBottom="7dp"
+            android:textColor="@color/txt_grey"
+            android:text="@string/security_zone_title"/>
+
+        <ListView
+            android:id="@+id/security_zone_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:cacheColorHint="@color/transparent"
+            android:scrollbars="none"
+            android:fadingEdge="none"
+            android:divider="@color/transparent"
+            android:dividerHeight="0dip" />
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:id="@+id/buttom_add_view"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:layout_alignParentBottom="true">
+        <View
+            android:visibility="gone"
+            android:layout_height="1px"
+            android:layout_width="match_parent"
+            android:background="@color/color_9"/>
+        <Button
+            android:visibility="gone"
+            android:id="@+id/btn_next_step"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="23dp"
+            android:layout_marginStart="23dp"
+            android:background="@drawable/btn_unbind_selector"
+            android:layout_centerInParent="true"
+            android:text="@string/security_finish_next"
+            android:textColor="@color/black"
+            android:textSize="@dimen/xiaomiMyTextSize1" />
+
+        <Button
+            android:id="@+id/security_add_btn"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_centerInParent="true"
+            android:layout_marginStart="23dp"
+            android:layout_marginEnd="23dp"
+            android:background="@drawable/bt_save_click"
+            android:text="添加常用区域"
+            android:textColor="#FFFFFF"
+            android:textSize="17sp"
+            android:visibility="visible" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/cover"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/cl_title"
+        android:clickable="false"
+        android:orientation="vertical" />
+</RelativeLayout>

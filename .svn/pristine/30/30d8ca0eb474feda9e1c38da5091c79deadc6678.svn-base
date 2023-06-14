@@ -1,0 +1,59 @@
+package com.xiaoxun.xun.utils;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
+import android.provider.MediaStore;
+import androidx.core.content.FileProvider;
+
+import com.xiaoxun.xun.ImibabyApp;
+import com.yalantis.ucrop.UCrop;
+
+import java.io.File;
+
+public class PhotoGetUtil {
+
+    public static int GET_IMAGE_FROM_ALBUM = 11;
+    public static int GET_IMAGE_FROM_CAMERA = 12;
+
+    public static File getDestinationFile(ImibabyApp myApp){
+        File temp = new File(myApp.getIconCacheDir(), System.currentTimeMillis()+"_tempcrop.jpg");
+        if (temp.exists()) {
+            temp.delete();
+        }
+        return temp;
+    }
+
+    public static Uri getDestinationUri(File mTemp) {
+        return Uri.fromFile(mTemp);
+    }
+
+    public static Uri startCameraCapture(ImibabyApp myApp, Activity context, File file) {
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        Uri photoUri = getDestinationUri(file);
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+            photoUri = FileProvider.getUriForFile(myApp, myApp.getPackageName() + ".fileprovider", new File(photoUri.getPath()));
+            intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        }else{
+            photoUri = getDestinationUri(file);
+        }
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
+        context.startActivityForResult(intent, GET_IMAGE_FROM_CAMERA);
+        return photoUri;
+    }
+
+    public static void startPhotoZoom(ImibabyApp myApp, Uri uri, Activity activity, File file) {
+        UCrop.of(uri, getDestinationUri(file))
+                .withAspectRatio(1, 1)
+                .withMaxResultSize(320, 320)
+                .start(activity);
+    }
+
+
+    public static void startPickHead(Activity activity) {
+        Intent intent = new Intent(Intent.ACTION_PICK, null);
+        intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
+        activity.startActivityForResult(intent, GET_IMAGE_FROM_ALBUM);
+    }
+}

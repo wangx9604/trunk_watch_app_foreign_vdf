@@ -1,0 +1,1 @@
+include ':app',':googlemap_library',':mapadapter',':libsvideocall',":camera"

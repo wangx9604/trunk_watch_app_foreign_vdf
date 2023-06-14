@@ -1,0 +1,406 @@
+package com.xiaoxun.xun.motion.activity;
+
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
+import android.os.Bundle;
+import android.text.TextUtils;
+import android.view.View;
+import android.widget.TextView;
+
+import androidx.constraintlayout.widget.Group;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.github.mikephil.newcharting.charts.BarChart;
+import com.github.mikephil.newcharting.charts.BarLineChartBase;
+import com.github.mikephil.newcharting.charts.LineChart;
+import com.github.mikephil.newcharting.components.AxisBase;
+import com.github.mikephil.newcharting.components.XAxis;
+import com.github.mikephil.newcharting.components.YAxis;
+import com.github.mikephil.newcharting.data.BarData;
+import com.github.mikephil.newcharting.data.BarDataSet;
+import com.github.mikephil.newcharting.data.BarEntry;
+import com.github.mikephil.newcharting.data.Entry;
+import com.github.mikephil.newcharting.data.LineData;
+import com.github.mikephil.newcharting.data.LineDataSet;
+import com.github.mikephil.newcharting.formatter.IAxisValueFormatter;
+import com.github.mikephil.newcharting.formatter.IValueFormatter;
+import com.github.mikephil.newcharting.utils.ViewPortHandler;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
+import com.xiaoxun.mapadapter.MapConstant;
+import com.xiaoxun.mapadapter.bean.XunLatLng;
+import com.xiaoxun.mapadapter.bean.XunPolyline;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.activitys.NormalAppCompatActivity;
+import com.xiaoxun.xun.motion.adapters.RecordDetailAdapter;
+import com.xiaoxun.xun.motion.beans.RecordDetailBean;
+import com.xiaoxun.xun.motion.utils.MotionUtils;
+import com.xiaoxun.xun.networkv2.beans.MotionSportRecordBeans;
+import com.xiaoxun.xun.networkv2.beans.MotionSportRecordBeansDao;
+import com.xiaoxun.xun.networkv2.retrofitclient.GreenDaoManager;
+import com.xiaoxun.xun.utils.LogUtil;
+import com.xiaoxun.xun.utils.TimeUtil;
+
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONValue;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+
+public class MotionRecordDetailActivity extends NormalAppCompatActivity {
+
+    private Long mRecordId;
+    private ArrayList<RecordDetailBean> mDetailList;
+    private RecordDetailAdapter mAdapter;
+    private MotionSportRecordBeans mBeans;
+    private ImibabyApp myApp;
+
+    @BindView(R.id.tv_motion_name)
+    public TextView mtvMotionName;
+    @BindView(R.id.tv_motion_time)
+    public TextView mTvMotionTime;
+    @BindView(R.id.tv_value_0)
+    public TextView mTvValue0;
+    @BindView(R.id.tv_value_unit)
+    public TextView mTvValueUnit;
+    @BindView(R.id.recyc_prop)
+    public RecyclerView mRecycProp;
+    @BindView(R.id.chart_line_heart)
+    public LineChart mLineHeart;
+    @BindView(R.id.chart_bar_zone)
+    public BarChart mBarZone;
+    @BindView(R.id.tv_max_rate_1)
+    public TextView mTvMaxRateValue;
+    @BindView(R.id.tv_avg_rate_1)
+    public TextView mTvAvgRateValue;
+    @BindView(R.id.tv_min_rate_1)
+    public TextView mTvMinRateValue;
+    @BindView(R.id.group_trace_layout)
+    public Group mGpTraceLayout;
+    @BindView(R.id.group_heart)
+    public Group mGpHeart;
+    @BindView(R.id.group_heart_zone)
+    public Group mGpHeartZone;
+    RecordMapFragment mapFragment;
+
+    @OnClick(R.id.iv_back)
+    public void onClickToBack(){
+        finish();
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_motion_record_detail);
+        ButterKnife.bind(this);
+
+        initManager();
+        //1:从数据库中获取数据,并数据解析到视图文件
+        initData();
+        //2:更新视图
+        updateView();
+
+    }
+
+    private void initManager() {
+        mRecordId = getIntent().getLongExtra("_id",0l);
+        myApp = getMyApp();
+    }
+
+    private void initData() {
+        //1:从数据库中读取数据
+        MotionSportRecordBeansDao mDao = GreenDaoManager.getInstance(this).getDaoSession().getMotionSportRecordBeansDao();
+        List<MotionSportRecordBeans> mList = mDao.queryBuilder()
+                .where(MotionSportRecordBeansDao.Properties.Id.eq(mRecordId))
+                .build().list();
+        //2:解释数据到Javabeans
+        mDetailList = new ArrayList<>();
+        mBeans = mList.get(0);
+        mDetailList.addAll(MotionUtils.onSportRecordToDetailList(this, mBeans));
+
+        //3:获取Fragment
+        mapFragment = (RecordMapFragment) getSupportFragmentManager().findFragmentById(R.id.layout_map_fragment);
+    }
+
+    private void updateView() {
+        //1:更新宫格数据
+        mAdapter = new RecordDetailAdapter(this, mDetailList);
+        mRecycProp.setLayoutManager(new GridLayoutManager(this, 2));
+        mRecycProp.setAdapter(mAdapter);
+        //2：更新运动数据
+        mtvMotionName.setText(MotionUtils.getValueByType(mBeans, this, true,true));
+        mTvMotionTime.setText(TimeUtil.getYear(mBeans.getTime()));
+        mTvValue0.setText(MotionUtils.getValueByType(mBeans, this,false,false));
+        mTvValueUnit.setText(MotionUtils.getValueUnitByType(mBeans, this, false));
+
+        //3:更新定位点
+        if(!TextUtils.isEmpty(mBeans.getLoc())) {
+            mGpTraceLayout.setVisibility(View.VISIBLE);
+            JSONArray mLocArray = (JSONArray) JSONValue.parse(mBeans.getLoc());
+            ArrayList<LatLng> mWatchRouteShapePoints = new ArrayList<>();
+//            List<String> mLocInfo = new ArrayList<>();
+//            mLocInfo.add("39.926445,116.419791");
+//            mLocInfo.add("39.887923,116.447387");
+//            mLocInfo.add("39.870205,116.407718");
+//            mLocInfo.add("39.882608,116.357701");
+//            mLocInfo.add("39.895452,116.32723");
+//            mLocInfo.add("39.928658,116.338728");
+            for (Object o : mLocArray) {
+                String item = (String)o;
+                double latitude = Double.parseDouble(item.split(",")[1]);
+                double longitude = Double.parseDouble(item.split(",")[0]);
+                LatLng xunLatLng = new LatLng(latitude, longitude);
+                mWatchRouteShapePoints.add(xunLatLng);
+            }
+//            Polyline mPlanRouteLine = new Polyline(this).setXunLatLngList(mWatchRouteShapePoints).setWidth(24).setColorId(getResources().getColor(R.color.navi_road));
+            if (mWatchRouteShapePoints.size() <= 0) {
+                LogUtil.e("There is not any point in line array.");
+                return;
+            }
+            PolylineOptions options = new PolylineOptions();
+            options.geodesic(true);
+            options.color(0xff1cb954);
+            options.width(24);
+            options.zIndex(1.0f);
+            for (int i = 0; i < mWatchRouteShapePoints.size(); i++) {
+                options.add(mWatchRouteShapePoints.get(i));
+            }
+            mapFragment.setPolyLineInfo(options);
+        }else{
+            mGpTraceLayout.setVisibility(View.GONE);
+        }
+
+        //4:更新心率数据
+        initChart(mLineHeart);
+        if(!TextUtils.isEmpty(mBeans.getHeartRate())) {
+            mGpHeart.setVisibility(View.VISIBLE);
+            ArrayList<Entry> entBmiArray = new ArrayList<>();
+            JSONArray mHeartArray = (JSONArray) JSONValue.parse(mBeans.getHeartRate());
+
+            //测试数据
+//            List<String> mHeartRateInfo = new ArrayList<>();
+//            mHeartRateInfo.add("1619589828010,98");
+//            mHeartRateInfo.add("1619589828015,88");
+//            mHeartRateInfo.add("1619589828020,97");
+            float mMaxValue = 0;
+            float mMinValue = 10000;
+            float mSumValue = 0;
+            for (int i = 0; i < mHeartArray.size(); i++) {
+                String mHeartItem = (String) mHeartArray.get(i);
+                float mHearRate = Float.parseFloat(mHeartItem.split(",")[1]);
+                entBmiArray.add(new Entry(i, mHearRate));
+                mSumValue+=mHearRate;
+                if(mHearRate > mMaxValue) mMaxValue = mHearRate;
+                if(mHearRate < mMinValue) mMinValue = mHearRate;
+            }
+            mTvMinRateValue.setText((int)mMinValue+"");
+            mTvMaxRateValue.setText((int)mMaxValue+"");
+            mTvAvgRateValue.setText((int)mSumValue/mHeartArray.size()+"");
+            updateChartView(mLineHeart, entBmiArray);
+        }else{
+            mGpHeart.setVisibility(View.GONE);
+        }
+
+        //5:更新心率区间数据
+        initBarChart(mBarZone);
+        if(!TextUtils.isEmpty(mBeans.getHeartIntvl())) {
+            mGpHeartZone.setVisibility(View.VISIBLE);
+            JSONArray mHeartIntvlArray = (JSONArray) JSONValue.parse(mBeans.getHeartIntvl());
+            List<String> mHeartIntvlInfo = new ArrayList<>();
+//            List<String> mHeartIntvlInfo = new ArrayList<>();
+//            mHeartIntvlInfo.add("com,900,50");
+//            mHeartIntvlInfo.add("hot,450,25");
+//            mHeartIntvlInfo.add("fat,228,13");
+//            mHeartIntvlInfo.add("aer,114,6");
+//            mHeartIntvlInfo.add("atp,54,3");
+//            mHeartIntvlInfo.add("lim,30,1");
+            for (Object o : mHeartIntvlArray) {
+                mHeartIntvlInfo.add((String)o);
+            }
+
+            updateBarChartView(mBarZone, mHeartIntvlInfo);
+        }else {
+            mGpHeartZone.setVisibility(View.GONE);
+        }
+
+    }
+
+    private void updateBarChartView(BarChart mBarZone, List<String> mIntvlInfo) {
+        ArrayList<BarEntry> values = new ArrayList<>();
+        for(int i=0;i<12;i++){
+            int value;
+            if(i%2!=0) value = MotionUtils.getHeartIntvlZoneByPos(mIntvlInfo,i);
+            else value = 0;
+            BarEntry entry = new BarEntry(i,value);
+            values.add(entry);
+        }
+        BarDataSet set1;
+        set1 = new BarDataSet(values,"");
+        set1.setDrawIcons(false);
+        set1.setDrawValues(true);
+        set1.setAxisDependency(YAxis.AxisDependency.RIGHT);
+        set1.setColors(getResources().getColor(R.color.record_zone_0),
+                getResources().getColor(R.color.record_zone_0),
+                getResources().getColor(R.color.record_zone_1),
+                        getResources().getColor(R.color.record_zone_1),
+                getResources().getColor(R.color.record_zone_2),
+                        getResources().getColor(R.color.record_zone_2),
+                getResources().getColor(R.color.record_zone_3),
+                        getResources().getColor(R.color.record_zone_3),
+                getResources().getColor(R.color.record_zone_4),
+                getResources().getColor(R.color.record_zone_4),
+                getResources().getColor(R.color.record_zone_5),
+                getResources().getColor(R.color.record_zone_5));
+        set1.setValueFormatter(new IValueFormatter() {
+            @Override
+            public String getFormattedValue(float v, Entry entry, int i, ViewPortHandler viewPortHandler) {
+                if(entry.getX()%2!=0) {
+                    String mValue = MotionUtils.getHeartIntvlTimeByPos(mIntvlInfo, (int) entry.getX());
+                    float minValue = Float.parseFloat(mValue)/60;
+                    int mSec = Integer.valueOf(mValue);
+                    String mDataTitle;
+                    if(mSec >= 60){
+                        mDataTitle = mSec/60 + getString(R.string.unit_minute);
+                    }else if(mSec > 0){
+                        mDataTitle = mSec + getString(R.string.second);
+                    }else{
+                        mDataTitle = "";
+                    }
+
+                    return mDataTitle;
+                }else return "";
+            }
+        });
+        BarData barData = new BarData(set1);
+        mBarZone.setData(barData);
+        mBarZone.invalidate();
+    }
+
+    private void initBarChart(BarChart barChart){
+        barChart.setBackgroundColor(Color.WHITE);
+        barChart.getDescription().setEnabled(false);
+        barChart.setNoDataText(getString(R.string.battery_detail_chart_no_data));
+        barChart.setTouchEnabled(false);
+        barChart.setDrawGridBackground(true);
+        barChart.setPinchZoom(true);
+        barChart.getAxisLeft().setEnabled(false);
+        barChart.getLegend().setEnabled(false);
+        barChart.setBackgroundColor(Color.WHITE);
+        barChart.setDrawGridBackground(false);
+        barChart.setExtraBottomOffset(16f);
+
+
+        XAxis xAxis = barChart.getXAxis();
+        xAxis.setDrawGridLines(false);
+        xAxis.setAxisMaximum(12f);
+        xAxis.setAxisMinimum(0f);
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setLabelCount(12);
+//        xAxis.setLabelCount(5,true);
+        xAxis.setTextColor(getResources().getColor(R.color.battery_detail_tab_divide));
+        xAxis.setTextSize(12f);
+        xAxis.setValueFormatter(new IAxisValueFormatter() {
+            @Override
+            public String getFormattedValue(float v, AxisBase axisBase) {
+                LogUtil.e("step xAxis x = " + v);
+                int value = (int)v;
+                String s = "";
+                switch (value){
+                    case 1:
+                        s=getString(R.string.record_zone_0);
+                        break;
+                    case 3:
+                        s=getString(R.string.record_zone_1);
+                        break;
+                    case 5:
+                        s=getString(R.string.record_zone_2);
+                        break;
+                    case 7:
+                        s=getString(R.string.record_zone_3);
+                        break;
+                    case 9:
+                        s=getString(R.string.record_zone_4);
+                        break;
+                    case 11:
+                        s=getString(R.string.record_zone_5);
+                        break;
+                    default:
+                        s="";
+                }
+                return s;
+            }
+        });
+        YAxis yAxis = barChart.getAxisRight();
+        yAxis.enableGridDashedLine(10f, 10f, 0f);
+        yAxis.setAxisMaximum(100f);
+        yAxis.setAxisMinimum(0f);
+        yAxis.setLabelCount(5);
+        yAxis.setTextColor(getResources().getColor(R.color.app_score_color));
+        yAxis.setTextSize(12f);
+        yAxis.setValueFormatter(new IAxisValueFormatter() {
+            @Override
+            public String getFormattedValue(float v, AxisBase axisBase) {
+                String s = "";
+                if(v == 0 || v == 20 || v == 40 || v == 60 || v == 80 || v == 100){
+                    s = (int)v+"%";
+                }
+                return s;
+            }
+        });
+    }
+    private void initChart(BarLineChartBase lineChart){
+        lineChart.setBackgroundColor(Color.WHITE);
+        lineChart.getDescription().setEnabled(false);
+        lineChart.setNoDataText(getString(R.string.battery_detail_chart_no_data));
+        lineChart.setTouchEnabled(false);
+        lineChart.setDrawGridBackground(true);
+        lineChart.setPinchZoom(true);
+        lineChart.getAxisRight().setEnabled(false);
+        lineChart.getLegend().setEnabled(false);
+        lineChart.setBackgroundColor(Color.WHITE);
+        lineChart.setDrawGridBackground(false);
+        lineChart.setExtraBottomOffset(6f);
+
+        XAxis xAxis = lineChart.getXAxis();
+        xAxis.enableGridDashedLine(10f, 10f, 0f);
+//        xAxis.setAxisMaximum(xMax);
+//        xAxis.setAxisMinimum(0f);
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setLabelCount(10);
+        xAxis.setTextColor(getResources().getColor(R.color.app_score_color));
+        xAxis.setTextSize(12f);
+        xAxis.setValueFormatter(new IAxisValueFormatter() {
+            @Override
+            public String getFormattedValue(float v, AxisBase axisBase) {
+                LogUtil.e("xAxis x = " + v);
+                return "";
+            }
+        });
+        YAxis yAxis = lineChart.getAxisLeft();
+        yAxis.setEnabled(false);
+        yAxis.setAxisMinimum(0f);
+    }
+    private void updateChartView(BarLineChartBase lineChart, ArrayList<Entry> entries) {
+        LineDataSet dataSet = new LineDataSet(entries,"");
+        dataSet.setAxisDependency(YAxis.AxisDependency.LEFT);
+        dataSet.setDrawValues(false);
+        dataSet.setDrawIcons(false);
+        dataSet.setDrawFilled(true);
+        Drawable drawable = getDrawable(R.drawable.shape_fade_red);
+        dataSet.setFillDrawable(drawable);
+        dataSet.setDrawCircles(false);
+        dataSet.setDrawCircleHole(false);
+        dataSet.setColor(getResources().getColor(R.color.record_rate_0));
+        LineData lineData = new LineData(dataSet);
+        lineChart.setData(lineData);
+        lineChart.invalidate();
+    }
+
+}

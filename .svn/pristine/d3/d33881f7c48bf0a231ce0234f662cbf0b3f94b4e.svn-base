@@ -1,0 +1,111 @@
+package com.xiaoxun.xun.networkv2.apis;
+
+import com.xiaoxun.xun.networkv2.beans.AllPrivacysInfo;
+import com.xiaoxun.xun.networkv2.beans.BaseRcResponse;
+import com.xiaoxun.xun.networkv2.beans.BehaviorStatInfo;
+import com.xiaoxun.xun.networkv2.beans.CloudTaskRankInfo;
+import com.xiaoxun.xun.networkv2.beans.CommonResponseInfo;
+import com.xiaoxun.xun.networkv2.beans.HeadImageResponseInfo;
+import com.xiaoxun.xun.networkv2.beans.PetInfo;
+import com.xiaoxun.xun.networkv2.beans.PrivacyUpdateInfo;
+import com.xiaoxun.xun.networkv2.beans.TaskDetailInfo;
+import com.xiaoxun.xun.networkv2.beans.TaskListInfo;
+import com.xiaoxun.xun.networkv2.beans.XunScoreRollInfo;
+
+import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.http.Body;
+import retrofit2.http.Headers;
+import retrofit2.http.POST;
+
+public interface Retrofit2Api {
+
+    @Headers({"Content-Type:application/json;charset=utf-8"})
+    @POST("/taskInfo")
+    Call<TaskDetailInfo> getTaskInfoApi(@Body RequestBody mParmas);
+
+    @Headers({"Content-Type:application/json;charset=utf-8"})
+    @POST("/tasklist")
+    Call<TaskListInfo> getTaskListInfoApi(@Body RequestBody mParmas);
+
+    @Headers({"Content-Type:application/json;charset=utf-8"})
+    @POST("/cloudtask")
+    Call<TaskListInfo> getCloudTaskListInfoOnApi(@Body RequestBody mParmas);
+
+    @Headers({"Content-Type:application/json;charset=utf-8"})
+    @POST("/taskSet")
+    Call<CommonResponseInfo> UpTaskDetailByTaskInfoOnApi(@Body RequestBody mParmas);
+
+    @Headers({"Content-Type:application/json;charset=utf-8"})
+    @POST("/taskUpload")
+    Call<CommonResponseInfo> UpTaskStatInfoOnApi(@Body RequestBody mParmas);
+
+    @Headers({"Content-Type:application/json;charset=utf-8"})
+    @POST("/cloudRank")
+    Call<CloudTaskRankInfo> getCloudTaskRankInfoOnApi(@Body RequestBody mParmas);
+
+    @Headers({"Content-Type:application/json;charset=utf-8"})
+    @POST("/statis")
+    Call<BehaviorStatInfo> getTaskStatCloudInfoOnApi(@Body RequestBody requestBody);
+
+    @Headers({"Content-Type:application/json;charset=utf-8"})
+    @POST("/dvsinfo")
+    Call<HeadImageResponseInfo> getHeadImageInfoOnApi(@Body RequestBody requestBody);
+
+    @Headers({"Content-Type:application/json;charset=utf-8"})
+    @POST("/petInfo")
+    Call<PetInfo> getPetInfoOnApi(@Body RequestBody requestBody);
+
+    @Headers({"Content-Type:application/json;charset=utf-8"})
+    @POST("/xx/loccorrect")
+    Call<ResponseBody> getRectifyInfoOnApi(@Body RequestBody requestBody);
+
+    @Headers({"Content-Type:application/json;charset=utf-8"})
+    @POST("/getprivacys")
+    Call<AllPrivacysInfo> getPrivacysOnCloud(@Body RequestBody requestBody);
+
+    @Headers({"Content-Type:application/json;charset=utf-8"})
+    @POST("/privacyupdate")
+    Call<PrivacyUpdateInfo> getPrivacyUpdateOnCloud(@Body RequestBody requestBody);
+
+    @Headers({"Content-Type:application/json;charset=utf-8"})
+    @POST("/getappprivacyver")
+    Call<ResponseBody> getPrivacyVerOnCloud(@Body RequestBody requestBody);
+
+    @Headers({"Content-Type:application/json;charset=utf-8"})
+    @POST("/push/get")
+    Call<BaseRcResponse> getPushManageInfo(@Body RequestBody requestBody);
+
+    @Headers({"Content-Type:application/json;charset=utf-8"})
+    @POST("/push/set")
+    Call<BaseRcResponse> setPushManageInfo(@Body RequestBody requestBody);
+
+    @Headers({"Content-Type:application/json;charset=utf-8"})
+    @POST("/xiaopeng/authInfo")
+    Call<ResponseBody> getXiaoPengAuthBindState(@Body RequestBody requestBody);
+
+    @Headers({"Content-Type:application/json;charset=utf-8"})
+    @POST("/xiaopeng/bindAuth")
+    Call<ResponseBody> setXiaoPengAuthBindRela(@Body RequestBody requestBody);
+
+    @Headers({"Content-Type:application/json;charset=utf-8"})
+    @POST("/xiaopeng/unbindAuth")
+    Call<ResponseBody> setXiaoPengAuthUnBindRela(@Body RequestBody requestBody);
+
+    @Headers({"Content-Type:application/json;charset=utf-8"})
+    @POST("/rollinfo")
+    Call<XunScoreRollInfo> getXunScoreRollInfo(@Body RequestBody requestBody);
+
+    @Headers({"Content-Type:application/json;charset=utf-8"})
+    @POST("/checkvisible")
+    Call<ResponseBody> xunScoreCheckVisibleApi(@Body RequestBody requestBody);
+
+    @Headers({"Content-Type:application/json;charset=utf-8"})
+    @POST("/app/v1/show")
+    Call<ResponseBody> xunDialShopCheckVisibleApi(@Body RequestBody requestBody);
+
+    @Headers({"Content-Type:application/json;charset=utf-8"})
+    @POST("/checkurl")
+    Call<ResponseBody> xunScoreCheckUrlApi(@Body RequestBody requestBody);
+}

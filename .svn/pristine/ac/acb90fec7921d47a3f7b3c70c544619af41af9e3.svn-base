@@ -1,0 +1,431 @@
+package com.xiaoxun.xun.utils;
+
+import android.annotation.SuppressLint;
+import android.os.AsyncTask;
+import android.util.Base64;
+import android.util.Log;
+
+import com.huawei.hms.utils.IOUtils;
+import com.xiaoxun.xun.FunctionUrl;
+import com.xiaoxun.xun.ImibabyApp;
+import com.xiaoxun.xun.OVERSEAURL;
+import com.xiaoxun.xun.R;
+import com.xiaoxun.xun.listener.ProgressListener;
+import com.xiaoxun.xun.region.XunKidsDomain;
+
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
+import net.minidev.json.JSONValue;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.scheme.PlainSocketFactory;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.entity.InputStreamEntity;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.security.KeyStore;
+
+/**
+ * Created by huangyouyang on 2018/8/7.
+ */
+
+public class CustomFileUtils {
+
+    private ImibabyApp mApp;
+
+    private CustomFileUtils(ImibabyApp mApp) {
+        this.mApp = mApp;
+    }
+
+    private static CustomFileUtils instance;
+
+    public static CustomFileUtils getInstance(ImibabyApp mApp) {
+        if (instance == null)
+            instance = new CustomFileUtils(mApp);
+        return instance;
+    }
+
+    public interface UploadListener {
+        void uploadSuccess(String result);
+
+        void uploadFail(String error);
+    }
+
+    public void uploadData(final byte[] data, final String eid, final String phoneNumber, final UploadListener uploadListener) {
+
+        final String key = "EP/" + eid + "/" + phoneNumber + "/IMAGE/" + TimeUtil.getTimeStampLocal() + ".jpg";
+        @SuppressLint("StaticFieldLeak")
+        AsyncTask<String, Boolean, String> task = new AsyncTask<String, Boolean, String>() {
+            @Override
+            protected String doInBackground(String... params) {
+                try {
+                    String url = XunKidsDomain.getInstance(mApp).getXunKidsFilesDomain(OVERSEAURL.FDSFILE_UPLOAD_PUB_URL);
+                    JSONObject json = new JSONObject();
+                    json.put("key", key);
+                    json.put("sid", mApp.getToken());
+                    String out = runWithHttpsClient(json.toJSONString(), url);
+                    JSONObject resultJson = (JSONObject) JSONValue.parse(out);
+                    int code = (Integer) resultJson.get("code");
+                    String fileUrl = "";
+                    String pkey = "";
+                    if (code == 0) {
+                        fileUrl = (String) resultJson.get("url");
+                        pkey = (String) resultJson.get("pkey");
+                    }
+                    if (fileUrl != null && fileUrl.startsWith("http")) {
+                        boolean success = putData(fileUrl, data);
+                        if (success) {
+                            out = getDownloadUrl(pkey);
+                            resultJson = (JSONObject) JSONValue.parse(out);
+                            code = (Integer) resultJson.get("code");
+                            String downloadUrl = "";
+                            if (code == 0) {
+                                downloadUrl = (String) resultJson.get("url");
+                            }
+                            return downloadUrl;
+                        }
+                    }
+                    publishProgress(true);
+                    return null;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(String result) {
+                super.onPostExecute(result);
+                LogUtil.i("HYY uploadData onPostExecute result=" + result);
+                if (result != null) {
+                    uploadListener.uploadSuccess(result);
+                } else {
+                    uploadListener.uploadFail("");
+                }
+            }
+
+            @Override
+            protected void onProgressUpdate(Boolean... values) {
+                super.onProgressUpdate(values);
+            }
+        };
+        task.execute();
+    }
+
+    public byte[] downloadUrl(String key) throws Exception {
+        JSONObject json = new JSONObject();
+        json.put("key", key);
+        json.put("sid", mApp.getToken());
+        String result = runWithHttpsClient(json.toJSONString(), XunKidsDomain.getInstance(mApp).getXunKidsFilesDomain(OVERSEAURL.FDSFILE_DOWNLOAD_URL));
+        JSONObject resultJson = (JSONObject) JSONValue.parse(result);
+        int code = (Integer) resultJson.get("code");
+        String urlResult = null;
+        if (code == 0) {
+            urlResult = (String) resultJson.get("url");
+            URL url = new URL(urlResult);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(5 * 1000);
+            InputStream inStream = conn.getInputStream();// 通过输入流获取图片数据
+            byte[] btImg = IOUtils.toByteArray(inStream);// 得到图片的二进制数据
+            return btImg;
+        } else {
+            return null;
+        }
+    }
+
+    public void uploadData(final byte[] data, final String key, final UploadListener uploadListener) {
+        @SuppressLint("StaticFieldLeak")
+        AsyncTask<String, Boolean, String> task = new AsyncTask<String, Boolean, String>() {
+            @Override
+            protected String doInBackground(String... params) {
+                try {
+                    String url = XunKidsDomain.getInstance(mApp).getXunKidsFilesDomain(OVERSEAURL.FDSFILE_UPLOAD_URL);
+                    JSONObject json = new JSONObject();
+                    json.put("key", key);
+                    json.put("sid", mApp.getToken());
+                    String out = runWithHttpsClient(json.toJSONString(), url);
+                    JSONObject resultJson = (JSONObject) JSONValue.parse(out);
+                    int code = (Integer) resultJson.get("code");
+                    String fileUrl = "";
+                    String pkey = "";
+                    if (code == 0) {
+                        fileUrl = (String) resultJson.get("url");
+                        pkey = (String) resultJson.get("pkey");
+                    }
+                    if (fileUrl != null && fileUrl.startsWith("http")) {
+                        boolean success = putData(fileUrl, data);
+                        if (success) {
+                            String ret = "success upload.";
+                            return ret;
+                        }
+                    }
+                    publishProgress(true);
+                    return null;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(String result) {
+                super.onPostExecute(result);
+                LogUtil.i("HYY uploadData onPostExecute result=" + result);
+                if (result != null) {
+                    uploadListener.uploadSuccess(result);
+                } else {
+                    uploadListener.uploadFail("");
+                }
+            }
+
+            @Override
+            protected void onProgressUpdate(Boolean... values) {
+                super.onProgressUpdate(values);
+            }
+        };
+        task.execute();
+    }
+
+
+    private String runWithHttpsClient(String postData, String postUrl) throws IOException {
+        try {
+            int timeOut = 30 * 1000;
+            HttpParams param = new BasicHttpParams();
+            HttpConnectionParams.setConnectionTimeout(param, timeOut);
+            HttpConnectionParams.setSoTimeout(param, timeOut);
+            HttpConnectionParams.setTcpNoDelay(param, true);
+
+            SchemeRegistry registry = new SchemeRegistry();
+            registry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
+            registry.register(new Scheme("https", SSLSocketFactory.getSocketFactory(), 443));
+
+            ClientConnectionManager manager = new ThreadSafeClientConnManager(param, registry);
+            DefaultHttpClient client = new DefaultHttpClient(manager, param);
+
+            HttpPost request = new HttpPost(postUrl);
+            request.setHeader("Accept", "application/json");
+            request.setHeader("Content-Type", "application/json");
+            request.setHeader("Charset", "UTF-8");
+            LogUtil.e("runWithHttpsClient postData = " + postData);
+            String encrytData = BASE64Encoder.encode(AESUtil.encryptAESCBC(postData, mApp.getNetService().AES_KEY, mApp.getNetService().AES_KEY));
+            StringEntity postEntity = new StringEntity(encrytData + mApp.getToken());
+            request.setEntity(postEntity);
+            HttpResponse response = client.execute(request);
+            HttpEntity entity = response.getEntity();
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(entity.getContent()));
+            StringBuilder result = new StringBuilder();
+            String line = "";
+            while ((line = reader.readLine()) != null) {
+                result.append(line);
+            }
+            LogUtil.e("runWithHttpsClient result = " + result);
+            return new String(AESUtil.decryptAESCBC(org.java_websocket.util.Base64.decode(result.toString()), mApp.getNetService().AES_KEY, mApp.getNetService().AES_KEY));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private boolean putFile(String url, String filePath) {
+        try {
+            File file = new File(filePath);
+            FileInputStream input = new FileInputStream(file);
+            long ccontentLength = file.length();
+            InputStreamEntity requestEntity = getInputStreamRequestEntity(input, ccontentLength);
+            ProgressOutHttpEntity progressEntity = new ProgressOutHttpEntity(requestEntity, new ProgressListener() {
+                @Override
+                public void transferred(long transferedBytes) {
+
+                }
+            });
+            HttpPut httpPut = new HttpPut(url);
+            httpPut.setEntity(progressEntity);
+
+            DefaultHttpClient dhc = new DefaultHttpClient();
+            HttpResponse response = dhc.execute(httpPut);
+            if (response.getStatusLine().getStatusCode() == 200) {
+                return true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    private boolean putData(String url, byte[] data) {
+        try {
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
+            long ccontentLength = data.length;
+            InputStreamEntity requestEntity = getInputStreamRequestEntity(inputStream, ccontentLength);
+            ProgressOutHttpEntity progressEntity = new ProgressOutHttpEntity(requestEntity, new ProgressListener() {
+                @Override
+                public void transferred(long transferedBytes) {
+                    LogUtil.i("HYY " + " putData transferedBytes=" + transferedBytes);
+                }
+            });
+            HttpPut httpPut = new HttpPut(url);
+            httpPut.setEntity(progressEntity);
+
+            DefaultHttpClient dhc = new DefaultHttpClient();
+            HttpResponse response = dhc.execute(httpPut);
+            LogUtil.i("HYY " + " putData response=" + response.getStatusLine().getStatusCode());
+            if (response.getStatusLine().getStatusCode() == 200) {
+                return true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    private InputStreamEntity getInputStreamRequestEntity(InputStream input, long inputStreamLength) {
+        BufferedInputStream bufferedInputStream = new BufferedInputStream(input);
+        return new InputStreamEntity(bufferedInputStream, inputStreamLength);
+    }
+
+    private String getDownloadUrl(final String key) {
+
+        try {
+            String url = XunKidsDomain.getInstance(mApp).getXunKidsFilesDomain(OVERSEAURL.FDSFILE_DOWNLOAD_PUB_URL);
+            JSONObject json = new JSONObject();
+            json.put("key", key);
+            json.put("sid", mApp.getToken());
+            return runWithHttpsClient(json.toJSONString(), url);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public void uploadFile(final String eid, final String gid, final String filePath, final String previewFilePath, final UploadListener uploadListener) {
+
+        final String fileName;
+        final String previewFileName;
+        String time = TimeUtil.getReversedOrderTime(TimeUtil.getTimeStampGMT());
+
+        if (filePath != null && filePath.length() > 0) {
+            String fileSuffix = filePath.substring(filePath.lastIndexOf(".") + 1);
+            fileName = time + "." + fileSuffix;
+            previewFileName = time + "_" + fileSuffix + previewFilePath.substring(previewFilePath.lastIndexOf("."));
+        } else {
+            fileName = null;
+            previewFileName = time + "_" + "xxx" + previewFilePath.substring(previewFilePath.lastIndexOf("."));
+        }
+
+        AsyncTask<Void, Boolean, Boolean> task = new AsyncTask<Void, Boolean, Boolean>() {
+            @Override
+            protected Boolean doInBackground(Void... params) {
+                try {
+                    if (filePath != null && filePath.length() > 0) {
+                        boolean uploadSuccess = uploadEncryptFile("GP/" + gid + "/MSG/SOURCE/" + fileName, filePath, eid.substring(0, 16));
+                        if (!uploadSuccess) {
+                            return false;
+                        }
+                    }
+
+                    boolean uploadSuccess = uploadEncryptFile("GP/" + gid + "/MSG/PREVIEW/" + previewFileName, previewFilePath, eid.substring(0, 16));
+                    if (!uploadSuccess) {
+                        if (filePath != null && filePath.length() > 0) {
+                            JSONArray array = new JSONArray();
+                            array.add("GP/" + gid + "/MSG/SOURCE/" + fileName);
+                            deleteServerFiles(array);
+                        }
+                    }
+                    return uploadSuccess;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return false;
+            }
+
+            @Override
+            protected void onPostExecute(Boolean result) {
+                super.onPostExecute(result);
+                if (result) {
+                    String content = "GP/" + gid + "/MSG/PREVIEW/" + previewFileName;
+                    uploadListener.uploadSuccess(content);
+                } else {
+                    uploadListener.uploadFail(mApp.getResources().getString(R.string.upload_file_fail));
+                }
+            }
+
+            @Override
+            protected void onProgressUpdate(Boolean... values) {
+                super.onProgressUpdate(values);
+            }
+        };
+        task.execute();
+
+    }
+
+    public boolean uploadEncryptFile(String key, String filePath, String aesKey) throws IOException {
+        byte[] encryptByte = AESUtil.encryptFile(filePath, aesKey, aesKey);
+        return uploadData(key, encryptByte);
+    }
+
+    public boolean uploadData(String key, byte[] data) throws IOException {
+        JSONObject json = new JSONObject();
+        if (data != null && data.length > 0) {
+            json.put("key", key);
+            json.put("sid", mApp.getToken());
+
+            String result = runWithHttpsClient(json.toJSONString(), XunKidsDomain.getInstance(mApp).getXunKidsFilesDomain(OVERSEAURL.FDSFILE_UPLOAD_URL));
+            JSONObject resultJson = (JSONObject) JSONValue.parse(result);
+            LogUtil.e(resultJson != null ? resultJson.toString() : "uploadData resultJson is null");
+            assert resultJson != null;
+            int code  = (Integer) resultJson.get("code");
+            String fileUrl = null;
+            if (code == 0) {
+                fileUrl = (String) resultJson.get("url");
+            } else {
+                return false;
+            }
+            if (fileUrl != null && fileUrl.startsWith("http")) {
+                boolean success = putData(fileUrl, data);
+                if (!success) {
+                    JSONArray array = new JSONArray();
+                    array.add(key);
+                    deleteServerFiles(array);
+                    return false;
+                } else {
+                    return true;
+                }
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    private void deleteServerFiles(JSONArray array) throws IOException {
+        JSONObject deleteJson = new JSONObject();
+        deleteJson.put("keys", array);
+        deleteJson.put("sid", mApp.getToken());
+        runWithHttpsClient(deleteJson.toJSONString(), XunKidsDomain.getInstance(instance.mApp).getXunKidsFilesDomain(OVERSEAURL.FDSFILE_DELETE_URL));
+    }
+
+}

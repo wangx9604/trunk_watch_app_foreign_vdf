@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layout_message_item"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <ImageView
+        android:id="@+id/iv_message_head"
+        android:layout_width="39dp"
+        android:layout_height="39dp"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="23.33dp"
+        android:src="@drawable/relation_custom" />
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="11dp">
+
+        <ImageView
+            android:id="@+id/iv_new_msg_bg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:background="@drawable/red_single" />
+
+        <TextView
+            android:id="@+id/tv_new_msg_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:gravity="center"
+            android:text="1"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="@dimen/activity_horizontal_margin"
+        android:layout_marginTop="18dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="15dp"
+        android:layout_toEndOf="@+id/iv_message_head">
+
+        <TextView
+            android:id="@+id/tv_message_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="家庭群聊"
+            android:layout_toStartOf="@+id/layout_message_time"
+            android:layout_alignParentStart="true"
+            android:layout_marginEnd="18dp"
+            android:textColor="@color/color_7"
+            android:textSize="@dimen/xiaomiMyTextSize1" />
+
+        <TextView
+            android:id="@+id/tv_message_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/tv_message_title"
+            android:layout_alignParentStart="true"
+            android:layout_marginTop="3dp"
+            android:layout_toStartOf="@+id/layout_message_time"
+            android:layout_marginEnd="18dp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="爸爸：[语音]"
+            android:textColor="@color/color_5"
+            android:textSize="@dimen/xiaomiMyTextSize3" />
+
+        <LinearLayout
+            android:id="@+id/layout_message_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_alignTop="@id/tv_message_content"
+            android:gravity="right"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_message_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="10:10"
+                android:textColor="@color/color_5"
+                android:textSize="@dimen/xiaomiMyTextSize3" />
+
+            <ImageView
+                android:id="@+id/iv_notice_disable"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/notification_disable"
+                android:visibility="gone" />
+        </LinearLayout>
+    </RelativeLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0.3dp"
+        android:layout_alignParentBottom="true"
+        android:background="@color/line_grey" />
+</RelativeLayout>

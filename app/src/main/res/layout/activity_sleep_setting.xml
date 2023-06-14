@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/xiaomi_bg_grey"
+    android:orientation="vertical">
+
+    <include
+        android:id="@+id/sleep_mode_title"
+        layout="@layout/activity_title" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/sleep_mode_title">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:id="@+id/sleep_mode_msg"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_marginTop="13dp"
+                android:layout_marginBottom="13dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginLeft="23.33dp"
+                    android:layout_marginRight="23.33dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tv_sleeptime_desc"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/device_sleep_message_detail"
+                        android:textColor="@color/txt_grey"
+                        android:textSize="@dimen/xiaomiMyTextSize13" />
+                </LinearLayout>
+
+            </RelativeLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1px"
+                android:layout_marginLeft="23.33dp"
+                android:layout_marginRight="23.33dp"
+                android:background="@color/divider_color" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/layer_notice_volume"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/sleep_mode_msg"
+            android:orientation="vertical">
+
+            <RelativeLayout
+                android:id="@+id/device_setting_layout"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:paddingEnd="@dimen/divideleftandright"
+                android:paddingStart="@dimen/divideleftandright"
+                android:background="@drawable/setting_item_selector">
+                <TextView
+                    android:id="@+id/time_sleep_setting"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:textColor="@color/color_12"
+                    android:textSize="@dimen/xiaomiMyTextNickname"
+                    android:text="@string/setting_watch_sleep" />
+
+                <ImageButton
+                    android:id="@+id/button_img_sleep"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:background="#00000000"
+                    android:focusable="false" />
+            </RelativeLayout>
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="1px"
+                android:paddingEnd="@dimen/divideleftandright"
+                android:paddingStart="@dimen/divideleftandright"
+                android:src="@color/line_grey" />
+
+        </LinearLayout>
+
+        <View
+            android:id="@+id/view_sleepsetting_line"
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:layout_below="@id/layer_notice_volume"
+            android:layout_marginLeft="23.33dp"
+            android:layout_marginRight="23.33dp"
+            android:background="@color/divider_color"
+            android:visibility="invisible"/>
+
+        <include
+            layout="@layout/activity_sleep_mode"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@+id/view_sleepsetting_line" />
+    </RelativeLayout>
+    </ScrollView>
+</RelativeLayout>

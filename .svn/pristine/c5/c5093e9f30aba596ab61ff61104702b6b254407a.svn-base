@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:descendantFocusability="blocksDescendants"
+    android:gravity="center_vertical"
+    android:background="@color/white"
+    android:orientation="vertical">
+	<RelativeLayout
+	    android:layout_width="match_parent"
+	    android:layout_height="63dp"
+		android:paddingLeft="23.33dp"
+		android:paddingRight="23.33dp"
+	    android:background="@drawable/list_item_selector">
+	      <ImageView
+			android:id="@+id/iv_member_head"
+			android:layout_width="40dp"
+			android:layout_height="40dp"
+            android:layout_centerVertical="true"
+			android:contentDescription="@string/blank_str"
+			android:src="@drawable/mask" />
+	
+		  <LinearLayout 
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_centerVertical="true"
+			android:layout_marginLeft="50dp"
+			android:orientation="vertical" 
+		    >
+			<TextView
+				android:id="@+id/tv_member_name"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_alignParentLeft="true"
+				android:maxWidth="200dp"
+				android:text="name"
+				android:singleLine="true"
+				android:ellipsize="end"
+				android:textColor="@color/black"
+				android:textSize="@dimen/xiaomiMyTextSize1" />
+			  <TextView
+				  android:id="@+id/tv_info"
+				  android:layout_width="wrap_content"
+				  android:layout_height="wrap_content"
+				  android:layout_alignParentLeft="true"
+				  android:text="name"
+				  android:singleLine="true"
+				  android:ellipsize="end"
+				  android:textColor="@color/txt_grey"
+				  android:textSize="@dimen/xiaomiMyTextSize2" />
+		  </LinearLayout>
+		<ImageView
+			android:id="@+id/iv_member_next"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignParentRight="true"
+			android:layout_centerVertical="true"
+			android:background="@drawable/radio_bt_0"/>
+	</RelativeLayout>
+</LinearLayout>
